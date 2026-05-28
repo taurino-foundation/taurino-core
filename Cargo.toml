@@ -1,0 +1,36 @@
+[package]
+name = "taurino-core"
+version = "0.1.0"
+edition = "2024"
+authors = ["Malek Ali <ari.bermeki@icloud.com>"]
+description = "A Rust framework for building webview-based desktop applications"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/taurino-foundation/taurino-core"
+homepage = "https://github.com/taurino-foundation/taurino-core"
+documentation = "https://docs.rs/taurino-core"
+readme = "README.md"
+keywords = ["desktop", "webview", "gui", "framework"]
+categories = ["gui", "web-programming"]
+exclude = [
+  "target/*",
+  ".github/*",
+  "assets/*"
+]
+
+
+# [lib]
+# name = "taurino-core"
+# path = "src/lib.rs"
+
+
+
+[dependencies]
+
+[dev-dependencies]
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+strip = true
+panic = "abort"
