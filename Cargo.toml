@@ -18,9 +18,9 @@ exclude = [
 ]
 
 
-# [lib]
-# name = "taurino-core"
-# path = "src/lib.rs"
+[lib]
+name = "taurino_core"
+path = "src/lib.rs"
 
 
 
