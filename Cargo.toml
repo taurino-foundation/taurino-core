@@ -25,6 +25,16 @@ path = "src/lib.rs"
 
 
 [dependencies]
+dpi = "0.1.2"
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.150"
+tao = "0.35.3"
+thiserror = "2.0.18"
+url = "2.5.8"
+wry = "0.55.1"
+
+
+
 
 [dev-dependencies]
 
