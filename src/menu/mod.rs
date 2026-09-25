@@ -38,7 +38,7 @@ pub mod prelude {
         CheckMenuItemBuilder, IconMenuItemBuilder, MenuBuilder, MenuItemBuilder, SubmenuBuilder,
     };
     pub use super::context::ContextMenu;
-    pub use super::install_menu_event_handler;
+    pub use super::{install_menu_event_handler,map_to_menu_theme};
     pub use super::item::{
         CheckMenuItem, IconMenuItem, IsMenuItem, Menu, MenuItem, MenuItemKind, PredefinedMenuItem,
         Submenu,
