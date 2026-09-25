@@ -159,7 +159,11 @@ impl ManagedWebview {
             .map_err(|_| crate::error::Error::FailedToSendMessage)
     }
 
-    pub fn set_size(&self, window: &Window, size: Size) -> crate::error::Result<()> {
+    pub fn set_size(
+        &self,
+        window: &Window,
+        size: Size,
+    ) -> crate::error::Result<()> {
         let mut bounds = self
             .inner
             .bounds()
@@ -272,7 +276,10 @@ impl ManagedWebview {
             .map_err(|_| crate::error::Error::FailedToSendMessage)
     }
 
-    pub fn size(&self, window: &Window) -> crate::error::Result<PhysicalSize<u32>> {
+    pub fn size(
+        &self,
+        window: &Window,
+    ) -> crate::error::Result<PhysicalSize<u32>> {
         self.inner
             .bounds()
             .map(|bounds| bounds.size.to_physical(window.scale_factor()))
@@ -354,7 +361,10 @@ impl ManagedWebview {
             .map_err(|_| crate::error::Error::FailedToSendMessage)
     }
 
-    pub fn delete_cookie(&self, cookie: &Cookie<'_>) -> crate::error::Result<()> {
+    pub fn delete_cookie(
+        &self,
+        cookie: &Cookie<'_>,
+    ) -> crate::error::Result<()> {
         self.inner
             .delete_cookie(cookie)
             .map_err(|_| crate::error::Error::FailedToSendMessage)

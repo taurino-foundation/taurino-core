@@ -368,10 +368,14 @@ impl WindowWebViewMetaData {
         let webview_label = webview_label.into();
 
         if window_label.trim().is_empty() {
-            return Err(crate::error::Error::EmptyInitializedWindow(window_label));
+            return Err(crate::error::Error::EmptyInitializedWindow(
+                window_label,
+            ));
         }
         if webview_label.trim().is_empty() {
-            return Err(crate::error::Error::EmptyInitializedWebView(webview_label));
+            return Err(crate::error::Error::EmptyInitializedWebView(
+                webview_label,
+            ));
         }
         if !is_label_valid(&window_label) {
             return Err(crate::error::Error::InvalidWindowLabel);

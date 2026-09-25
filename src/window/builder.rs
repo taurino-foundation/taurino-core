@@ -674,7 +674,8 @@ impl WindowBuilder {
         F: for<'a> Fn(
                 wry::WebViewBuilder<'a>,
                 WebviewUrl,
-            ) -> crate::error::Result<wry::WebViewBuilder<'a>>
+            )
+                -> crate::error::Result<wry::WebViewBuilder<'a>>
             + Send
             + Clone
             + 'static,

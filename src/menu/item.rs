@@ -1,14 +1,14 @@
-use muda::MenuId;
-use std::sync::Arc;
-use crate::error::{Result};
 use super::{
     context::sealed,
     metadata::{AboutMetadata, NativeIcon},
 };
+use crate::error::Result;
 use crate::{
     menu::sealed::IsMenuItemBase,
     utils::{image::Image, resource::Resource},
 };
+use muda::MenuId;
+use std::sync::Arc;
 
 // -----------------------------------------------------------------------------
 // wrappers
@@ -382,10 +382,7 @@ impl IconMenuItem {
         Ok(())
     }
 
-    pub fn set_native_icon(
-        &self,
-        icon: Option<NativeIcon>,
-    ) -> Result<()> {
+    pub fn set_native_icon(&self, icon: Option<NativeIcon>) -> Result<()> {
         #[cfg(target_os = "macos")]
         self.0.inner.set_native_icon(icon.map(Into::into));
         let _ = icon;

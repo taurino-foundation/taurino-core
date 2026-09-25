@@ -1,5 +1,3 @@
-use muda::MenuId;
-use crate::error::{Result};
 use super::{
     item::{
         CheckMenuItem, IconMenuItem, IsMenuItem, Menu, MenuItem, MenuItemKind,
@@ -7,7 +5,9 @@ use super::{
     },
     metadata::{AboutMetadata, NativeIcon},
 };
+use crate::error::Result;
 use crate::utils::image::Image;
+use muda::MenuId;
 
 // -----------------------------------------------------------------------------
 // item builders

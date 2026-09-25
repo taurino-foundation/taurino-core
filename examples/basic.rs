@@ -1,10 +1,10 @@
 use std::sync::Arc;
 
-use taurino_core::prelude::*;
 use tao::{
     event::{Event, WindowEvent},
     event_loop::{ControlFlow, EventLoop},
 };
+use taurino_core::prelude::*;
 use url::Url;
 
 fn main() -> crate::Result<()> {

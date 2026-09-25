@@ -1,8 +1,8 @@
+use crate::error::Result;
+use crate::menu::sealed::ContextMenuBase;
 use dpi::Position;
 use muda::ContextMenu as MudaContextMenu;
 use tao::window::Window;
-use crate::error::{Result};
-use crate::menu::sealed::ContextMenuBase;
 
 use super::item::{Menu, Submenu};
 
@@ -35,9 +35,9 @@ pub trait ContextMenu: sealed::ContextMenuBase + Send + Sync {
 }
 
 pub(crate) mod sealed {
+    use crate::error::Result;
     use dpi::Position;
     use tao::window::Window;
-    use crate::error::{Result};
 
     pub trait IsMenuItemBase {
         fn inner_muda(&self) -> &dyn muda::IsMenuItem;

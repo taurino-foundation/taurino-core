@@ -71,11 +71,13 @@ pub type ResourceId = u32;
 /// Each resource is identified through a _resource ID (rid)_, which acts as
 /// the key in the map.
 #[derive(Default)]
+#[allow(dead_code)]
 pub struct ResourceTable {
     index: BTreeMap<ResourceId, Arc<dyn Resource>>,
 }
 
 impl ResourceTable {
+    #[allow(dead_code)]
     fn new_random_rid() -> u32 {
         let mut bytes = [0_u8; 4];
         getrandom::fill(&mut bytes).expect("failed to get random bytes");
@@ -128,7 +130,10 @@ impl ResourceTable {
     /// Returns a reference counted pointer to the resource of type `T` with the
     /// given `rid`. If `rid` is not present or has a type different than `T`,
     /// this function returns [`Error::BadResourceId`](crate::error::Error::BadResourceId).
-    pub fn get<T: Resource>(&self, rid: ResourceId) -> crate::error::Result<Arc<T>> {
+    pub fn get<T: Resource>(
+        &self,
+        rid: ResourceId,
+    ) -> crate::error::Result<Arc<T>> {
         self.index
             .get(&rid)
             .and_then(|rc| rc.downcast_arc::<T>())
@@ -138,7 +143,10 @@ impl ResourceTable {
 
     /// Returns a reference counted pointer to the resource of the given `rid`.
     /// If `rid` is not present, this function returns [`crate::error::Error::BadResourceId`].
-    pub fn get_any(&self, rid: ResourceId) -> crate::error::Result<Arc<dyn Resource>> {
+    pub fn get_any(
+        &self,
+        rid: ResourceId,
+    ) -> crate::error::Result<Arc<dyn Resource>> {
         self.index
             .get(&rid)
             .ok_or_else(|| crate::error::Error::BadResourceId(rid))

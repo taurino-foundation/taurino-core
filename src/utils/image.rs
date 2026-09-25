@@ -64,6 +64,7 @@ impl<'a> From<&'a str> for IconResource<'a> {
 /// Used by [`crate::generate_context!`]; not public API.
 #[cfg(windows)]
 #[doc(hidden)]
+#[allow(dead_code)]
 pub fn default_window_icon_from_app_icon_resource() -> Option<Image<'static>> {
     // the window icon is drawn in the title bar and, as a fallback for the taskbar icon,
     // at the system's large icon size (32x32 at 96 DPI, scaled with the system DPI),

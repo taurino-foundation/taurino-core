@@ -1,9 +1,9 @@
+use crate::error::{Error, Result};
 #[cfg(windows)]
 use crate::platform::prelude::{
     attach_resize_handler, detach_resize_handler,
     update_drag_hwnd_rgn_for_undecorated,
 };
-use crate::error::{Result, Error};
 use dpi::{PhysicalPosition, PhysicalSize, Position, Size};
 use std::{
     fmt,
@@ -103,9 +103,7 @@ impl ManagedWindow {
 
     pub fn inner_window(&self) -> Result<&Window> {
         self.inner.as_deref().ok_or_else(|| {
-            Error::WindowNotInitialized(
-                self.metadata.window_label.clone(),
-            )
+            Error::WindowNotInitialized(self.metadata.window_label.clone())
         })
     }
 
@@ -192,9 +190,7 @@ impl ManagedWindow {
     #[inline]
     fn window(&self) -> Result<&Window> {
         self.inner.as_deref().ok_or_else(|| {
-            Error::WindowNotInitialized(
-                self.metadata.window_label.clone(),
-            )
+            Error::WindowNotInitialized(self.metadata.window_label.clone())
         })
     }
 
@@ -500,10 +496,7 @@ impl ManagedWindow {
         self.surface.take();
     }
 
-    pub fn set_always_on_bottom(
-        &self,
-        always_on_bottom: bool,
-    ) -> Result<()> {
+    pub fn set_always_on_bottom(&self, always_on_bottom: bool) -> Result<()> {
         self.window()?.set_always_on_bottom(always_on_bottom);
         Ok(())
     }
@@ -513,10 +506,7 @@ impl ManagedWindow {
         Ok(())
     }
 
-    pub fn set_visible_on_all_workspaces(
-        &self,
-        visible: bool,
-    ) -> Result<()> {
+    pub fn set_visible_on_all_workspaces(&self, visible: bool) -> Result<()> {
         self.window()?.set_visible_on_all_workspaces(visible);
         Ok(())
     }
@@ -531,18 +521,12 @@ impl ManagedWindow {
         Ok(())
     }
 
-    pub fn set_min_size<S: Into<Size>>(
-        &self,
-        size: Option<S>,
-    ) -> Result<()> {
+    pub fn set_min_size<S: Into<Size>>(&self, size: Option<S>) -> Result<()> {
         self.window()?.set_min_inner_size(size.map(Into::into));
         Ok(())
     }
 
-    pub fn set_max_size<S: Into<Size>>(
-        &self,
-        size: Option<S>,
-    ) -> Result<()> {
+    pub fn set_max_size<S: Into<Size>>(&self, size: Option<S>) -> Result<()> {
         self.window()?.set_max_inner_size(size.map(Into::into));
         Ok(())
     }
@@ -562,10 +546,7 @@ impl ManagedWindow {
         Ok(())
     }
 
-    pub fn set_position<P: Into<Position>>(
-        &self,
-        position: P,
-    ) -> Result<()> {
+    pub fn set_position<P: Into<Position>>(&self, position: P) -> Result<()> {
         self.window()?.set_outer_position(position.into());
         Ok(())
     }
@@ -579,10 +560,7 @@ impl ManagedWindow {
         Ok(())
     }
 
-    pub fn set_fullscreen_on_monitor(
-        &self,
-        position: Position,
-    ) -> Result<()> {
+    pub fn set_fullscreen_on_monitor(&self, position: Position) -> Result<()> {
         let window = self.window()?;
 
         if let Some(monitor) =
@@ -688,10 +666,7 @@ impl ManagedWindow {
             .map_err(|_| Error::FailedToSendMessage)
     }
 
-    pub fn resize_drag_window(
-        &self,
-        direction: ResizeDirection,
-    ) -> Result<()> {
+    pub fn resize_drag_window(&self, direction: ResizeDirection) -> Result<()> {
         let direction = match direction {
             ResizeDirection::East => tao::window::ResizeDirection::East,
             ResizeDirection::North => tao::window::ResizeDirection::North,
@@ -777,29 +752,20 @@ impl ManagedWindow {
         }
     }
     #[cfg(windows)]
-    pub fn set_overlay_icon(
-        &self,
-        icon: Option<Icon<'_>>,
-    ) -> Result<()> {
+    pub fn set_overlay_icon(&self, icon: Option<Icon<'_>>) -> Result<()> {
         let icon = icon.map(TaoIcon::try_from).transpose()?;
         self.window()?
             .set_overlay_icon(icon.as_ref().map(|icon| &icon.0));
         Ok(())
     }
 
-    pub fn set_progress_bar(
-        &self,
-        progress: ProgressBarState,
-    ) -> Result<()> {
+    pub fn set_progress_bar(&self, progress: ProgressBarState) -> Result<()> {
         self.window()?
             .set_progress_bar(ProgressBarStateWrapper::from(progress).0);
         Ok(())
     }
 
-    pub fn set_title_bar_style(
-        &self,
-        style: TitleBarStyle,
-    ) -> Result<()> {
+    pub fn set_title_bar_style(&self, style: TitleBarStyle) -> Result<()> {
         #[cfg(target_os = "macos")]
         {
             let window = self.window()?;
@@ -846,10 +812,7 @@ impl ManagedWindow {
         Ok(())
     }
 
-    pub fn set_background_color(
-        &self,
-        color: Option<Color>,
-    ) -> Result<()> {
+    pub fn set_background_color(&self, color: Option<Color>) -> Result<()> {
         self.window()?.set_background_color(color.map(Into::into));
         Ok(())
     }

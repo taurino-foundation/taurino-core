@@ -1,11 +1,11 @@
-use muda::MenuId;
-use std::sync::Arc;
-use crate::error::{Result};
 use super::{
     item::{IsMenuItem, Menu, MenuInner, MenuItemKind, Submenu, SubmenuInner},
     metadata::NativeIcon,
 };
+use crate::error::Result;
 use crate::utils::image::Image;
+use muda::MenuId;
+use std::sync::Arc;
 
 // -----------------------------------------------------------------------------
 // submenu
@@ -124,11 +124,7 @@ impl Submenu {
         self.0.inner.prepend(item.inner_muda()).map_err(Into::into)
     }
 
-    pub fn insert(
-        &self,
-        item: &dyn IsMenuItem,
-        position: usize,
-    ) -> Result<()> {
+    pub fn insert(&self, item: &dyn IsMenuItem, position: usize) -> Result<()> {
         self.0
             .inner
             .insert(item.inner_muda(), position)
@@ -169,10 +165,7 @@ impl Submenu {
         Ok(())
     }
 
-    pub fn set_native_icon(
-        &self,
-        icon: Option<NativeIcon>,
-    ) -> Result<()> {
+    pub fn set_native_icon(&self, icon: Option<NativeIcon>) -> Result<()> {
         #[cfg(target_os = "macos")]
         self.0.inner.set_native_icon(icon.map(Into::into));
         let _ = icon;
@@ -227,11 +220,7 @@ impl Menu {
         self.0.inner.prepend(item.inner_muda()).map_err(Into::into)
     }
 
-    pub fn insert(
-        &self,
-        item: &dyn IsMenuItem,
-        position: usize,
-    ) -> Result<()> {
+    pub fn insert(&self, item: &dyn IsMenuItem, position: usize) -> Result<()> {
         self.0
             .inner
             .insert(item.inner_muda(), position)
