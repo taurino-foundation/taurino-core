@@ -11,6 +11,34 @@ use std::sync::Arc;
 // submenu
 // -----------------------------------------------------------------------------
 
+
+#[cfg(target_os = "macos")]
+impl Submenu {
+    pub fn set_as_windows_menu_for_nsapp(&self) {
+        self.0.inner.set_as_windows_menu_for_nsapp();
+    }
+
+    pub fn set_as_help_menu_for_nsapp(&self) {
+        self.0.inner.set_as_help_menu_for_nsapp();
+    }
+}
+
+
+impl Menu {
+    pub(crate) fn inner_muda(&self) -> &muda::Menu {
+        &self.0.inner
+    }
+}
+
+impl Submenu {
+    pub(crate) fn inner_muda(&self) -> &muda::Submenu {
+        &self.0.inner
+    }
+}
+
+
+
+
 impl Submenu {
     pub fn new<S: AsRef<str>>(text: S, enabled: bool) -> Result<Self> {
         Ok(Self(Arc::new(SubmenuInner::new(muda::Submenu::new(
