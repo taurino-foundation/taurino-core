@@ -3,13 +3,13 @@ mod context;
 mod item;
 mod menu;
 mod metadata;
-
+use crate::prelude::Theme;
 use std::sync::Arc;
 
 pub(crate) use context::sealed;
 
 
-pub fn map_to_menu_theme(theme: crate::types::Theme) -> muda::MenuTheme {
+pub fn map_to_menu_theme(theme:Theme) -> muda::MenuTheme {
     match theme {
         Theme::Light => muda::MenuTheme::Light,
         Theme::Dark => muda::MenuTheme::Dark,
