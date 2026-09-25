@@ -1,5 +1,8 @@
 use super::{
-    item::{IsMenuItem, Menu, MenuInner, MenuItemKind, Submenu, SubmenuInner},
+    item::{
+        CheckMenuItem, IconMenuItem, IsMenuItem, Menu, MenuInner, MenuItem, MenuItemKind,
+        PredefinedMenuItem, Submenu, SubmenuInner,
+    },
     metadata::NativeIcon,
 };
 use crate::error::Result;
