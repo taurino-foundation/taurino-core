@@ -6,11 +6,146 @@ use crate::error::Result;
 use crate::utils::image::Image;
 use muda::MenuId;
 use std::sync::Arc;
+impl Menu {
+    /// Direct children only.
+    pub fn get(&self, id: &MenuId) -> Result<Option<MenuItemKind>> {
+        Ok(self
+            .items()?
+            .into_iter()
+            .find(|item| item.id() == id))
+    }
 
-// -----------------------------------------------------------------------------
-// submenu
-// -----------------------------------------------------------------------------
+    /// Search the entire menu tree recursively.
+    pub fn find(&self, id: &MenuId) -> Result<Option<MenuItemKind>> {
+        for item in self.items()? {
+            if let Some(found) = item.find(id)? {
+                return Ok(Some(found));
+            }
+        }
 
+        Ok(None)
+    }
+
+    /// Every item in the tree, depth-first.
+    pub fn all_items(&self) -> Result<Vec<MenuItemKind>> {
+        let mut result = Vec::new();
+
+        for item in self.items()? {
+            result.push(item.clone());
+            item.collect_descendants(&mut result)?;
+        }
+
+        Ok(result)
+    }
+
+    pub fn get_menu_item(&self, id: &MenuId) -> Result<Option<MenuItem>> {
+        Ok(match self.find(id)? {
+            Some(MenuItemKind::MenuItem(item)) => Some(item),
+            _ => None,
+        })
+    }
+
+    pub fn get_submenu(&self, id: &MenuId) -> Result<Option<Submenu>> {
+        Ok(match self.find(id)? {
+            Some(MenuItemKind::Submenu(item)) => Some(item),
+            _ => None,
+        })
+    }
+
+    pub fn get_check(&self, id: &MenuId) -> Result<Option<CheckMenuItem>> {
+        Ok(match self.find(id)? {
+            Some(MenuItemKind::Check(item)) => Some(item),
+            _ => None,
+        })
+    }
+
+    pub fn get_icon(&self, id: &MenuId) -> Result<Option<IconMenuItem>> {
+        Ok(match self.find(id)? {
+            Some(MenuItemKind::Icon(item)) => Some(item),
+            _ => None,
+        })
+    }
+
+    pub fn get_predefined(
+        &self,
+        id: &MenuId,
+    ) -> Result<Option<PredefinedMenuItem>> {
+        Ok(match self.find(id)? {
+            Some(MenuItemKind::Predefined(item)) => Some(item),
+            _ => None,
+        })
+    }
+}
+
+impl Submenu {
+    /// Direct child only.
+    pub fn get(&self, id: &MenuId) -> Result<Option<MenuItemKind>> {
+        Ok(self
+            .items()?
+            .into_iter()
+            .find(|item| item.id() == id))
+    }
+
+    /// Recursive search starting from this submenu.
+    pub fn find(&self, id: &MenuId) -> Result<Option<MenuItemKind>> {
+        for item in self.items()? {
+            if let Some(found) = item.find(id)? {
+                return Ok(Some(found));
+            }
+        }
+
+        Ok(None)
+    }
+
+    pub fn all_items(&self) -> Result<Vec<MenuItemKind>> {
+        let mut result = Vec::new();
+
+        for item in self.items()? {
+            result.push(item.clone());
+            item.collect_descendants(&mut result)?;
+        }
+
+        Ok(result)
+    }
+
+    pub fn get_menu_item(&self, id: &MenuId) -> Result<Option<MenuItem>> {
+        Ok(match self.find(id)? {
+            Some(MenuItemKind::MenuItem(item)) => Some(item),
+            _ => None,
+        })
+    }
+
+    pub fn get_submenu(&self, id: &MenuId) -> Result<Option<Submenu>> {
+        Ok(match self.find(id)? {
+            Some(MenuItemKind::Submenu(item)) => Some(item),
+            _ => None,
+        })
+    }
+
+    pub fn get_check(&self, id: &MenuId) -> Result<Option<CheckMenuItem>> {
+        Ok(match self.find(id)? {
+            Some(MenuItemKind::Check(item)) => Some(item),
+            _ => None,
+        })
+    }
+
+    pub fn get_icon(&self, id: &MenuId) -> Result<Option<IconMenuItem>> {
+        Ok(match self.find(id)? {
+            Some(MenuItemKind::Icon(item)) => Some(item),
+            _ => None,
+        })
+    }
+
+    pub fn get_predefined(
+        &self,
+        id: &MenuId,
+    ) -> Result<Option<PredefinedMenuItem>> {
+        Ok(match self.find(id)? {
+            Some(MenuItemKind::Predefined(item)) => Some(item),
+            _ => None,
+        })
+    }
+}
 
 #[cfg(target_os = "macos")]
 impl Submenu {
