@@ -14,6 +14,7 @@ pub mod prelude {
         platform::prelude::*,
         tray::*,
         types::*,
+        utils::*,
         webview::{ManagedWebview, WebViewBuilder},
         window::{ManagedWindow, WindowBuilder},
     };
