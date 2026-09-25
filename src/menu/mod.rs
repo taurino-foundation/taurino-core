@@ -3,16 +3,24 @@ mod context;
 mod item;
 mod menu;
 mod metadata;
+use crate::native::tao::window::Theme as TaoTheme;
 use crate::prelude::Theme;
 use std::sync::Arc;
 
 pub(crate) use context::sealed;
 
-
-pub fn map_to_menu_theme(theme:Theme) -> muda::MenuTheme {
+pub fn map_to_menu_theme(theme: Theme) -> muda::MenuTheme {
     match theme {
         Theme::Light => muda::MenuTheme::Light,
         Theme::Dark => muda::MenuTheme::Dark,
+        _ => muda::MenuTheme::Auto,
+    }
+}
+
+pub fn map_from_tao_to_menu_theme(theme: TaoTheme) -> muda::MenuTheme {
+    match theme {
+        TaoTheme::Light => muda::MenuTheme::Light,
+        TaoTheme::Dark => muda::MenuTheme::Dark,
         _ => muda::MenuTheme::Auto,
     }
 }
@@ -38,10 +46,10 @@ pub mod prelude {
         CheckMenuItemBuilder, IconMenuItemBuilder, MenuBuilder, MenuItemBuilder, SubmenuBuilder,
     };
     pub use super::context::ContextMenu;
-    pub use super::{install_menu_event_handler,map_to_menu_theme};
     pub use super::item::{
         CheckMenuItem, IconMenuItem, IsMenuItem, Menu, MenuItem, MenuItemKind, PredefinedMenuItem,
         Submenu,
     };
     pub use super::metadata::{AboutMetadata, AboutMetadataBuilder, NativeIcon};
+    pub use super::{install_menu_event_handler, map_from_tao_to_menu_theme, map_to_menu_theme};
 }

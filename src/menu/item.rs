@@ -241,7 +241,6 @@ impl MenuItemKind {
         Ok(())
     }
 
-
     pub fn id(&self) -> &MenuId {
         match self {
             Self::MenuItem(v) => v.id(),
@@ -261,7 +260,6 @@ impl MenuItemKind {
             Self::Icon(v) => v.inner_muda(),
         }
     }
-
 
     pub fn visit<F>(&self, visitor: &mut F) -> Result<()>
     where
@@ -323,7 +321,11 @@ impl_menu_item!(IconMenuItem, Icon);
 // -----------------------------------------------------------------------------
 
 impl MenuItem {
-    pub fn new<T: AsRef<str>, A: AsRef<str>>(text: T, enabled: bool, accelerator: Option<A>) -> Result<Self> {
+    pub fn new<T: AsRef<str>, A: AsRef<str>>(
+        text: T,
+        enabled: bool,
+        accelerator: Option<A>,
+    ) -> Result<Self> {
         let accelerator = accelerator.and_then(|s| s.as_ref().parse().ok());
         let inner = muda::MenuItem::new(text.as_ref(), enabled, accelerator);
         Ok(Self(Arc::new(MenuItemInner::new(inner))))
@@ -469,7 +471,12 @@ impl IconMenuItem {
         accelerator: Option<A>,
     ) -> Result<Self> {
         let accelerator = accelerator.and_then(|s| s.as_ref().parse().ok());
-        let inner = muda::IconMenuItem::with_native_icon(text.as_ref(), enabled, icon.map(Into::into), accelerator);
+        let inner = muda::IconMenuItem::with_native_icon(
+            text.as_ref(),
+            enabled,
+            icon.map(Into::into),
+            accelerator,
+        );
         Ok(Self(Arc::new(IconMenuItemInner::new(inner))))
     }
 
@@ -481,8 +488,13 @@ impl IconMenuItem {
         accelerator: Option<A>,
     ) -> Result<Self> {
         let accelerator = accelerator.and_then(|s| s.as_ref().parse().ok());
-        let inner =
-            muda::IconMenuItem::with_id_and_native_icon(id, text.as_ref(), enabled, icon.map(Into::into), accelerator);
+        let inner = muda::IconMenuItem::with_id_and_native_icon(
+            id,
+            text.as_ref(),
+            enabled,
+            icon.map(Into::into),
+            accelerator,
+        );
         Ok(Self(Arc::new(IconMenuItemInner::new(inner))))
     }
 
@@ -529,13 +541,21 @@ impl IconMenuItem {
 impl MenuItemKind {
     pub(crate) fn from_muda(item: muda::MenuItemKind) -> Self {
         match item {
-            muda::MenuItemKind::MenuItem(v) => Self::MenuItem(MenuItem(Arc::new(MenuItemInner::new(v)))),
-            muda::MenuItemKind::Submenu(v) => Self::Submenu(Submenu(Arc::new(SubmenuInner::new(v)))),
-            muda::MenuItemKind::Predefined(v) => {
-                Self::Predefined(PredefinedMenuItem(Arc::new(PredefinedMenuItemInner::new(v))))
+            muda::MenuItemKind::MenuItem(v) => {
+                Self::MenuItem(MenuItem(Arc::new(MenuItemInner::new(v))))
             }
-            muda::MenuItemKind::Check(v) => Self::Check(CheckMenuItem(Arc::new(CheckMenuItemInner::new(v)))),
-            muda::MenuItemKind::Icon(v) => Self::Icon(IconMenuItem(Arc::new(IconMenuItemInner::new(v)))),
+            muda::MenuItemKind::Submenu(v) => {
+                Self::Submenu(Submenu(Arc::new(SubmenuInner::new(v))))
+            }
+            muda::MenuItemKind::Predefined(v) => Self::Predefined(PredefinedMenuItem(Arc::new(
+                PredefinedMenuItemInner::new(v),
+            ))),
+            muda::MenuItemKind::Check(v) => {
+                Self::Check(CheckMenuItem(Arc::new(CheckMenuItemInner::new(v))))
+            }
+            muda::MenuItemKind::Icon(v) => {
+                Self::Icon(IconMenuItem(Arc::new(IconMenuItemInner::new(v))))
+            }
         }
     }
 }

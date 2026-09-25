@@ -15,8 +15,8 @@ use dpi::Position;
 use crate::{
     error::Result,
     types::{
-        CloseRequestedHandler, Color, PreventOverflowConfig, Theme, WebContextStore, WebviewUrl, WindowConfig,
-        WindowEventHandler, WindowSizeConstraints,
+        CloseRequestedHandler, Color, PreventOverflowConfig, Theme, WebContextStore, WebviewUrl,
+        WindowConfig, WindowEventHandler, WindowSizeConstraints,
     },
     utils::{
         Icon, RawWindow, WindowWebViewMetaData,
@@ -155,7 +155,8 @@ impl WindowBuilder {
                 window = window.tabbing_identifier(identifier);
             }
             if let Some(position) = &config.traffic_light_position {
-                window = window.traffic_light_position(dpi::LogicalPosition::new(position.x, position.y));
+                window = window
+                    .traffic_light_position(dpi::LogicalPosition::new(position.x, position.y));
             }
         }
 
@@ -163,7 +164,11 @@ impl WindowBuilder {
         {
             window = window.transparent(config.transparent);
         }
-        #[cfg(all(target_os = "macos", not(feature = "macos-private-api"), debug_assertions))]
+        #[cfg(all(
+            target_os = "macos",
+            not(feature = "macos-private-api"),
+            debug_assertions
+        ))]
         if config.transparent {
             eprintln!(
         "The window is set to be transparent but the `macos-private-api` is not enabled.
@@ -189,14 +194,18 @@ impl WindowBuilder {
                 window.inner = window.inner.with_activity_name(activity_name.clone());
             }
             if let Some(activity_name) = &config.created_by_activity_name {
-                window.inner = window.inner.with_created_by_activity_name(activity_name.clone());
+                window.inner = window
+                    .inner
+                    .with_created_by_activity_name(activity_name.clone());
             }
         }
 
         #[cfg(target_os = "ios")]
         {
             if let Some(scene_identifier) = &config.requested_by_scene_identifier {
-                window.inner = window.inner.with_requesting_scene_identifier(scene_identifier.clone());
+                window.inner = window
+                    .inner
+                    .with_requesting_scene_identifier(scene_identifier.clone());
             }
         }
 
@@ -261,9 +270,9 @@ impl WindowBuilder {
         if let Some(prevent_overflow) = &config.prevent_overflow {
             window = match prevent_overflow {
                 PreventOverflowConfig::Enable(true) => window.prevent_overflow(),
-                PreventOverflowConfig::Margin(margin) => {
-                    window.prevent_overflow_with_margin(PhysicalSize::new(margin.width, margin.height).into())
-                }
+                PreventOverflowConfig::Margin(margin) => window.prevent_overflow_with_margin(
+                    PhysicalSize::new(margin.width, margin.height).into(),
+                ),
                 _ => window,
             };
         }
@@ -291,12 +300,16 @@ impl WindowBuilder {
     }
 
     pub fn min_inner_size(mut self, min_width: f64, min_height: f64) -> Self {
-        self.inner = self.inner.with_min_inner_size(LogicalSize::new(min_width, min_height));
+        self.inner = self
+            .inner
+            .with_min_inner_size(LogicalSize::new(min_width, min_height));
         self
     }
 
     pub fn max_inner_size(mut self, max_width: f64, max_height: f64) -> Self {
-        self.inner = self.inner.with_max_inner_size(LogicalSize::new(max_width, max_height));
+        self.inner = self
+            .inner
+            .with_max_inner_size(LogicalSize::new(max_width, max_height));
         self
     }
 
@@ -316,7 +329,8 @@ impl WindowBuilder {
     ///
     /// - **iOS / Android:** Unsupported.
     pub fn prevent_overflow(mut self) -> Self {
-        self.prevent_overflow.replace(PhysicalSize::new(0, 0).into());
+        self.prevent_overflow
+            .replace(PhysicalSize::new(0, 0).into());
         self
     }
 
@@ -358,7 +372,8 @@ impl WindowBuilder {
 
     pub fn fullscreen(mut self, fullscreen: bool) -> Self {
         self.inner = if fullscreen {
-            self.inner.with_fullscreen(Some(Fullscreen::Borderless(None)))
+            self.inner
+                .with_fullscreen(Some(Fullscreen::Borderless(None)))
         } else {
             self.inner.with_fullscreen(None)
         };
@@ -407,7 +422,9 @@ impl WindowBuilder {
     }
 
     pub fn visible_on_all_workspaces(mut self, visible_on_all_workspaces: bool) -> Self {
-        self.inner = self.inner.with_visible_on_all_workspaces(visible_on_all_workspaces);
+        self.inner = self
+            .inner
+            .with_visible_on_all_workspaces(visible_on_all_workspaces);
         self
     }
 
@@ -511,7 +528,9 @@ impl WindowBuilder {
     }
 
     pub fn icon(mut self, icon: Icon) -> Result<Self> {
-        self.inner = self.inner.with_window_icon(Some(TaoIcon::try_from(icon)?.0));
+        self.inner = self
+            .inner
+            .with_window_icon(Some(TaoIcon::try_from(icon)?.0));
         Ok(self)
     }
 
@@ -594,20 +613,25 @@ impl WindowBuilder {
 
     #[cfg(target_os = "ios")]
     pub fn requested_by_scene_identifier<S: Into<String>>(mut self, identifier: S) -> Self {
-        self.inner = self.inner.with_requesting_scene_identifier(identifier.into());
+        self.inner = self
+            .inner
+            .with_requesting_scene_identifier(identifier.into());
         self
     }
 
-    pub fn build<T: 'static, F, M: Fn(RawWindow) + Send + 'static>(
+    pub fn build<T: 'static, F>(
         self,
         window_target: &EventLoopWindowTarget<T>,
         window_id: WindowId,
         web_context_store: WebContextStore,
-        befor_webview_creation: Option<F>,
-        after_window_creation: Option<M>,
+        before_webview_creation: Option<F>,
+        after_window_creation: Option<crate::window::SetupMenu>,
     ) -> crate::error::Result<ManagedWindow>
     where
-        F: for<'a> Fn(wry::WebViewBuilder<'a>, WebviewUrl) -> crate::error::Result<wry::WebViewBuilder<'a>>
+        F: for<'a> Fn(
+                wry::WebViewBuilder<'a>,
+                WebviewUrl,
+            ) -> crate::error::Result<wry::WebViewBuilder<'a>>
             + Send
             + Clone
             + 'static,
@@ -618,7 +642,7 @@ impl WindowBuilder {
             window_id,
             web_context_store,
             after_window_creation,
-            befor_webview_creation,
+            before_webview_creation,
         )
     }
 }

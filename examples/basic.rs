@@ -7,17 +7,19 @@ use tao::{
 use taurino_core::prelude::*;
 use url::Url;
 
-fn main() -> crate::Result<()> {
+fn main() -> Result<()> {
     let event_loop = EventLoop::new();
 
     // -------------------------------------------------------------------------
     // Window
     // -------------------------------------------------------------------------
+
     let web_context: WebContextStore = Default::default();
+
     let window_builder = WindowBuilder::new()
-        .add_webview_builder(
-            WebViewBuilder::new().with_url(WebviewUrl::External(Url::parse("https://example.com").unwrap())),
-        )
+        .add_webview_builder(WebViewBuilder::new().with_url(WebviewUrl::External(
+            Url::parse("https://example.com").unwrap(),
+        )))
         .title("Tao + Wry")
         .center()
         .inner_size(800.0, 600.0)
@@ -36,54 +38,59 @@ fn main() -> crate::Result<()> {
     let window = window_builder.build(
         &event_loop,
         1.into(),
-        web_context.clone(),
-        None::<fn(wry::WebViewBuilder<'_>, WebviewUrl) -> crate::Result<wry::WebViewBuilder<'_>>>,
+        web_context,
+        // before_webview_creation
+        None::<fn(wry::WebViewBuilder<'_>, WebviewUrl) -> Result<wry::WebViewBuilder<'_>>>,
+        // after_window_creation / SetupMenu
+        None,
     )?;
-
     let window = Arc::new(window);
-    let webview = window.webview("root")?;
-
-    // -------------------------------------------------------------------------
-    // WebContext
-    // -------------------------------------------------------------------------
 
     // -------------------------------------------------------------------------
     // WebView
     // -------------------------------------------------------------------------
 
-    // Beispiele für deine neuen direkten Methoden.
-    webview.set_zoom(1.0)?;
+    {
+        let webview = window.webview("root")?;
 
-    println!("current url: {}", webview.url()?);
+        webview.set_zoom(1.0)?;
 
-    let cookies = webview.cookies()?;
+        println!("current url: {}", webview.url()?);
 
-    for cookie in cookies {
-        println!("cookie: {} = {}", cookie.name(), cookie.value(),);
+        for cookie in webview.cookies()? {
+            println!("cookie: {} = {}", cookie.name(), cookie.value());
+        }
     }
 
     // -------------------------------------------------------------------------
     // Tao event loop
     // -------------------------------------------------------------------------
+
     event_loop.run(move |event, _, control_flow| {
         *control_flow = ControlFlow::Wait;
 
         match event {
-            Event::WindowEvent { event, window_id, .. } if window_id == window.id() => {
+            Event::WindowEvent {
+                event, window_id, ..
+            } if window_id == window.id() => {
                 window.emit_window_event(&event);
 
                 match event {
-                    WindowEvent::CloseRequested => match window.close() {
-                        Ok(true) => {
-                            *control_flow = ControlFlow::Exit;
-                        }
+                    WindowEvent::CloseRequested => {
+                        match window.close() {
+                            Ok(true) => {
+                                *control_flow = ControlFlow::Exit;
+                            }
 
-                        Ok(false) => {}
+                            Ok(false) => {
+                                // Close wurde verhindert.
+                            }
 
-                        Err(error) => {
-                            eprintln!("close error: {error}");
+                            Err(error) => {
+                                eprintln!("close error: {error}");
+                            }
                         }
-                    },
+                    }
 
                     WindowEvent::Resized(size) => {
                         println!("resized: {size:?}");

@@ -327,7 +327,11 @@ impl NewWindowFeatures {
         position: Option<dpi::LogicalPosition<f64>>,
         opener: NewWindowOpener,
     ) -> Self {
-        Self { size, position, opener }
+        Self {
+            size,
+            position,
+            opener,
+        }
     }
 
     /// Specifies the size of the content area
@@ -429,7 +433,11 @@ pub fn parse_proxy_url(url: &Url) -> crate::Result<ProxyConfig> {
 } */
 
 #[cfg(target_os = "macos")]
-pub fn inner_size(window: &Window, webviews: &[ManagedWebview], has_children: bool) -> PhysicalSize<u32> {
+pub fn inner_size(
+    window: &Window,
+    webviews: &[ManagedWebview],
+    has_children: bool,
+) -> PhysicalSize<u32> {
     if !has_children && !webviews.is_empty() {
         use wry::WebViewExtMacOS;
         let webview = webviews.first().unwrap();
@@ -444,7 +452,11 @@ pub fn inner_size(window: &Window, webviews: &[ManagedWebview], has_children: bo
 
 #[cfg(not(target_os = "macos"))]
 #[allow(unused_variables)]
-pub fn inner_size(window: &Window, webviews: &[ManagedWebview], has_children: bool) -> PhysicalSize<u32> {
+pub fn inner_size(
+    window: &Window,
+    webviews: &[ManagedWebview],
+    has_children: bool,
+) -> PhysicalSize<u32> {
     window.inner_size()
 }
 

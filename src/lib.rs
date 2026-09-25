@@ -30,4 +30,4 @@ pub mod native {
     pub use wry;
 }
 
-fn main() {}
+// fn main() {}

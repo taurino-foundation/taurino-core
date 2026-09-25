@@ -9,9 +9,10 @@ use url::Url;
 use crate::types::WebContextStore;
 use crate::{
     types::{
-        DocumentTitleChangedHandler, DownloadEvent, DownloadHandler, NavigationHandler, NewWindowHandler,
-        NewWindowResponse, OnPageLoadHandler, PageLoadEvent, PermissionKind, PermissionRequestHandler,
-        PermissionResponse, Rect, UriSchemeProtocolHandler, WebviewIpcHandler, WebviewUrl,
+        DocumentTitleChangedHandler, DownloadEvent, DownloadHandler, NavigationHandler,
+        NewWindowHandler, NewWindowResponse, OnPageLoadHandler, PageLoadEvent, PermissionKind,
+        PermissionRequestHandler, PermissionResponse, Rect, UriSchemeProtocolHandler,
+        WebviewIpcHandler, WebviewUrl,
     },
     utils::{NewWindowFeatures, WindowWebViewMetaData},
     webview::{ManagedWebview, factory::create_webview},
@@ -40,7 +41,14 @@ pub struct WebViewBuilder {
     #[cfg(target_os = "android")]
     #[allow(clippy::type_complexity)]
     pub on_webview_created: Option<
-        Box<dyn Fn(&WindowWebViewMetaData, CreationContext<'_, '_>) -> Result<(), jni::errors::Error> + Send + Sync>,
+        Box<
+            dyn Fn(
+                    &WindowWebViewMetaData,
+                    CreationContext<'_, '_>,
+                ) -> Result<(), jni::errors::Error>
+                + Send
+                + Sync,
+        >,
     >,
 
     pub on_page_load_handler: Option<Box<OnPageLoadHandler>>,
@@ -66,7 +74,9 @@ impl Default for WebViewBuilder {
             navigation_handler: None,
             new_window_handler: None,
             document_title_changed_handler: None,
-            url: Some(WebviewUrl::External(Url::parse("https://tauri.app").unwrap())),
+            url: Some(WebviewUrl::External(
+                Url::parse("https://tauri.app").unwrap(),
+            )),
             #[cfg(target_os = "android")]
             on_webview_created: None,
             on_page_load_handler: None,
@@ -167,11 +177,20 @@ impl WebViewBuilder {
         befor_webview_creation: Option<F>,
     ) -> crate::error::Result<ManagedWebview>
     where
-        F: for<'a> Fn(wry::WebViewBuilder<'a>, WebviewUrl) -> crate::error::Result<wry::WebViewBuilder<'a>>
+        F: for<'a> Fn(
+                wry::WebViewBuilder<'a>,
+                WebviewUrl,
+            ) -> crate::error::Result<wry::WebViewBuilder<'a>>
             + Send
             + 'static,
     {
-        create_webview(self, window, metadata.clone(), web_context, befor_webview_creation)
+        create_webview(
+            self,
+            window,
+            metadata.clone(),
+            web_context,
+            befor_webview_creation,
+        )
     }
 }
 

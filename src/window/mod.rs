@@ -1,16 +1,15 @@
-use crate::error::{Error, Result};
-#[cfg(windows)]
-use crate::platform::prelude::{attach_resize_handler, detach_resize_handler, update_drag_hwnd_rgn_for_undecorated};
-use dpi::{PhysicalPosition, PhysicalSize, Position, Size};
 use std::{
     fmt,
     sync::{
-        Arc,
+        Arc, Mutex,
         atomic::{AtomicBool, Ordering},
     },
+    time::Duration,
 };
-mod builder;
-pub(crate) mod factory;
+
+use crate::prelude::ContextMenu;
+use dpi::{PhysicalPosition, PhysicalSize, Position, Size};
+use muda::MenuId;
 use tao::window::{Fullscreen, Window, WindowId as TaoWindowId};
 
 #[cfg(target_os = "macos")]
@@ -31,21 +30,31 @@ use tao::platform::windows::WindowExtWindows;
 #[cfg(windows)]
 use crate::{types::FocusState, utils::ArcMut};
 
+#[cfg(windows)]
+use crate::platform::prelude::{
+    attach_resize_handler, detach_resize_handler, update_drag_hwnd_rgn_for_undecorated,
+};
+
 use crate::{
+    error::{Error, Result},
     platform::prelude::WindowExt,
+    prelude::Menu,
     types::{
-        CloseRequestedHandler, Color, CursorIcon, Monitor, ProgressBarState, ResizeDirection, Theme, TitleBarStyle,
-        UserAttentionType, WindowEventHandler, WindowSizeConstraints,
+        CloseRequestedHandler, Color, CursorIcon, Monitor, ProgressBarState, ResizeDirection,
+        Theme, TitleBarStyle, UserAttentionType, WindowEventHandler, WindowSizeConstraints,
     },
     utils::{
         Icon, WindowWebViewMetaData, find_monitor_for_position, inner_size,
         wrappers::{
-            CursorIconWrapper, MonitorHandleWrapper, ProgressBarStateWrapper, TaoIcon, UserAttentionTypeWrapper,
-            WindowEventWrapper,
+            CursorIconWrapper, MonitorHandleWrapper, ProgressBarStateWrapper, TaoIcon,
+            UserAttentionTypeWrapper, WindowEventWrapper,
         },
     },
     webview::{ManagedWebview, WebViewId},
 };
+
+mod builder;
+pub(crate) mod factory;
 
 pub use self::builder::WindowBuilder;
 
@@ -59,17 +68,30 @@ impl From<u32> for WindowId {
     }
 }
 
+/// Ein einem Fenster zugeordnetes Menü.
+///
+/// `is_app_wide` gibt an, ob das Menü von mehreren Fenstern als
+/// anwendungsweites Menü gemeinsam verwendet wird.
+pub struct WindowMenu {
+    pub is_app_wide: bool,
+    pub menu: Menu,
+}
+
+/// Setup-Callback, der ein [`WindowMenu`] für ein Fenster baut.
+///
+/// Bekommt das native Tao-Fenster, damit der Callback z. B.
+/// `menu.popup(window)` oder `window.set_menu(...)` aufrufen kann.
+pub type SetupMenu = Box<dyn Fn(&Window) -> Result<WindowMenu> + Send + 'static>;
+
 pub struct ManagedWindow {
     pub(crate) metadata: WindowWebViewMetaData,
     pub inner: Option<Arc<Window>>,
-
+    pub(crate) menu: Arc<Mutex<Option<WindowMenu>>>,
     pub on_window_event: Option<WindowEventHandler>,
-    /// Programmatic close requests are routed back to the event-loop owner.
     pub close_requested_handler: Option<CloseRequestedHandler>,
-    // whether this window has child webviews
-    // or it's just a container for a single webview
     pub has_children: AtomicBool,
     pub webviews: Vec<ManagedWebview>,
+
     #[cfg(windows)]
     pub background_color: Option<tao::window::RGBA>,
     #[cfg(windows)]
@@ -85,8 +107,11 @@ impl fmt::Debug for ManagedWindow {
         f.debug_struct("ManagedWindow")
             .field("label", &self.metadata.window_label)
             .field("inner", &self.inner)
-            .field("has_close_requested_handler", &self.close_requested_handler.is_some())
-            .finish()
+            .field(
+                "has_close_requested_handler",
+                &self.close_requested_handler.is_some(),
+            )
+            .finish() // menu wird bewusst weggelassen
     }
 }
 impl ManagedWindow {
@@ -195,11 +220,15 @@ impl ManagedWindow {
     }
 
     pub fn inner_position(&self) -> Result<PhysicalPosition<i32>> {
-        self.window()?.inner_position().map_err(|_| Error::FailedToSendMessage)
+        self.window()?
+            .inner_position()
+            .map_err(|_| Error::FailedToSendMessage)
     }
 
     pub fn outer_position(&self) -> Result<PhysicalPosition<i32>> {
-        self.window()?.outer_position().map_err(|_| Error::FailedToSendMessage)
+        self.window()?
+            .outer_position()
+            .map_err(|_| Error::FailedToSendMessage)
     }
 
     pub fn inner_size(&self) -> Result<PhysicalSize<u32>> {
@@ -271,11 +300,17 @@ impl ManagedWindow {
     }
 
     pub fn current_monitor(&self) -> Result<Option<Monitor>> {
-        Ok(self.window()?.current_monitor().map(|m| MonitorHandleWrapper(m).into()))
+        Ok(self
+            .window()?
+            .current_monitor()
+            .map(|m| MonitorHandleWrapper(m).into()))
     }
 
     pub fn primary_monitor(&self) -> Result<Option<Monitor>> {
-        Ok(self.window()?.primary_monitor().map(|m| MonitorHandleWrapper(m).into()))
+        Ok(self
+            .window()?
+            .primary_monitor()
+            .map(|m| MonitorHandleWrapper(m).into()))
     }
 
     pub fn monitor_from_point(&self, x: f64, y: f64) -> Result<Option<Monitor>> {
@@ -312,7 +347,10 @@ impl ManagedWindow {
         target_os = "openbsd"
     ))]
     pub fn gtk_box(&self) -> Result<gtk::Box> {
-        self.window()?.default_vbox().cloned().ok_or(Error::FailedToSendMessage)
+        self.window()?
+            .default_vbox()
+            .cloned()
+            .ok_or(Error::FailedToSendMessage)
     }
 
     #[cfg(target_os = "android")]
@@ -359,8 +397,9 @@ impl ManagedWindow {
     }
 
     pub fn request_user_attention(&self, request_type: Option<UserAttentionType>) -> Result<()> {
-        self.window()?
-            .request_user_attention(request_type.map(|request| UserAttentionTypeWrapper::from(request).0));
+        self.window()?.request_user_attention(
+            request_type.map(|request| UserAttentionTypeWrapper::from(request).0),
+        );
         Ok(())
     }
 
@@ -432,17 +471,14 @@ impl ManagedWindow {
         };
 
         let (tx, rx) = std::sync::mpsc::channel();
-
         handler(tx);
 
-        match rx.try_recv() {
+        match rx.recv_timeout(Duration::from_millis(100)) {
             // true = prevent close
             Ok(true) => Ok(false),
-
-            // false = explizit close
+            // false = allow close
             Ok(false) => Ok(true),
-
-            // no answor = standardmäßig erlauben
+            // timeout / disconnect = allow by default
             Err(_) => Ok(true),
         }
     }
@@ -542,7 +578,8 @@ impl ManagedWindow {
     }
 
     pub fn set_icon(&self, icon: Icon<'_>) -> Result<()> {
-        self.window()?.set_window_icon(Some(TaoIcon::try_from(icon)?.0));
+        self.window()?
+            .set_window_icon(Some(TaoIcon::try_from(icon)?.0));
         Ok(())
     }
 
@@ -592,7 +629,8 @@ impl ManagedWindow {
     }
 
     pub fn set_cursor_icon(&self, icon: CursorIcon) -> Result<()> {
-        self.window()?.set_cursor_icon(CursorIconWrapper::from(icon).0);
+        self.window()?
+            .set_cursor_icon(CursorIconWrapper::from(icon).0);
         Ok(())
     }
 
@@ -609,7 +647,9 @@ impl ManagedWindow {
     }
 
     pub fn drag_window(&self) -> Result<()> {
-        self.window()?.drag_window().map_err(|_| Error::FailedToSendMessage)
+        self.window()?
+            .drag_window()
+            .map_err(|_| Error::FailedToSendMessage)
     }
 
     pub fn resize_drag_window(&self, direction: ResizeDirection) -> Result<()> {
@@ -634,11 +674,16 @@ impl ManagedWindow {
         Ok(())
     }
 
-    pub fn set_badge_count(&self, count: Option<i64>, desktop_filename: Option<String>) -> Result<()> {
+    pub fn set_badge_count(
+        &self,
+        count: Option<i64>,
+        desktop_filename: Option<String>,
+    ) -> Result<()> {
         let _window = self.window()?;
 
         #[cfg(target_os = "ios")]
-        _window.set_badge_count(count.map_or(0, |x| x.clamp(i32::MIN as i64, i32::MAX as i64) as i32));
+        _window
+            .set_badge_count(count.map_or(0, |x| x.clamp(i32::MIN as i64, i32::MAX as i64) as i32));
 
         #[cfg(target_os = "macos")]
         _window.set_badge_label(count.map(|x| x.to_string()));
@@ -684,7 +729,8 @@ impl ManagedWindow {
     #[cfg(windows)]
     pub fn set_overlay_icon(&self, icon: Option<Icon<'_>>) -> Result<()> {
         let icon = icon.map(TaoIcon::try_from).transpose()?;
-        self.window()?.set_overlay_icon(icon.as_ref().map(|icon| &icon.0));
+        self.window()?
+            .set_overlay_icon(icon.as_ref().map(|icon| &icon.0));
         Ok(())
     }
 
@@ -741,5 +787,297 @@ impl ManagedWindow {
     pub fn set_background_color(&self, color: Option<Color>) -> Result<()> {
         self.window()?.set_background_color(color.map(Into::into));
         Ok(())
+    }
+
+    /// Setzt ein vollständiges [`WindowMenu`] für dieses Fenster und gibt das
+    /// zuvor gesetzte Menü zurück.
+    ///
+    /// Die native Menü-Initialisierung wird auf den unterstützten Plattformen
+    /// durchgeführt, bevor das Menü im [`ManagedWindow`] gespeichert wird.
+    #[cfg_attr(target_os = "macos", allow(unused_variables))]
+    pub fn set_window_menu(&self, window_menu: WindowMenu) -> Result<Option<WindowMenu>> {
+        let window = self.window()?;
+        let menu = &window_menu.menu;
+
+        #[cfg(windows)]
+        {
+            use crate::menu::map_from_tao_to_menu_theme;
+
+            let hwnd = window.hwnd();
+            let theme = map_from_tao_to_menu_theme(window.theme());
+
+            unsafe {
+                menu.init_for_hwnd_with_theme(hwnd as _, theme)?;
+            }
+        }
+
+        #[cfg(any(
+            target_os = "linux",
+            target_os = "dragonfly",
+            target_os = "freebsd",
+            target_os = "netbsd",
+            target_os = "openbsd"
+        ))]
+        {
+            if let (Ok(gtk_window), Some(gtk_box)) = (window.gtk_window(), window.default_vbox()) {
+                menu.inner()
+                    .init_for_gtk_window(&gtk_window, Some(&gtk_box))?;
+            }
+        }
+
+        let previous = self.menu.lock().unwrap().replace(window_menu);
+        Ok(previous)
+    }
+
+    /// Setzt ein normales, fensterspezifisches Menü und gibt das vorherige Menü zurück.
+    pub fn set_menu(&self, menu: Menu) -> Result<Option<Menu>> {
+        self.set_window_menu(WindowMenu {
+            is_app_wide: false,
+            menu,
+        })
+        .map(|previous| previous.map(|window_menu| window_menu.menu))
+    }
+
+    /// Entfernt das Menü mitsamt seiner Metadaten und gibt es zurück.
+    pub fn remove_window_menu(&self) -> Result<Option<WindowMenu>> {
+        let window = self.window()?;
+        let previous = self.menu.lock().unwrap().take();
+
+        #[cfg(not(target_os = "macos"))]
+        if let Some(window_menu) = &previous {
+            let menu = &window_menu.menu;
+
+            #[cfg(windows)]
+            {
+                let hwnd = window.hwnd();
+                unsafe {
+                    menu.0.inner.remove_for_hwnd(hwnd as _)?;
+                }
+            }
+
+            #[cfg(any(
+                target_os = "linux",
+                target_os = "dragonfly",
+                target_os = "freebsd",
+                target_os = "netbsd",
+                target_os = "openbsd"
+            ))]
+            {
+                if let Ok(gtk_window) = window.gtk_window() {
+                    menu.remove_for_gtk_window(&gtk_window)?;
+                }
+            }
+        }
+
+        Ok(previous)
+    }
+
+    /// Entfernt das aktuelle Menü und gibt nur das eigentliche [`Menu`] zurück.
+    pub fn remove_menu(&self) -> Result<Option<Menu>> {
+        Ok(self
+            .remove_window_menu()?
+            .map(|window_menu| window_menu.menu))
+    }
+
+    /// Entfernt das aktuelle Menü, ohne es zurückzugeben.
+    pub fn clear_menu(&self) -> Result<()> {
+        self.remove_window_menu()?;
+        Ok(())
+    }
+
+    /// Gibt zurück, ob dem Fenster aktuell ein Menü zugeordnet ist.
+    pub fn has_menu(&self) -> bool {
+        self.menu.lock().unwrap().is_some()
+    }
+
+    /// Gibt zurück, ob das aktuelle Menü als anwendungsweit markiert ist.
+    pub fn has_app_wide_menu(&self) -> bool {
+        self.menu
+            .lock()
+            .unwrap()
+            .as_ref()
+            .is_some_and(|menu| menu.is_app_wide)
+    }
+
+    /// Prüft, ob die angegebene Menü-ID zum aktuell gesetzten Fenster-Menü gehört.
+    pub fn is_menu_in_use<I: PartialEq<MenuId>>(&self, id: &I) -> bool {
+        self.menu
+            .lock()
+            .unwrap()
+            .as_ref()
+            .is_some_and(|window_menu| id.eq(window_menu.menu.id()))
+    }
+
+    /// Gibt eine Kopie des aktuell gesetzten Menüs zurück.
+    pub fn menu(&self) -> Option<Menu> {
+        self.menu
+            .lock()
+            .unwrap()
+            .as_ref()
+            .map(|window_menu| window_menu.menu.clone())
+    }
+
+    /// Gibt ID und `is_app_wide` des aktuellen Menüs zurück.
+    pub fn menu_info(&self) -> Option<(MenuId, bool)> {
+        self.menu
+            .lock()
+            .unwrap()
+            .as_ref()
+            .map(|window_menu| (window_menu.menu.id().clone(), window_menu.is_app_wide))
+    }
+
+    /// Blendet das aktuelle Fenster-Menü aus.
+    pub fn hide_menu(&self) -> Result<()> {
+        let window = self.window()?;
+
+        #[cfg(not(target_os = "macos"))]
+        if let Some(window_menu) = self.menu.lock().unwrap().as_ref() {
+            let menu = &window_menu.menu;
+
+            #[cfg(windows)]
+            {
+                let hwnd = window.hwnd();
+                unsafe {
+                    menu.0.inner.hide_for_hwnd(hwnd as _)?;
+                }
+            }
+
+            #[cfg(any(
+                target_os = "linux",
+                target_os = "dragonfly",
+                target_os = "freebsd",
+                target_os = "netbsd",
+                target_os = "openbsd"
+            ))]
+            {
+                if let Ok(gtk_window) = window.gtk_window() {
+                    menu.inner().hide_for_gtk_window(&gtk_window)?;
+                }
+            }
+        }
+
+        Ok(())
+    }
+
+    /// Blendet das aktuelle Fenster-Menü ein.
+    pub fn show_menu(&self) -> Result<()> {
+        let window = self.window()?;
+
+        #[cfg(not(target_os = "macos"))]
+        if let Some(window_menu) = self.menu.lock().unwrap().as_ref() {
+            let menu = &window_menu.menu;
+
+            #[cfg(windows)]
+            {
+                let hwnd = window.hwnd();
+                unsafe {
+                    menu.0.inner.show_for_hwnd(hwnd as _)?;
+                }
+            }
+
+            #[cfg(any(
+                target_os = "linux",
+                target_os = "dragonfly",
+                target_os = "freebsd",
+                target_os = "netbsd",
+                target_os = "openbsd"
+            ))]
+            {
+                if let Ok(gtk_window) = window.gtk_window() {
+                    menu.inner().show_for_gtk_window(&gtk_window)?;
+                }
+            }
+        }
+
+        Ok(())
+    }
+
+    /// Gibt zurück, ob das aktuelle Fenster-Menü sichtbar ist.
+    pub fn is_menu_visible(&self) -> Result<bool> {
+        let window = self.window()?;
+
+        #[cfg(not(target_os = "macos"))]
+        if let Some(window_menu) = self.menu.lock().unwrap().as_ref() {
+            let menu = &window_menu.menu;
+
+            #[cfg(windows)]
+            {
+                let hwnd = window.hwnd();
+                return Ok(unsafe { menu.0.inner.is_visible_on_hwnd(hwnd as _) });
+            }
+
+            #[cfg(any(
+                target_os = "linux",
+                target_os = "dragonfly",
+                target_os = "freebsd",
+                target_os = "netbsd",
+                target_os = "openbsd"
+            ))]
+            {
+                if let Ok(gtk_window) = window.gtk_window() {
+                    return Ok(menu.is_visible_on_gtk_window(&gtk_window));
+                }
+            }
+        }
+
+        Ok(false)
+    }
+
+    /// Zeigt das gespeicherte Fenster-Menü als Kontextmenü am Cursor an.
+    pub fn popup_window_menu(&self) -> Result<()>
+    where
+        Menu: crate::prelude::ContextMenu,
+    {
+        let window = self.window()?;
+        let guard = self.menu.lock().unwrap();
+        let Some(window_menu) = guard.as_ref() else {
+            return Ok(());
+        };
+
+        window_menu.menu.popup(window)?;
+        Ok(())
+    }
+
+    /// Zeigt das gespeicherte Fenster-Menü an einer Position an.
+    pub fn popup_window_menu_at<P: Into<Position>>(&self, position: P) -> Result<()>
+    where
+        Menu: crate::prelude::ContextMenu,
+    {
+        let window = self.window()?;
+        let guard = self.menu.lock().unwrap();
+        let Some(window_menu) = guard.as_ref() else {
+            return Ok(());
+        };
+
+        window_menu.menu.popup_at(window, position)?;
+        Ok(())
+    }
+
+    /// Zeigt ein beliebiges Kontextmenü an der Cursorposition an.
+    pub fn popup_menu<M: crate::prelude::ContextMenu>(&self, menu: &M) -> Result<()> {
+        let window = self.window()?;
+        menu.popup(window)
+    }
+
+    /// Zeigt ein beliebiges Kontextmenü an der angegebenen Position an.
+    ///
+    /// Die Position ist relativ zur linken oberen Ecke des Fensters.
+    pub fn popup_menu_at<M: crate::prelude::ContextMenu, P: Into<Position>>(
+        &self,
+        menu: &M,
+        position: P,
+    ) -> Result<()> {
+        let window = self.window()?;
+        menu.popup_at(window, position)
+    }
+
+    #[cfg(windows)]
+    pub fn hpopupmenu(&self) -> Result<Option<isize>> {
+        let guard = self.menu.lock().unwrap();
+
+        match guard.as_ref() {
+            Some(window_menu) => Ok(Some(window_menu.menu.hpopupmenu()?)),
+            None => Ok(None),
+        }
     }
 }
