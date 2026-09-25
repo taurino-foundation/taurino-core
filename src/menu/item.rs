@@ -230,7 +230,7 @@ impl MenuItemKind {
         Ok(result)
     }
 
-    fn collect_descendants(&self, result: &mut Vec<MenuItemKind>) -> Result<()> {
+    pub(crate) fn collect_descendants(&self, result: &mut Vec<MenuItemKind>) -> Result<()> {
         if let Self::Submenu(submenu) = self {
             for child in submenu.items()? {
                 result.push(child.clone());
