@@ -8,6 +8,14 @@ use std::sync::Arc;
 
 pub(crate) use context::sealed;
 
+
+pub fn map_to_menu_theme(theme: crate::types::Theme) -> muda::MenuTheme {
+    match theme {
+        Theme::Light => muda::MenuTheme::Light,
+        Theme::Dark => muda::MenuTheme::Dark,
+        _ => muda::MenuTheme::Auto,
+    }
+}
 // -----------------------------------------------------------------------------
 // muda event handler → forward to tao
 //
