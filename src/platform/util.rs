@@ -34,8 +34,7 @@ mod imp {
         assert_eq!(function.chars().last(), Some('\0'));
 
         // Library names we will use are ASCII so we can use the A version to avoid string conversion.
-        let module =
-            unsafe { LoadLibraryW(PCWSTR::from_raw(library.as_ptr())) }.unwrap_or_default();
+        let module = unsafe { LoadLibraryW(PCWSTR::from_raw(library.as_ptr())) }.unwrap_or_default();
         if module.is_invalid() {
             return None;
         }
@@ -57,8 +56,7 @@ mod imp {
         dpi_x: *mut u32,
         dpi_y: *mut u32,
     ) -> HRESULT;
-    type GetSystemMetricsForDpi =
-        unsafe extern "system" fn(nindex: SYSTEM_METRICS_INDEX, dpi: u32) -> i32;
+    type GetSystemMetricsForDpi = unsafe extern "system" fn(nindex: SYSTEM_METRICS_INDEX, dpi: u32) -> i32;
 
     static GET_DPI_FOR_WINDOW: Lazy<Option<GetDpiForWindow>> =
         Lazy::new(|| get_function!("user32.dll", GetDpiForWindow));

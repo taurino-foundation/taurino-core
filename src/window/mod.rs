@@ -31,23 +31,21 @@ use tao::platform::windows::WindowExtWindows;
 use crate::{types::FocusState, utils::ArcMut};
 
 #[cfg(windows)]
-use crate::platform::prelude::{
-    attach_resize_handler, detach_resize_handler, update_drag_hwnd_rgn_for_undecorated,
-};
+use crate::platform::prelude::{attach_resize_handler, detach_resize_handler, update_drag_hwnd_rgn_for_undecorated};
 
 use crate::{
     error::{Error, Result},
     platform::prelude::WindowExt,
     prelude::Menu,
     types::{
-        CloseRequestedHandler, Color, CursorIcon, Monitor, ProgressBarState, ResizeDirection,
-        Theme, TitleBarStyle, UserAttentionType, WindowEventHandler, WindowSizeConstraints,
+        CloseRequestedHandler, Color, CursorIcon, Monitor, ProgressBarState, ResizeDirection, Theme, TitleBarStyle,
+        UserAttentionType, WindowEventHandler, WindowSizeConstraints,
     },
     utils::{
         Icon, WindowWebViewMetaData, find_monitor_for_position, inner_size,
         wrappers::{
-            CursorIconWrapper, MonitorHandleWrapper, ProgressBarStateWrapper, TaoIcon,
-            UserAttentionTypeWrapper, WindowEventWrapper,
+            CursorIconWrapper, MonitorHandleWrapper, ProgressBarStateWrapper, TaoIcon, UserAttentionTypeWrapper,
+            WindowEventWrapper,
         },
     },
     webview::{ManagedWebview, WebViewId},
@@ -107,10 +105,7 @@ impl fmt::Debug for ManagedWindow {
         f.debug_struct("ManagedWindow")
             .field("label", &self.metadata.window_label)
             .field("inner", &self.inner)
-            .field(
-                "has_close_requested_handler",
-                &self.close_requested_handler.is_some(),
-            )
+            .field("has_close_requested_handler", &self.close_requested_handler.is_some())
             .finish() // menu wird bewusst weggelassen
     }
 }
@@ -220,15 +215,11 @@ impl ManagedWindow {
     }
 
     pub fn inner_position(&self) -> Result<PhysicalPosition<i32>> {
-        self.window()?
-            .inner_position()
-            .map_err(|_| Error::FailedToSendMessage)
+        self.window()?.inner_position().map_err(|_| Error::FailedToSendMessage)
     }
 
     pub fn outer_position(&self) -> Result<PhysicalPosition<i32>> {
-        self.window()?
-            .outer_position()
-            .map_err(|_| Error::FailedToSendMessage)
+        self.window()?.outer_position().map_err(|_| Error::FailedToSendMessage)
     }
 
     pub fn inner_size(&self) -> Result<PhysicalSize<u32>> {
@@ -300,17 +291,11 @@ impl ManagedWindow {
     }
 
     pub fn current_monitor(&self) -> Result<Option<Monitor>> {
-        Ok(self
-            .window()?
-            .current_monitor()
-            .map(|m| MonitorHandleWrapper(m).into()))
+        Ok(self.window()?.current_monitor().map(|m| MonitorHandleWrapper(m).into()))
     }
 
     pub fn primary_monitor(&self) -> Result<Option<Monitor>> {
-        Ok(self
-            .window()?
-            .primary_monitor()
-            .map(|m| MonitorHandleWrapper(m).into()))
+        Ok(self.window()?.primary_monitor().map(|m| MonitorHandleWrapper(m).into()))
     }
 
     pub fn monitor_from_point(&self, x: f64, y: f64) -> Result<Option<Monitor>> {
@@ -347,10 +332,7 @@ impl ManagedWindow {
         target_os = "openbsd"
     ))]
     pub fn gtk_box(&self) -> Result<gtk::Box> {
-        self.window()?
-            .default_vbox()
-            .cloned()
-            .ok_or(Error::FailedToSendMessage)
+        self.window()?.default_vbox().cloned().ok_or(Error::FailedToSendMessage)
     }
 
     #[cfg(target_os = "android")]
@@ -397,9 +379,8 @@ impl ManagedWindow {
     }
 
     pub fn request_user_attention(&self, request_type: Option<UserAttentionType>) -> Result<()> {
-        self.window()?.request_user_attention(
-            request_type.map(|request| UserAttentionTypeWrapper::from(request).0),
-        );
+        self.window()?
+            .request_user_attention(request_type.map(|request| UserAttentionTypeWrapper::from(request).0));
         Ok(())
     }
 
@@ -578,8 +559,7 @@ impl ManagedWindow {
     }
 
     pub fn set_icon(&self, icon: Icon<'_>) -> Result<()> {
-        self.window()?
-            .set_window_icon(Some(TaoIcon::try_from(icon)?.0));
+        self.window()?.set_window_icon(Some(TaoIcon::try_from(icon)?.0));
         Ok(())
     }
 
@@ -629,8 +609,7 @@ impl ManagedWindow {
     }
 
     pub fn set_cursor_icon(&self, icon: CursorIcon) -> Result<()> {
-        self.window()?
-            .set_cursor_icon(CursorIconWrapper::from(icon).0);
+        self.window()?.set_cursor_icon(CursorIconWrapper::from(icon).0);
         Ok(())
     }
 
@@ -647,9 +626,7 @@ impl ManagedWindow {
     }
 
     pub fn drag_window(&self) -> Result<()> {
-        self.window()?
-            .drag_window()
-            .map_err(|_| Error::FailedToSendMessage)
+        self.window()?.drag_window().map_err(|_| Error::FailedToSendMessage)
     }
 
     pub fn resize_drag_window(&self, direction: ResizeDirection) -> Result<()> {
@@ -674,16 +651,11 @@ impl ManagedWindow {
         Ok(())
     }
 
-    pub fn set_badge_count(
-        &self,
-        count: Option<i64>,
-        desktop_filename: Option<String>,
-    ) -> Result<()> {
+    pub fn set_badge_count(&self, count: Option<i64>, desktop_filename: Option<String>) -> Result<()> {
         let _window = self.window()?;
 
         #[cfg(target_os = "ios")]
-        _window
-            .set_badge_count(count.map_or(0, |x| x.clamp(i32::MIN as i64, i32::MAX as i64) as i32));
+        _window.set_badge_count(count.map_or(0, |x| x.clamp(i32::MIN as i64, i32::MAX as i64) as i32));
 
         #[cfg(target_os = "macos")]
         _window.set_badge_label(count.map(|x| x.to_string()));
@@ -729,8 +701,7 @@ impl ManagedWindow {
     #[cfg(windows)]
     pub fn set_overlay_icon(&self, icon: Option<Icon<'_>>) -> Result<()> {
         let icon = icon.map(TaoIcon::try_from).transpose()?;
-        self.window()?
-            .set_overlay_icon(icon.as_ref().map(|icon| &icon.0));
+        self.window()?.set_overlay_icon(icon.as_ref().map(|icon| &icon.0));
         Ok(())
     }
 
@@ -820,8 +791,7 @@ impl ManagedWindow {
         ))]
         {
             if let (Ok(gtk_window), Some(gtk_box)) = (window.gtk_window(), window.default_vbox()) {
-                menu.inner()
-                    .init_for_gtk_window(&gtk_window, Some(&gtk_box))?;
+                menu.inner().init_for_gtk_window(&gtk_window, Some(&gtk_box))?;
             }
         }
 
@@ -874,9 +844,7 @@ impl ManagedWindow {
 
     /// Entfernt das aktuelle Menü und gibt nur das eigentliche [`Menu`] zurück.
     pub fn remove_menu(&self) -> Result<Option<Menu>> {
-        Ok(self
-            .remove_window_menu()?
-            .map(|window_menu| window_menu.menu))
+        Ok(self.remove_window_menu()?.map(|window_menu| window_menu.menu))
     }
 
     /// Entfernt das aktuelle Menü, ohne es zurückzugeben.
@@ -892,11 +860,7 @@ impl ManagedWindow {
 
     /// Gibt zurück, ob das aktuelle Menü als anwendungsweit markiert ist.
     pub fn has_app_wide_menu(&self) -> bool {
-        self.menu
-            .lock()
-            .unwrap()
-            .as_ref()
-            .is_some_and(|menu| menu.is_app_wide)
+        self.menu.lock().unwrap().as_ref().is_some_and(|menu| menu.is_app_wide)
     }
 
     /// Prüft, ob die angegebene Menü-ID zum aktuell gesetzten Fenster-Menü gehört.

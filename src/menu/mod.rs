@@ -42,13 +42,10 @@ where
 }
 
 pub mod prelude {
-    pub use super::builder::{
-        CheckMenuItemBuilder, IconMenuItemBuilder, MenuBuilder, MenuItemBuilder, SubmenuBuilder,
-    };
+    pub use super::builder::{CheckMenuItemBuilder, IconMenuItemBuilder, MenuBuilder, MenuItemBuilder, SubmenuBuilder};
     pub use super::context::ContextMenu;
     pub use super::item::{
-        CheckMenuItem, IconMenuItem, IsMenuItem, Menu, MenuItem, MenuItemKind, PredefinedMenuItem,
-        Submenu,
+        CheckMenuItem, IconMenuItem, IsMenuItem, Menu, MenuItem, MenuItemKind, PredefinedMenuItem, Submenu,
     };
     pub use super::metadata::{AboutMetadata, AboutMetadataBuilder, NativeIcon};
     pub use super::{install_menu_event_handler, map_from_tao_to_menu_theme, map_to_menu_theme};

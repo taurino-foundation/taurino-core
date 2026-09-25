@@ -1,0 +1,205 @@
+use crate::{
+    manager::RuntimeManager,
+    schema::window::WindowConfig,
+    utils::{ArcMut, arc_mut},
+};
+use anyhow::{Context, Result, bail};
+use muda::{Menu, MenuId};
+use std::{
+    collections::HashMap,
+    sync::{Arc, Weak},
+};
+
+#[cfg(windows)]
+use crate::utils::map_tao_window_theme_to_menu_theme;
+#[cfg(windows)]
+use tao::platform::windows::WindowExtWindows;
+/// Ein einem Fenster zugeordnetes Menü.
+///
+/// `is_app_wide` gibt an, ob das Menü von mehreren Fenstern als
+/// anwendungsweites Menü gemeinsam verwendet wird.
+pub struct WindowMenu {
+    pub(crate) is_app_wide: bool,
+    pub(crate) menu: Menu,
+}
+
+/// Verwaltet alle Menüs der Anwendung.
+///
+/// Der Manager hält registrierte Menüs am Leben und verwaltet zusätzlich
+/// das optionale anwendungsweite Menü.
+pub struct MenuManager {
+    manager: Option<Weak<RuntimeManager>>,
+    menus: HashMap<MenuId, Menu>,
+    app_wide_menu: Option<Menu>,
+}
+
+impl MenuManager {
+    /// Erstellt einen neuen, noch nicht an einen [`RuntimeManager`]
+    /// gebundenen Menü-Manager.
+    pub fn new() -> Result<ArcMut<Self>> {
+        Ok(arc_mut(Self {
+            manager: None,
+            menus: HashMap::new(),
+            app_wide_menu: None,
+        }))
+    }
+
+    /// Bindet diesen Menü-Manager einmalig an den [`RuntimeManager`].
+    pub fn bind_manager(&mut self, manager: Arc<RuntimeManager>) -> Result<()> {
+        if self.manager.is_some() {
+            bail!("MenuManager is already bound to a RuntimeManager");
+        }
+
+        self.manager = Some(Arc::downgrade(&manager));
+
+        Ok(())
+    }
+
+    /// Gibt den zugehörigen [`RuntimeManager`] zurück.
+    pub fn manager(&self) -> Result<Arc<RuntimeManager>> {
+        self.manager
+            .as_ref()
+            .context("MenuManager is not bound to a RuntimeManager")?
+            .upgrade()
+            .context("RuntimeManager has already been dropped")
+    }
+
+    /// Gibt alle registrierten Menüs zurück.
+    pub fn menus(&self) -> impl Iterator<Item = (&MenuId, &Menu)> {
+        self.menus.iter()
+    }
+
+    /// Gibt ein registriertes Menü anhand seiner ID zurück.
+    pub fn get_menu(&self, id: &MenuId) -> Option<&Menu> {
+        self.menus.get(id)
+    }
+
+    /// Registriert ein Menü.
+    ///
+    /// Ein bereits vorhandenes Menü mit derselben ID wird ersetzt.
+    pub fn add_menu(&mut self, menu: Menu) -> Option<Menu> {
+        self.menus.insert(menu.id().clone(), menu)
+    }
+
+    /// Stellt sicher, dass ein Menü im internen Speicher registriert ist.
+    ///
+    /// Existiert bereits ein Menü mit derselben ID, bleibt der vorhandene
+    /// Eintrag unverändert.
+    pub fn insert_menu_into_stash(&mut self, menu: &Menu) {
+        self.menus
+            .entry(menu.id().clone())
+            .or_insert_with(|| menu.clone());
+    }
+
+    /// Setzt das anwendungsweite Menü.
+    ///
+    /// Das Menü wird gleichzeitig im internen Menü-Speicher registriert.
+    pub fn set_app_wide_menu(&mut self, menu: Menu) -> Option<Menu> {
+        let previous = self.app_wide_menu.replace(menu.clone());
+
+        if let Some(previous) = &previous {
+            self.menus.remove(previous.id());
+        }
+
+        self.insert_menu_into_stash(&menu);
+
+        previous
+    }
+    /// Entfernt das aktuell gesetzte anwendungsweite Menü.
+    pub fn remove_app_wide_menu(&mut self) -> Option<Menu> {
+        let menu = self.app_wide_menu.take()?;
+        let id = menu.id().clone();
+
+        self.menus.remove(&id);
+
+        Some(menu)
+    }
+
+    /// Gibt das aktuell gesetzte anwendungsweite Menü zurück.
+    pub fn app_wide_menu(&self) -> Option<&Menu> {
+        self.app_wide_menu.as_ref()
+    }
+
+    /// Prüft, ob ein Menü mit der angegebenen ID registriert ist.
+    pub fn is_menu_in_use<I>(&self, id: &I) -> bool
+    where
+        I: PartialEq<MenuId>,
+    {
+        self.menus.values().any(|menu| id.eq(menu.id()))
+    }
+
+    pub fn create_window_menu(
+        &mut self,
+        window: &tao::window::Window,
+        _options: &WindowConfig,
+    ) -> Result<Option<WindowMenu>> {
+        #[cfg(target_os = "macos")]
+        {
+            if let Some(menu) = self.app_wide_menu.clone() {
+                self.insert_menu_into_stash(&menu);
+
+                return Ok(Some(WindowMenu {
+                    is_app_wide: true,
+                    menu,
+                }));
+            }
+        }
+
+        let menu = Menu::new();
+
+        self.insert_menu_into_stash(&menu);
+
+        #[cfg(windows)]
+        {
+            let hwnd = window.hwnd();
+            let theme = map_tao_window_theme_to_menu_theme(window.theme());
+
+            unsafe {
+                menu.init_for_hwnd_with_theme(hwnd as _, theme)?;
+            }
+        }
+
+        #[cfg(any(
+            target_os = "linux",
+            target_os = "dragonfly",
+            target_os = "freebsd",
+            target_os = "netbsd",
+            target_os = "openbsd"
+        ))]
+        {
+            use tao::platform::unix::WindowExtUnix;
+
+            let gtk_window = window
+                .gtk_window()
+                .context("Failed to obtain GTK window for menu initialization")?;
+
+            let gtk_box = window
+                .default_vbox()
+                .context("Failed to obtain GTK container for menu initialization")?;
+
+            menu.init_for_gtk_window(&gtk_window, Some(&gtk_box))?;
+        }
+
+        Ok(Some(WindowMenu {
+            is_app_wide: false,
+            menu,
+        }))
+    }
+
+    pub fn remove_menu_if_not_app_wide(&mut self, id: &MenuId) -> Option<Menu> {
+        if self
+            .app_wide_menu
+            .as_ref()
+            .is_some_and(|menu| menu.id() == id)
+        {
+            return None;
+        }
+
+        self.menus.remove(id)
+    }
+
+    pub fn clear(&mut self) {
+        self.app_wide_menu = None;
+        self.menus.clear();
+    }
+}

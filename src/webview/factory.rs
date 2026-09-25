@@ -33,10 +33,7 @@ pub fn create_webview<F>(
     befor_webview_creation: Option<F>,
 ) -> crate::error::Result<ManagedWebview>
 where
-    F: for<'a> Fn(
-            wry::WebViewBuilder<'a>,
-            WebviewUrl,
-        ) -> crate::error::Result<wry::WebViewBuilder<'a>>
+    F: for<'a> Fn(wry::WebViewBuilder<'a>, WebviewUrl) -> crate::error::Result<wry::WebViewBuilder<'a>>
         + Send
         + 'static,
 {
@@ -82,11 +79,7 @@ where
         }
         Vacant(vacant) => {
             let mut web_context = WryWebContext::new(web_context_key.clone());
-            web_context.set_allows_automation(if automation_enabled {
-                is_first_context
-            } else {
-                false
-            });
+            web_context.set_allows_automation(if automation_enabled { is_first_context } else { false });
             vacant.insert(WebContext {
                 inner: web_context,
                 referenced_by_webviews: [label.clone()].into(),
@@ -142,12 +135,8 @@ where
         webview_builder = match befor_webview_creation {
             Some(callback) => callback(webview_builder, url)?,
             None => match url {
-                WebviewUrl::External(u) | WebviewUrl::CustomProtocol(u) => {
-                    webview_builder.with_url(u.to_string())
-                }
-                WebviewUrl::App(path) => {
-                    webview_builder.with_url(path.to_string_lossy().to_string())
-                }
+                WebviewUrl::External(u) | WebviewUrl::CustomProtocol(u) => webview_builder.with_url(u.to_string()),
+                WebviewUrl::App(path) => webview_builder.with_url(path.to_string_lossy().to_string()),
             },
         };
     }
@@ -240,22 +229,15 @@ where
                 return false;
             };
 
-            started_handler(
-                &started_metadata,
-                DownloadEvent::Requested { url, destination },
-            )
+            started_handler(&started_metadata, DownloadEvent::Requested { url, destination })
         });
 
         let completed_metadata = metadata.clone();
-        webview_builder =
-            webview_builder.with_download_completed_handler(move |url, path, success| {
-                if let Ok(url) = url.parse() {
-                    let _ = download_handler(
-                        &completed_metadata,
-                        DownloadEvent::Finished { url, path, success },
-                    );
-                }
-            });
+        webview_builder = webview_builder.with_download_completed_handler(move |url, path, success| {
+            if let Ok(url) = url.parse() {
+                let _ = download_handler(&completed_metadata, DownloadEvent::Finished { url, path, success });
+            }
+        });
     }
 
     if let Some(page_load_handler) = on_page_load_handler {
@@ -276,27 +258,23 @@ where
 
     for (scheme, protocol) in uri_scheme_protocols {
         let metadata = metadata.clone();
-        webview_builder = webview_builder.with_asynchronous_custom_protocol(
-            scheme,
-            move |webview_id, request, responder| {
+        webview_builder =
+            webview_builder.with_asynchronous_custom_protocol(scheme, move |webview_id, request, responder| {
                 protocol(
                     &metadata,
                     webview_id,
                     request,
                     Box::new(move |response| responder.respond(response)),
                 );
-            },
-        );
+            });
     }
 
     #[cfg(any(target_os = "macos", target_os = "ios"))]
-    if let Some(on_web_content_process_terminate_handler) = on_web_content_process_terminate_handler
-    {
+    if let Some(on_web_content_process_terminate_handler) = on_web_content_process_terminate_handler {
         let metadata = metadata.clone();
-        webview_builder =
-            webview_builder.with_on_web_content_process_terminated_handler(move || {
-                on_web_content_process_terminate_handler(&metadata);
-            });
+        webview_builder = webview_builder.with_on_web_content_process_terminated_handler(move || {
+            on_web_content_process_terminate_handler(&metadata);
+        });
     }
 
     let webview = Rc::new(
@@ -308,11 +286,7 @@ where
         metadata,
         inner: webview,
         context_store: web_context_store.clone(),
-        context_key: if automation_enabled {
-            None
-        } else {
-            web_context_key
-        },
+        context_key: if automation_enabled { None } else { web_context_key },
         bounds: Arc::new(Mutex::new(webview_bounds)),
     })
 }

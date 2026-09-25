@@ -1,8 +1,5 @@
 use super::{
-    item::{
-        CheckMenuItem, IconMenuItem, IsMenuItem, Menu, MenuItem, MenuItemKind, PredefinedMenuItem,
-        Submenu,
-    },
+    item::{CheckMenuItem, IconMenuItem, IsMenuItem, Menu, MenuItem, MenuItemKind, PredefinedMenuItem, Submenu},
     metadata::{AboutMetadata, NativeIcon},
 };
 use crate::error::Result;
@@ -108,9 +105,7 @@ impl CheckMenuItemBuilder {
 
     pub fn build(self) -> Result<CheckMenuItem> {
         match self.id {
-            Some(id) => {
-                CheckMenuItem::with_id(id, self.text, self.enabled, self.checked, self.accelerator)
-            }
+            Some(id) => CheckMenuItem::with_id(id, self.text, self.enabled, self.checked, self.accelerator),
             None => CheckMenuItem::new(self.text, self.enabled, self.checked, self.accelerator),
         }
     }
@@ -178,19 +173,11 @@ impl<'a> IconMenuItemBuilder<'a> {
             (Some(id), Some(icon), _) => {
                 IconMenuItem::with_id(id, self.text, self.enabled, Some(icon), self.accelerator)
             }
-            (None, Some(icon), _) => {
-                IconMenuItem::new(self.text, self.enabled, Some(icon), self.accelerator)
+            (None, Some(icon), _) => IconMenuItem::new(self.text, self.enabled, Some(icon), self.accelerator),
+            (Some(id), None, native) => {
+                IconMenuItem::with_id_and_native_icon(id, self.text, self.enabled, native, self.accelerator)
             }
-            (Some(id), None, native) => IconMenuItem::with_id_and_native_icon(
-                id,
-                self.text,
-                self.enabled,
-                native,
-                self.accelerator,
-            ),
-            (None, None, native) => {
-                IconMenuItem::with_native_icon(self.text, self.enabled, native, self.accelerator)
-            }
+            (None, None, native) => IconMenuItem::with_native_icon(self.text, self.enabled, native, self.accelerator),
         }
     }
 }
@@ -243,28 +230,20 @@ impl MenuBuilder {
     }
 
     pub fn check<I: Into<MenuId>, S: AsRef<str>>(mut self, id: I, text: S) -> Self {
-        self.items.push(
-            CheckMenuItem::with_id(id, text, true, true, None::<&str>).map(MenuItemKind::Check),
-        );
+        self.items
+            .push(CheckMenuItem::with_id(id, text, true, true, None::<&str>).map(MenuItemKind::Check));
         self
     }
 
     pub fn icon<I: Into<MenuId>, S: AsRef<str>>(mut self, id: I, text: S, icon: Image<'_>) -> Self {
-        self.items.push(
-            IconMenuItem::with_id(id, text, true, Some(icon), None::<&str>).map(MenuItemKind::Icon),
-        );
+        self.items
+            .push(IconMenuItem::with_id(id, text, true, Some(icon), None::<&str>).map(MenuItemKind::Icon));
         self
     }
 
-    pub fn native_icon<I: Into<MenuId>, S: AsRef<str>>(
-        mut self,
-        id: I,
-        text: S,
-        icon: NativeIcon,
-    ) -> Self {
+    pub fn native_icon<I: Into<MenuId>, S: AsRef<str>>(mut self, id: I, text: S, icon: NativeIcon) -> Self {
         self.items.push(
-            IconMenuItem::with_id_and_native_icon(id, text, true, Some(icon), None::<&str>)
-                .map(MenuItemKind::Icon),
+            IconMenuItem::with_id_and_native_icon(id, text, true, Some(icon), None::<&str>).map(MenuItemKind::Icon),
         );
         self
     }
@@ -451,9 +430,8 @@ impl<'a> SubmenuBuilder<'a> {
     }
 
     pub fn check<I: Into<MenuId>, S: AsRef<str>>(mut self, id: I, text: S) -> Self {
-        self.items.push(
-            CheckMenuItem::with_id(id, text, true, true, None::<&str>).map(MenuItemKind::Check),
-        );
+        self.items
+            .push(CheckMenuItem::with_id(id, text, true, true, None::<&str>).map(MenuItemKind::Check));
         self
     }
 
@@ -465,16 +443,10 @@ impl<'a> SubmenuBuilder<'a> {
 
     pub fn build(self) -> Result<Submenu> {
         let submenu = match (self.id, self.icon, self.native_icon) {
-            (Some(id), Some(icon), _) => {
-                Submenu::with_id_and_icon(id, self.text, self.enabled, Some(icon))?
-            }
+            (Some(id), Some(icon), _) => Submenu::with_id_and_icon(id, self.text, self.enabled, Some(icon))?,
             (None, Some(icon), _) => Submenu::new_with_icon(self.text, self.enabled, Some(icon))?,
-            (Some(id), None, Some(icon)) => {
-                Submenu::with_id_and_native_icon(id, self.text, self.enabled, Some(icon))?
-            }
-            (None, None, Some(icon)) => {
-                Submenu::new_with_native_icon(self.text, self.enabled, Some(icon))?
-            }
+            (Some(id), None, Some(icon)) => Submenu::with_id_and_native_icon(id, self.text, self.enabled, Some(icon))?,
+            (None, None, Some(icon)) => Submenu::new_with_native_icon(self.text, self.enabled, Some(icon))?,
             (Some(id), None, None) => Submenu::with_id(id, self.text, self.enabled)?,
             (None, None, None) => Submenu::new(self.text, self.enabled)?,
         };

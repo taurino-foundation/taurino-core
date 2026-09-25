@@ -17,9 +17,9 @@ fn main() -> Result<()> {
     let web_context: WebContextStore = Default::default();
 
     let window_builder = WindowBuilder::new()
-        .add_webview_builder(WebViewBuilder::new().with_url(WebviewUrl::External(
-            Url::parse("https://example.com").unwrap(),
-        )))
+        .add_webview_builder(
+            WebViewBuilder::new().with_url(WebviewUrl::External(Url::parse("https://example.com").unwrap())),
+        )
         .title("Tao + Wry")
         .center()
         .inner_size(800.0, 600.0)
@@ -70,9 +70,7 @@ fn main() -> Result<()> {
         *control_flow = ControlFlow::Wait;
 
         match event {
-            Event::WindowEvent {
-                event, window_id, ..
-            } if window_id == window.id() => {
+            Event::WindowEvent { event, window_id, .. } if window_id == window.id() => {
                 window.emit_window_event(&event);
 
                 match event {

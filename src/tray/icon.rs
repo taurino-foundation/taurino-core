@@ -98,10 +98,7 @@ impl TrayIcon {
         install_global_dispatch();
         let id = inner.id().clone();
         let this = Self {
-            inner: Arc::new(TrayIconInner {
-                id: id.clone(),
-                inner,
-            }),
+            inner: Arc::new(TrayIconInner { id: id.clone(), inner }),
         };
         handlers().lock().unwrap().insert(
             id,
@@ -142,9 +139,7 @@ impl TrayIcon {
     }
 
     pub fn set_menu<M: ContextMenu + 'static>(&self, menu: Option<M>) -> crate::error::Result<()> {
-        self.inner
-            .inner
-            .set_menu(menu.map(|m| m.inner_context_owned()));
+        self.inner.inner.set_menu(menu.map(|m| m.inner_context_owned()));
         Ok(())
     }
 
@@ -156,9 +151,7 @@ impl TrayIcon {
     }
 
     pub fn set_title<S: AsRef<str>>(&self, title: Option<S>) -> crate::error::Result<()> {
-        self.inner
-            .inner
-            .set_title(title.map(|s| s.as_ref().to_string()));
+        self.inner.inner.set_title(title.map(|s| s.as_ref().to_string()));
         Ok(())
     }
 
@@ -175,10 +168,7 @@ impl TrayIcon {
         Ok(())
     }
 
-    pub fn set_icon_as_template(
-        &self,
-        #[allow(unused)] is_template: bool,
-    ) -> crate::error::Result<()> {
+    pub fn set_icon_as_template(&self, #[allow(unused)] is_template: bool) -> crate::error::Result<()> {
         #[cfg(target_os = "macos")]
         self.inner.inner.set_icon_as_template(is_template);
         Ok(())
@@ -202,10 +192,7 @@ impl TrayIcon {
         self.set_icon(icon)
     }
 
-    pub fn set_show_menu_on_left_click(
-        &self,
-        #[allow(unused)] enable: bool,
-    ) -> crate::error::Result<()> {
+    pub fn set_show_menu_on_left_click(&self, #[allow(unused)] enable: bool) -> crate::error::Result<()> {
         #[cfg(any(target_os = "macos", windows))]
         self.inner.inner.set_show_menu_on_left_click(enable);
         Ok(())

@@ -1,7 +1,7 @@
 use super::{
     item::{
-        CheckMenuItem, IconMenuItem, IsMenuItem, Menu, MenuInner, MenuItem, MenuItemKind,
-        PredefinedMenuItem, Submenu, SubmenuInner,
+        CheckMenuItem, IconMenuItem, IsMenuItem, Menu, MenuInner, MenuItem, MenuItemKind, PredefinedMenuItem, Submenu,
+        SubmenuInner,
     },
     metadata::NativeIcon,
 };
@@ -196,11 +196,7 @@ impl Submenu {
         )))))
     }
 
-    pub fn new_with_icon<S: AsRef<str>>(
-        text: S,
-        enabled: bool,
-        icon: Option<Image<'_>>,
-    ) -> Result<Self> {
+    pub fn new_with_icon<S: AsRef<str>>(text: S, enabled: bool, icon: Option<Image<'_>>) -> Result<Self> {
         let submenu = muda::Submenu::new(text.as_ref(), enabled);
         if let Some(icon) = icon {
             submenu.set_icon(Some(icon.try_into()?));
@@ -221,11 +217,7 @@ impl Submenu {
         Ok(Self(Arc::new(SubmenuInner::new(submenu))))
     }
 
-    pub fn new_with_native_icon<S: AsRef<str>>(
-        text: S,
-        enabled: bool,
-        icon: Option<NativeIcon>,
-    ) -> Result<Self> {
+    pub fn new_with_native_icon<S: AsRef<str>>(text: S, enabled: bool, icon: Option<NativeIcon>) -> Result<Self> {
         let submenu = muda::Submenu::new(text.as_ref(), enabled);
         if let Some(icon) = icon {
             submenu.set_native_icon(Some(icon.into()));
@@ -246,11 +238,7 @@ impl Submenu {
         Ok(Self(Arc::new(SubmenuInner::new(submenu))))
     }
 
-    pub fn with_items<S: AsRef<str>>(
-        text: S,
-        enabled: bool,
-        items: &[&dyn IsMenuItem],
-    ) -> Result<Self> {
+    pub fn with_items<S: AsRef<str>>(text: S, enabled: bool, items: &[&dyn IsMenuItem]) -> Result<Self> {
         let submenu = Self::new(text, enabled)?;
         submenu.append_items(items)?;
         Ok(submenu)
@@ -290,10 +278,7 @@ impl Submenu {
     }
 
     pub fn insert(&self, item: &dyn IsMenuItem, position: usize) -> Result<()> {
-        self.0
-            .inner
-            .insert(item.inner_muda(), position)
-            .map_err(Into::into)
+        self.0.inner.insert(item.inner_muda(), position).map_err(Into::into)
     }
 
     pub fn remove(&self, item: &dyn IsMenuItem) -> Result<()> {
@@ -301,13 +286,7 @@ impl Submenu {
     }
 
     pub fn items(&self) -> Result<Vec<MenuItemKind>> {
-        Ok(self
-            .0
-            .inner
-            .items()
-            .into_iter()
-            .map(MenuItemKind::from_muda)
-            .collect())
+        Ok(self.0.inner.items().into_iter().map(MenuItemKind::from_muda).collect())
     }
 
     pub fn set_text<S: AsRef<str>>(&self, text: S) -> Result<()> {
@@ -383,10 +362,7 @@ impl Menu {
     }
 
     pub fn insert(&self, item: &dyn IsMenuItem, position: usize) -> Result<()> {
-        self.0
-            .inner
-            .insert(item.inner_muda(), position)
-            .map_err(Into::into)
+        self.0.inner.insert(item.inner_muda(), position).map_err(Into::into)
     }
 
     pub fn remove(&self, item: &dyn IsMenuItem) -> Result<()> {
@@ -394,13 +370,7 @@ impl Menu {
     }
 
     pub fn items(&self) -> Result<Vec<MenuItemKind>> {
-        Ok(self
-            .0
-            .inner
-            .items()
-            .into_iter()
-            .map(MenuItemKind::from_muda)
-            .collect())
+        Ok(self.0.inner.items().into_iter().map(MenuItemKind::from_muda).collect())
     }
 }
 
@@ -415,27 +385,13 @@ impl Menu {
     }
 
     #[cfg(windows)]
-    pub unsafe fn init_for_hwnd_with_theme(
-        &self,
-        hwnd: isize,
-        theme: muda::MenuTheme,
-    ) -> Result<()> {
-        unsafe {
-            self.0
-                .inner
-                .init_for_hwnd_with_theme(hwnd, theme)
-                .map_err(Into::into)
-        }
+    pub unsafe fn init_for_hwnd_with_theme(&self, hwnd: isize, theme: muda::MenuTheme) -> Result<()> {
+        unsafe { self.0.inner.init_for_hwnd_with_theme(hwnd, theme).map_err(Into::into) }
     }
 
     #[cfg(windows)]
     pub unsafe fn set_theme_for_hwnd(&self, hwnd: isize, theme: muda::MenuTheme) -> Result<()> {
-        unsafe {
-            self.0
-                .inner
-                .set_theme_for_hwnd(hwnd, theme)
-                .map_err(Into::into)
-        }
+        unsafe { self.0.inner.set_theme_for_hwnd(hwnd, theme).map_err(Into::into) }
     }
 
     #[cfg(windows)]
@@ -468,10 +424,7 @@ impl Menu {
         W: gtk::prelude::IsA<gtk::Window> + gtk::prelude::IsA<gtk::Widget>,
         C: gtk::prelude::IsA<gtk::Widget>,
     {
-        self.0
-            .inner
-            .init_for_gtk_window(window, container)
-            .map_err(Into::into)
+        self.0.inner.init_for_gtk_window(window, container).map_err(Into::into)
     }
 
     #[cfg(any(
@@ -485,10 +438,7 @@ impl Menu {
     where
         W: gtk::prelude::IsA<gtk::Window> + gtk::prelude::IsA<gtk::Widget>,
     {
-        self.0
-            .inner
-            .remove_for_gtk_window(window)
-            .map_err(Into::into)
+        self.0.inner.remove_for_gtk_window(window).map_err(Into::into)
     }
 
     #[cfg(any(

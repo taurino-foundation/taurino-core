@@ -9,8 +9,7 @@ impl super::WindowExt for tao::window::Window {
         let ns_window: &NSWindow = unsafe { &*self.ns_window().cast() };
         if !enabled {
             let frame = ns_window.frame();
-            let mtm = MainThreadMarker::new()
-                .expect("`Window::set_enabled` can only be called on the main thread");
+            let mtm = MainThreadMarker::new().expect("`Window::set_enabled` can only be called on the main thread");
             let sheet = unsafe {
                 NSWindow::initWithContentRect_styleMask_backing_defer(
                     mtm.alloc(),

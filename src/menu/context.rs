@@ -42,19 +42,11 @@ pub(crate) mod sealed {
     pub trait ContextMenuBase {
         fn inner_context(&self) -> &dyn muda::ContextMenu;
         fn inner_context_owned(&self) -> Box<dyn muda::ContextMenu>;
-        fn popup_inner<P: Into<Position>>(
-            &self,
-            window: &Window,
-            position: Option<P>,
-        ) -> Result<()>;
+        fn popup_inner<P: Into<Position>>(&self, window: &Window, position: Option<P>) -> Result<()>;
     }
 }
 
-fn show_context_menu(
-    menu: &dyn MudaContextMenu,
-    window: &Window,
-    position: Option<Position>,
-) -> Result<()> {
+fn show_context_menu(menu: &dyn MudaContextMenu, window: &Window, position: Option<Position>) -> Result<()> {
     #[cfg(windows)]
     {
         use tao::platform::windows::WindowExtWindows;

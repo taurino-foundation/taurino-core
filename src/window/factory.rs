@@ -57,10 +57,7 @@ pub fn create_window<T, F>(
 ) -> crate::error::Result<ManagedWindow>
 where
     T: 'static,
-    F: for<'a> Fn(
-            wry::WebViewBuilder<'a>,
-            WebviewUrl,
-        ) -> crate::error::Result<wry::WebViewBuilder<'a>>
+    F: for<'a> Fn(wry::WebViewBuilder<'a>, WebviewUrl) -> crate::error::Result<wry::WebViewBuilder<'a>>
         + Clone
         + Send
         + 'static,
@@ -129,9 +126,7 @@ where
             let mut shadow_width = 0;
             #[cfg(windows)]
             if inner.window.decorations {
-                use windows::Win32::UI::WindowsAndMessaging::{
-                    AdjustWindowRect, WS_OVERLAPPEDWINDOW,
-                };
+                use windows::Win32::UI::WindowsAndMessaging::{AdjustWindowRect, WS_OVERLAPPEDWINDOW};
                 let mut rect = windows::Win32::Foundation::RECT::default();
                 let result = unsafe { AdjustWindowRect(&mut rect, WS_OVERLAPPEDWINDOW, false) };
                 if result.is_ok() {
@@ -150,15 +145,11 @@ where
                 );
                 if window_size.width > constraint.width || window_size.height > constraint.height {
                     if window_size.width > constraint.width {
-                        inner_size.width = inner_size
-                            .width
-                            .saturating_sub(window_size.width - constraint.width);
+                        inner_size.width = inner_size.width.saturating_sub(window_size.width - constraint.width);
                         window_size.width = constraint.width;
                     }
                     if window_size.height > constraint.height {
-                        inner_size.height = inner_size
-                            .height
-                            .saturating_sub(window_size.height - constraint.height);
+                        inner_size.height = inner_size.height.saturating_sub(window_size.height - constraint.height);
                         window_size.height = constraint.height;
                     }
                     inner.window.inner_size = Some(inner_size.into());
@@ -178,16 +169,13 @@ where
     };
 
     #[cfg(any(target_os = "macos", target_os = "linux"))]
-    let (initial_position, is_fullscreen) =
-        (inner.window.position, inner.window.fullscreen.is_some());
+    let (initial_position, is_fullscreen) = (inner.window.position, inner.window.fullscreen.is_some());
 
     // If fullscreen is requested with an explicit position, resolve the target
     // monitor up front so the window is created fullscreen on that display.
     #[cfg(any(target_os = "macos", target_os = "linux"))]
     if let (true, Some(position)) = (is_fullscreen, initial_position) {
-        if let Some(target_monitor) =
-            find_monitor_for_position(window_target.available_monitors(), position)
-        {
+        if let Some(target_monitor) = find_monitor_for_position(window_target.available_monitors(), position) {
             inner.window.fullscreen = Some(Fullscreen::Borderless(Some(target_monitor)));
         }
     }
@@ -197,8 +185,7 @@ where
         .inspect_err(|e| log::error!("Error creating window: {e:?}"))
         .map_err(|_| crate::error::Error::CreateWindow)?;
 
-    let has_children =
-        pending_webviews.len() > 1 || pending_webviews.iter().any(|builder| builder.kind);
+    let has_children = pending_webviews.len() > 1 || pending_webviews.iter().any(|builder| builder.kind);
 
     let mut webviews = Vec::with_capacity(pending_webviews.len());
 
@@ -209,13 +196,8 @@ where
 
         let webview_label = webview_builder.label.clone();
 
-        let webview_metadata = WindowWebViewMetaData::new(
-            window_id,
-            webview_id,
-            window.id(),
-            label.clone(),
-            webview_label,
-        )?;
+        let webview_metadata =
+            WindowWebViewMetaData::new(window_id, webview_id, window.id(), label.clone(), webview_label)?;
 
         // Metadata der ersten WebView als Metadata des ManagedWindow merken.
         if window_webview_metadata.is_none() {
@@ -231,8 +213,7 @@ where
 
         webviews.push(webview);
     }
-    let metadata =
-        window_webview_metadata.ok_or(crate::error::Error::WebviewNotFound("root".to_string()))?;
+    let metadata = window_webview_metadata.ok_or(crate::error::Error::WebviewNotFound("root".to_string()))?;
 
     let menu = match after_window_creation {
         Some(handler) => Some(handler(&window)?),
