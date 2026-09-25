@@ -287,10 +287,6 @@ impl Menu {
         self.0.inner.haccel()
     }
 
-    #[cfg(windows)]
-    pub fn hmenu(&self) -> isize {
-        self.0.inner.hmenu()
-    }
 
     // -------------------------------------------------------------------------
     // macOS
