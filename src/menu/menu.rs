@@ -114,7 +114,16 @@ impl Submenu {
 
         Ok(None)
     }
+    pub fn visit<F>(&self, mut visitor: F) -> Result<()>
+    where
+        F: FnMut(&MenuItemKind) -> Result<()>,
+    {
+        for item in self.items()? {
+            item.visit(&mut visitor)?;
+        }
 
+        Ok(())
+    }
     pub fn all_items(&self) -> Result<Vec<MenuItemKind>> {
         let mut result = Vec::new();
 
