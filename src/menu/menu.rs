@@ -203,4 +203,186 @@ impl Menu {
     pub fn items(&self) -> Result<Vec<MenuItemKind>> {
         Ok(self.0.inner.items().into_iter().map(MenuItemKind::from_muda).collect())
     }
+
+
+}
+
+
+
+
+
+impl Menu {
+    // -------------------------------------------------------------------------
+    // Windows
+    // -------------------------------------------------------------------------
+
+    #[cfg(windows)]
+    pub unsafe fn init_for_hwnd(&self, hwnd: isize) -> Result<()> {
+        unsafe {
+            self.0
+                .inner
+                .init_for_hwnd(hwnd)
+                .map_err(Into::into)
+        }
+    }
+
+    #[cfg(windows)]
+    pub unsafe fn init_for_hwnd_with_theme(
+        &self,
+        hwnd: isize,
+        theme: muda::MenuTheme,
+    ) -> Result<()> {
+        unsafe {
+            self.0
+                .inner
+                .init_for_hwnd_with_theme(hwnd, theme)
+                .map_err(Into::into)
+        }
+    }
+
+    #[cfg(windows)]
+    pub unsafe fn set_theme_for_hwnd(
+        &self,
+        hwnd: isize,
+        theme: muda::MenuTheme,
+    ) -> Result<()> {
+        unsafe {
+            self.0
+                .inner
+                .set_theme_for_hwnd(hwnd, theme)
+                .map_err(Into::into)
+        }
+    }
+
+    #[cfg(windows)]
+    pub fn haccel(&self) -> isize {
+        self.0.inner.haccel()
+    }
+
+    #[cfg(windows)]
+    pub fn hmenu(&self) -> isize {
+        self.0.inner.hmenu()
+    }
+
+    // -------------------------------------------------------------------------
+    // macOS
+    // -------------------------------------------------------------------------
+
+    #[cfg(target_os = "macos")]
+    pub fn init_for_nsapp(&self) {
+        self.0.inner.init_for_nsapp();
+    }
+
+    // -------------------------------------------------------------------------
+    // Linux / BSD — GTK
+    // -------------------------------------------------------------------------
+
+    #[cfg(any(
+        target_os = "dragonfly",
+        target_os = "freebsd",
+        target_os = "linux",
+        target_os = "netbsd",
+        target_os = "openbsd"
+    ))]
+    pub fn init_for_gtk_window<W, C>(
+        &self,
+        window: &W,
+        container: Option<&C>,
+    ) -> Result<()>
+    where
+        W: gtk::prelude::IsA<gtk::Window>
+            + gtk::prelude::IsA<gtk::Widget>,
+        C: gtk::prelude::IsA<gtk::Widget>,
+    {
+        self.0
+            .inner
+            .init_for_gtk_window(window, container)
+            .map_err(Into::into)
+    }
+
+    #[cfg(any(
+        target_os = "dragonfly",
+        target_os = "freebsd",
+        target_os = "linux",
+        target_os = "netbsd",
+        target_os = "openbsd"
+    ))]
+    pub fn remove_for_gtk_window<W>(&self, window: &W) -> Result<()>
+    where
+        W: gtk::prelude::IsA<gtk::Window>
+            + gtk::prelude::IsA<gtk::Widget>,
+    {
+        self.0
+            .inner
+            .remove_for_gtk_window(window)
+            .map_err(Into::into)
+    }
+
+    #[cfg(any(
+        target_os = "dragonfly",
+        target_os = "freebsd",
+        target_os = "linux",
+        target_os = "netbsd",
+        target_os = "openbsd"
+    ))]
+    pub fn hide_for_gtk_window<W>(&self, window: &W) -> Result<()>
+    where
+        W: gtk::prelude::IsA<gtk::Window>,
+    {
+        self.0
+            .inner
+            .hide_for_gtk_window(window)
+            .map_err(Into::into)
+    }
+
+    #[cfg(any(
+        target_os = "dragonfly",
+        target_os = "freebsd",
+        target_os = "linux",
+        target_os = "netbsd",
+        target_os = "openbsd"
+    ))]
+    pub fn show_for_gtk_window<W>(&self, window: &W) -> Result<()>
+    where
+        W: gtk::prelude::IsA<gtk::Window>,
+    {
+        self.0
+            .inner
+            .show_for_gtk_window(window)
+            .map_err(Into::into)
+    }
+
+    #[cfg(any(
+        target_os = "dragonfly",
+        target_os = "freebsd",
+        target_os = "linux",
+        target_os = "netbsd",
+        target_os = "openbsd"
+    ))]
+    pub fn is_visible_on_gtk_window<W>(&self, window: &W) -> bool
+    where
+        W: gtk::prelude::IsA<gtk::Window>,
+    {
+        self.0.inner.is_visible_on_gtk_window(window)
+    }
+
+    #[cfg(all(
+        feature = "gtk3",
+        any(
+            target_os = "dragonfly",
+            target_os = "freebsd",
+            target_os = "linux",
+            target_os = "netbsd",
+            target_os = "openbsd"
+        )
+    ))]
+    pub fn gtk_menubar_for_gtk_window<W>(
+        self,
+        window: &W,
+    ) -> Option<gtk::MenuBar>
+    where
+        W: gtk::prelude::IsA<gtk::Window>,
+    {
+        self.0.inner.clone().gtk_menubar_for_gtk_window(window)
+    }
 }
