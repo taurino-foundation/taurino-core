@@ -6,10 +6,7 @@ use crate::window::ManagedWindow;
 use crate::{
     error::Error,
     platform::prelude::MonitorExt,
-    types::{
-        CursorIcon, DeviceEventFilter, Monitor, ProgressBarState,
-        ProgressBarStatus, Rect, UserAttentionType,
-    },
+    types::{CursorIcon, DeviceEventFilter, Monitor, ProgressBarState, ProgressBarStatus, Rect, UserAttentionType},
     utils::{Icon, inner_size, map_theme},
 };
 use dpi::{PhysicalPosition, PhysicalSize};
@@ -19,10 +16,8 @@ use tao::{
     event_loop::DeviceEventFilter as TaoDeviceEventFilter,
     monitor::MonitorHandle,
     window::{
-        CursorIcon as TaoCursorIcon, Icon as TaoWindowIcon,
-        ProgressBarState as TaoProgressBarState,
-        ProgressState as TaoProgressState,
-        UserAttentionType as TaoUserAttentionType,
+        CursorIcon as TaoCursorIcon, Icon as TaoWindowIcon, ProgressBarState as TaoProgressBarState,
+        ProgressState as TaoProgressState, UserAttentionType as TaoUserAttentionType,
     },
 };
 /// Wrapper around a [`tao::window::Icon`] that can be created from an [`Icon`].
@@ -44,9 +39,7 @@ impl From<DeviceEventFilter> for DeviceEventFilterWrapper {
         match item {
             DeviceEventFilter::Always => Self(TaoDeviceEventFilter::Always),
             DeviceEventFilter::Never => Self(TaoDeviceEventFilter::Never),
-            DeviceEventFilter::Unfocused => {
-                Self(TaoDeviceEventFilter::Unfocused)
-            }
+            DeviceEventFilter::Unfocused => Self(TaoDeviceEventFilter::Unfocused),
         }
     }
 }
@@ -81,9 +74,7 @@ impl From<UserAttentionType> for UserAttentionTypeWrapper {
     fn from(request_type: UserAttentionType) -> Self {
         let o = match request_type {
             UserAttentionType::Critical => TaoUserAttentionType::Critical,
-            UserAttentionType::Informational => {
-                TaoUserAttentionType::Informational
-            }
+            UserAttentionType::Informational => TaoUserAttentionType::Informational,
         };
         Self(o)
     }
@@ -159,9 +150,7 @@ impl From<ProgressBarState> for ProgressBarStateWrapper {
     fn from(progress_state: ProgressBarState) -> Self {
         Self(TaoProgressBarState {
             progress: progress_state.progress,
-            state: progress_state
-                .status
-                .map(|state| ProgressStateWrapper::from(state).0),
+            state: progress_state.status.map(|state| ProgressStateWrapper::from(state).0),
             desktop_filename: progress_state.desktop_filename,
         })
     }
@@ -187,10 +176,7 @@ pub enum WindowEvent {
 pub struct WindowEventWrapper(pub Option<WindowEvent>);
 
 impl WindowEventWrapper {
-    pub fn map_from_tao(
-        event: &TaoWindowEvent<'_>,
-        #[cfg(windows)] window: &ManagedWindow,
-    ) -> Self {
+    pub fn map_from_tao(event: &TaoWindowEvent<'_>, #[cfg(windows)] window: &ManagedWindow) -> Self {
         let event = match event {
             TaoWindowEvent::Resized(size) => WindowEvent::Resized(*size),
             TaoWindowEvent::Moved(position) => WindowEvent::Moved(*position),
@@ -217,23 +203,22 @@ impl WindowEventWrapper {
                         return Self(None);
                     }
 
-                    let mut focused_webview =
-                        window.focused_webview.lock().unwrap();
+                    let mut focused_webview = window.focused_webview.lock().unwrap();
                     if let FocusState::Blured {
                         last_focused_webview_label,
                     } = &*focused_webview
                     {
-                        let should_focus_webview = last_focused_webview_label
-                            .as_deref()
-                            .and_then(|last_focused_webview_label| {
-                                window.webviews.iter().find(|w| {
-                                    w.metadata.webview_label
-                                        == last_focused_webview_label
-                                })
-                            });
+                        let should_focus_webview =
+                            last_focused_webview_label
+                                .as_deref()
+                                .and_then(|last_focused_webview_label| {
+                                    window
+                                        .webviews
+                                        .iter()
+                                        .find(|w| w.metadata.webview_label == last_focused_webview_label)
+                                });
                         *focused_webview = FocusState::WindowFocused;
-                        if let Some(should_focus_webview) = should_focus_webview
-                        {
+                        if let Some(should_focus_webview) = should_focus_webview {
                             drop(focused_webview);
                             let _ = should_focus_webview.focus();
                         }
@@ -251,9 +236,7 @@ impl WindowEventWrapper {
                     return Self(None);
                 }
             }
-            TaoWindowEvent::ThemeChanged(theme) => {
-                WindowEvent::ThemeChanged(map_theme(theme))
-            }
+            TaoWindowEvent::ThemeChanged(theme) => WindowEvent::ThemeChanged(map_theme(theme)),
             _ => return Self(None),
         };
         Self(Some(event))
@@ -265,11 +248,7 @@ impl WindowEventWrapper {
             // because wry replaces the NSView
             TaoWindowEvent::Resized(_) => {
                 if let Some(w) = &window.inner {
-                    let size = inner_size(
-                        w,
-                        &window.webviews,
-                        window.has_children.load(Ordering::Relaxed),
-                    );
+                    let size = inner_size(w, &window.webviews, window.has_children.load(Ordering::Relaxed));
                     Self(Some(WindowEvent::Resized(size)))
                 } else {
                     Self(None)

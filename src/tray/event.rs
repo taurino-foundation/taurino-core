@@ -124,36 +124,30 @@ impl From<tray_icon::TrayIconEvent> for TrayIconEvent {
                 },
                 button: button.into(),
             },
-            tray_icon::TrayIconEvent::Enter { id, position, rect } => {
-                Self::Enter {
-                    id,
-                    position,
-                    rect: Rect {
-                        position: rect.position.into(),
-                        size: rect.size.into(),
-                    },
-                }
-            }
-            tray_icon::TrayIconEvent::Move { id, position, rect } => {
-                Self::Move {
-                    id,
-                    position,
-                    rect: Rect {
-                        position: rect.position.into(),
-                        size: rect.size.into(),
-                    },
-                }
-            }
-            tray_icon::TrayIconEvent::Leave { id, position, rect } => {
-                Self::Leave {
-                    id,
-                    position,
-                    rect: Rect {
-                        position: rect.position.into(),
-                        size: rect.size.into(),
-                    },
-                }
-            }
+            tray_icon::TrayIconEvent::Enter { id, position, rect } => Self::Enter {
+                id,
+                position,
+                rect: Rect {
+                    position: rect.position.into(),
+                    size: rect.size.into(),
+                },
+            },
+            tray_icon::TrayIconEvent::Move { id, position, rect } => Self::Move {
+                id,
+                position,
+                rect: Rect {
+                    position: rect.position.into(),
+                    size: rect.size.into(),
+                },
+            },
+            tray_icon::TrayIconEvent::Leave { id, position, rect } => Self::Leave {
+                id,
+                position,
+                rect: Rect {
+                    position: rect.position.into(),
+                    size: rect.size.into(),
+                },
+            },
             _ => unreachable!("unsupported tray-icon event variant"),
         }
     }

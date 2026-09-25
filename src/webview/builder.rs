@@ -9,11 +9,9 @@ use url::Url;
 use crate::types::WebContextStore;
 use crate::{
     types::{
-        DocumentTitleChangedHandler, DownloadEvent, DownloadHandler,
-        NavigationHandler, NewWindowHandler, NewWindowResponse,
-        OnPageLoadHandler, PageLoadEvent, PermissionKind,
-        PermissionRequestHandler, PermissionResponse, Rect,
-        UriSchemeProtocolHandler, WebviewIpcHandler, WebviewUrl,
+        DocumentTitleChangedHandler, DownloadEvent, DownloadHandler, NavigationHandler, NewWindowHandler,
+        NewWindowResponse, OnPageLoadHandler, PageLoadEvent, PermissionKind, PermissionRequestHandler,
+        PermissionResponse, Rect, UriSchemeProtocolHandler, WebviewIpcHandler, WebviewUrl,
     },
     utils::{NewWindowFeatures, WindowWebViewMetaData},
     webview::{ManagedWebview, factory::create_webview},
@@ -34,8 +32,7 @@ pub struct WebViewBuilder {
 
     pub new_window_handler: Option<Box<NewWindowHandler>>,
 
-    pub document_title_changed_handler:
-        Option<Box<DocumentTitleChangedHandler>>,
+    pub document_title_changed_handler: Option<Box<DocumentTitleChangedHandler>>,
 
     /// The resolved URL to load on the webview.
     pub url: Option<WebviewUrl>,
@@ -43,14 +40,7 @@ pub struct WebViewBuilder {
     #[cfg(target_os = "android")]
     #[allow(clippy::type_complexity)]
     pub on_webview_created: Option<
-        Box<
-            dyn Fn(
-                    &WindowWebViewMetaData,
-                    CreationContext<'_, '_>,
-                ) -> Result<(), jni::errors::Error>
-                + Send
-                + Sync,
-        >,
+        Box<dyn Fn(&WindowWebViewMetaData, CreationContext<'_, '_>) -> Result<(), jni::errors::Error> + Send + Sync>,
     >,
 
     pub on_page_load_handler: Option<Box<OnPageLoadHandler>>,
@@ -60,8 +50,7 @@ pub struct WebViewBuilder {
     pub permission_request_handler: Option<Box<PermissionRequestHandler>>,
 
     #[cfg(any(target_os = "macos", target_os = "ios"))]
-    pub on_web_content_process_terminate_handler:
-        Option<Box<OnWebContentProcessTerminateHandler>>,
+    pub on_web_content_process_terminate_handler: Option<Box<OnWebContentProcessTerminateHandler>>,
     pub data_directory: Option<PathBuf>,
     pub bounds: Option<Rect>,
 }
@@ -77,9 +66,7 @@ impl Default for WebViewBuilder {
             navigation_handler: None,
             new_window_handler: None,
             document_title_changed_handler: None,
-            url: Some(WebviewUrl::External(
-                Url::parse("https://tauri.app").unwrap(),
-            )),
+            url: Some(WebviewUrl::External(Url::parse("https://tauri.app").unwrap())),
             #[cfg(target_os = "android")]
             on_webview_created: None,
             on_page_load_handler: None,
@@ -130,12 +117,7 @@ impl WebViewBuilder {
     /// Sets the new-window request handler.
     pub fn with_new_window_handler<F>(mut self, handler: F) -> Self
     where
-        F: Fn(
-                &WindowWebViewMetaData,
-                Url,
-                NewWindowFeatures,
-            ) -> NewWindowResponse
-            + 'static,
+        F: Fn(&WindowWebViewMetaData, Url, NewWindowFeatures) -> NewWindowResponse + 'static,
     {
         self.new_window_handler = Some(Box::new(handler));
         self
@@ -162,10 +144,7 @@ impl WebViewBuilder {
     /// Sets the download handler.
     pub fn with_download_handler<F>(mut self, handler: F) -> Self
     where
-        F: for<'a> Fn(&WindowWebViewMetaData, DownloadEvent<'a>) -> bool
-            + Send
-            + Sync
-            + 'static,
+        F: for<'a> Fn(&WindowWebViewMetaData, DownloadEvent<'a>) -> bool + Send + Sync + 'static,
     {
         self.download_handler = Some(Arc::new(handler));
         self
@@ -174,10 +153,7 @@ impl WebViewBuilder {
     /// Sets the permission-request handler.
     pub fn with_permission_request_handler<F>(mut self, handler: F) -> Self
     where
-        F: Fn(&WindowWebViewMetaData, PermissionKind) -> PermissionResponse
-            + Send
-            + Sync
-            + 'static,
+        F: Fn(&WindowWebViewMetaData, PermissionKind) -> PermissionResponse + Send + Sync + 'static,
     {
         self.permission_request_handler = Some(Box::new(handler));
         self
@@ -191,21 +167,11 @@ impl WebViewBuilder {
         befor_webview_creation: Option<F>,
     ) -> crate::error::Result<ManagedWebview>
     where
-        F: for<'a> Fn(
-                wry::WebViewBuilder<'a>,
-                WebviewUrl,
-            )
-                -> crate::error::Result<wry::WebViewBuilder<'a>>
+        F: for<'a> Fn(wry::WebViewBuilder<'a>, WebviewUrl) -> crate::error::Result<wry::WebViewBuilder<'a>>
             + Send
             + 'static,
     {
-        create_webview(
-            self,
-            window,
-            metadata.clone(),
-            web_context,
-            befor_webview_creation,
-        )
+        create_webview(self, window, metadata.clone(), web_context, befor_webview_creation)
     }
 }
 

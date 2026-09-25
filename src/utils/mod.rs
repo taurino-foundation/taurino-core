@@ -3,6 +3,7 @@ use dpi::Position;
 use std::{
     borrow::Cow,
     collections::{HashMap, HashSet},
+    marker::PhantomData,
     sync::{Arc, Mutex},
 };
 
@@ -174,6 +175,30 @@ where
     std::fs::write(path, content)
 } */
 
+/// A raw window type that contains fields to access
+/// the HWND on Windows, gtk::ApplicationWindow on Linux
+pub struct RawWindow<'a> {
+    #[cfg(windows)]
+    pub hwnd: isize,
+    #[cfg(any(
+        target_os = "linux",
+        target_os = "dragonfly",
+        target_os = "freebsd",
+        target_os = "netbsd",
+        target_os = "openbsd"
+    ))]
+    pub gtk_window: &'a gtk::ApplicationWindow,
+    #[cfg(any(
+        target_os = "linux",
+        target_os = "dragonfly",
+        target_os = "freebsd",
+        target_os = "netbsd",
+        target_os = "openbsd"
+    ))]
+    pub default_vbox: Option<&'a gtk::Box>,
+    pub _marker: &'a PhantomData<()>,
+}
+
 #[derive(Debug)]
 pub struct WebContext {
     pub inner: WryWebContext,
@@ -211,8 +236,7 @@ pub fn find_monitor_for_position(
         let monitor_size = m.size();
 
         // type annotations required for 32bit targets.
-        let window_position =
-            window_position.to_physical::<i32>(m.scale_factor());
+        let window_position = window_position.to_physical::<i32>(m.scale_factor());
 
         monitor_pos.x <= window_position.x
             && window_position.x < monitor_pos.x + monitor_size.width as i32
@@ -231,29 +255,19 @@ pub fn from_wry_permission_kind(kind: wry::PermissionKind) -> PermissionKind {
         wry::PermissionKind::DisplayCapture => PermissionKind::DisplayCapture,
         wry::PermissionKind::Midi => PermissionKind::Midi,
         wry::PermissionKind::Sensors => PermissionKind::Sensors,
-        wry::PermissionKind::MediaKeySystemAccess => {
-            PermissionKind::MediaKeySystemAccess
-        }
+        wry::PermissionKind::MediaKeySystemAccess => PermissionKind::MediaKeySystemAccess,
         wry::PermissionKind::LocalFonts => PermissionKind::LocalFonts,
-        wry::PermissionKind::WindowManagement => {
-            PermissionKind::WindowManagement
-        }
+        wry::PermissionKind::WindowManagement => PermissionKind::WindowManagement,
         wry::PermissionKind::PointerLock => PermissionKind::PointerLock,
-        wry::PermissionKind::AutomaticDownloads => {
-            PermissionKind::AutomaticDownloads
-        }
-        wry::PermissionKind::FileSystemAccess => {
-            PermissionKind::FileSystemAccess
-        }
+        wry::PermissionKind::AutomaticDownloads => PermissionKind::AutomaticDownloads,
+        wry::PermissionKind::FileSystemAccess => PermissionKind::FileSystemAccess,
         wry::PermissionKind::Autoplay => PermissionKind::Autoplay,
         wry::PermissionKind::Other => PermissionKind::Other,
         _ => PermissionKind::Other,
     }
 }
 
-pub fn to_wry_permission_response(
-    response: PermissionResponse,
-) -> wry::PermissionResponse {
+pub fn to_wry_permission_response(response: PermissionResponse) -> wry::PermissionResponse {
     match response {
         PermissionResponse::Allow => wry::PermissionResponse::Allow,
         PermissionResponse::Deny => wry::PermissionResponse::Deny,
@@ -288,8 +302,7 @@ pub struct NewWindowOpener {
     #[cfg(windows)]
     pub webview: webview2_com::Microsoft::Web::WebView2::Win32::ICoreWebView2,
     #[cfg(windows)]
-    pub environment:
-        webview2_com::Microsoft::Web::WebView2::Win32::ICoreWebView2Environment,
+    pub environment: webview2_com::Microsoft::Web::WebView2::Win32::ICoreWebView2Environment,
     /// The instance of the webview that initiated the new window request.
     #[cfg(target_os = "macos")]
     pub webview: objc2::rc::Retained<objc2_web_kit::WKWebView>,
@@ -297,8 +310,7 @@ pub struct NewWindowOpener {
     ///
     /// This **MUST** be used when creating the target webview. See [`WebviewAttributes::webview_configuration`].
     #[cfg(target_os = "macos")]
-    pub target_configuration:
-        objc2::rc::Retained<objc2_web_kit::WKWebViewConfiguration>,
+    pub target_configuration: objc2::rc::Retained<objc2_web_kit::WKWebViewConfiguration>,
 }
 
 /// Window features of a window requested to open.
@@ -315,11 +327,7 @@ impl NewWindowFeatures {
         position: Option<dpi::LogicalPosition<f64>>,
         opener: NewWindowOpener,
     ) -> Self {
-        Self {
-            size,
-            position,
-            opener,
-        }
+        Self { size, position, opener }
     }
 
     /// Specifies the size of the content area
@@ -368,14 +376,10 @@ impl WindowWebViewMetaData {
         let webview_label = webview_label.into();
 
         if window_label.trim().is_empty() {
-            return Err(crate::error::Error::EmptyInitializedWindow(
-                window_label,
-            ));
+            return Err(crate::error::Error::EmptyInitializedWindow(window_label));
         }
         if webview_label.trim().is_empty() {
-            return Err(crate::error::Error::EmptyInitializedWebView(
-                webview_label,
-            ));
+            return Err(crate::error::Error::EmptyInitializedWebView(webview_label));
         }
         if !is_label_valid(&window_label) {
             return Err(crate::error::Error::InvalidWindowLabel);
@@ -395,9 +399,9 @@ impl WindowWebViewMetaData {
 }
 
 pub fn is_label_valid(label: &str) -> bool {
-    label.chars().all(|c| {
-        char::is_alphanumeric(c) || c == '-' || c == '/' || c == ':' || c == '_'
-    })
+    label
+        .chars()
+        .all(|c| char::is_alphanumeric(c) || c == '-' || c == '/' || c == ':' || c == '_')
 }
 /*
 pub fn assert_label_is_valid(label: &str) {
@@ -425,20 +429,13 @@ pub fn parse_proxy_url(url: &Url) -> crate::Result<ProxyConfig> {
 } */
 
 #[cfg(target_os = "macos")]
-pub fn inner_size(
-    window: &Window,
-    webviews: &[ManagedWebview],
-    has_children: bool,
-) -> PhysicalSize<u32> {
+pub fn inner_size(window: &Window, webviews: &[ManagedWebview], has_children: bool) -> PhysicalSize<u32> {
     if !has_children && !webviews.is_empty() {
         use wry::WebViewExtMacOS;
         let webview = webviews.first().unwrap();
-        let view = unsafe {
-            Retained::cast_unchecked::<objc2_app_kit::NSView>(webview.webview())
-        };
+        let view = unsafe { Retained::cast_unchecked::<objc2_app_kit::NSView>(webview.webview()) };
         let view_frame = view.frame();
-        let logical: LogicalSize<f64> =
-            (view_frame.size.width, view_frame.size.height).into();
+        let logical: LogicalSize<f64> = (view_frame.size.width, view_frame.size.height).into();
         return logical.to_physical(window.scale_factor());
     }
 
@@ -447,11 +444,7 @@ pub fn inner_size(
 
 #[cfg(not(target_os = "macos"))]
 #[allow(unused_variables)]
-pub fn inner_size(
-    window: &Window,
-    webviews: &[ManagedWebview],
-    has_children: bool,
-) -> PhysicalSize<u32> {
+pub fn inner_size(window: &Window, webviews: &[ManagedWebview], has_children: bool) -> PhysicalSize<u32> {
     window.inner_size()
 }
 

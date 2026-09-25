@@ -27,11 +27,7 @@ pub trait ContextMenu: sealed::ContextMenuBase + Send + Sync {
     /// Popup this menu as a context menu on the specified window at the specified position.
     ///
     /// The position is relative to the window's top-left corner.
-    fn popup_at<P: Into<Position>>(
-        &self,
-        window: &Window,
-        position: P,
-    ) -> Result<()>;
+    fn popup_at<P: Into<Position>>(&self, window: &Window, position: P) -> Result<()>;
 }
 
 pub(crate) mod sealed {
@@ -46,19 +42,11 @@ pub(crate) mod sealed {
     pub trait ContextMenuBase {
         fn inner_context(&self) -> &dyn muda::ContextMenu;
         fn inner_context_owned(&self) -> Box<dyn muda::ContextMenu>;
-        fn popup_inner<P: Into<Position>>(
-            &self,
-            window: &Window,
-            position: Option<P>,
-        ) -> Result<()>;
+        fn popup_inner<P: Into<Position>>(&self, window: &Window, position: Option<P>) -> Result<()>;
     }
 }
 
-fn show_context_menu(
-    menu: &dyn MudaContextMenu,
-    window: &Window,
-    position: Option<Position>,
-) -> Result<()> {
+fn show_context_menu(menu: &dyn MudaContextMenu, window: &Window, position: Option<Position>) -> Result<()> {
     #[cfg(windows)]
     {
         use tao::platform::windows::WindowExtWindows;
@@ -87,10 +75,7 @@ fn show_context_menu(
     {
         use tao::platform::unix::WindowExtUnix;
 
-        menu.show_context_menu_for_gtk_window(
-            window.gtk_window().as_ref(),
-            position,
-        );
+        menu.show_context_menu_for_gtk_window(window.gtk_window().as_ref(), position);
     }
 
     Ok(())
@@ -106,11 +91,7 @@ impl ContextMenu for Menu {
         self.popup_inner(window, None::<Position>)
     }
 
-    fn popup_at<P: Into<Position>>(
-        &self,
-        window: &Window,
-        position: P,
-    ) -> Result<()> {
+    fn popup_at<P: Into<Position>>(&self, window: &Window, position: P) -> Result<()> {
         self.popup_inner(window, Some(position))
     }
 }
@@ -124,11 +105,7 @@ impl sealed::ContextMenuBase for Menu {
         Box::new(self.0.inner.clone())
     }
 
-    fn popup_inner<P: Into<Position>>(
-        &self,
-        window: &Window,
-        position: Option<P>,
-    ) -> Result<()> {
+    fn popup_inner<P: Into<Position>>(&self, window: &Window, position: Option<P>) -> Result<()> {
         show_context_menu(&self.0.inner, window, position.map(Into::into))
     }
 }
@@ -143,11 +120,7 @@ impl ContextMenu for Submenu {
         self.popup_inner(window, None::<Position>)
     }
 
-    fn popup_at<P: Into<Position>>(
-        &self,
-        window: &Window,
-        position: P,
-    ) -> Result<()> {
+    fn popup_at<P: Into<Position>>(&self, window: &Window, position: P) -> Result<()> {
         self.popup_inner(window, Some(position))
     }
 }
@@ -161,11 +134,7 @@ impl sealed::ContextMenuBase for Submenu {
         Box::new(self.0.inner.clone())
     }
 
-    fn popup_inner<P: Into<Position>>(
-        &self,
-        window: &Window,
-        position: Option<P>,
-    ) -> Result<()> {
+    fn popup_inner<P: Into<Position>>(&self, window: &Window, position: Option<P>) -> Result<()> {
         show_context_menu(&self.0.inner, window, position.map(Into::into))
     }
 }

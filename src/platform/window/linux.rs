@@ -20,8 +20,7 @@ impl super::WindowExt for tao::window::Window {
     fn center(&self) {
         if let Some(monitor) = self.current_monitor() {
             let window_size = self.outer_size();
-            let new_pos =
-                super::calculate_window_center_position(window_size, monitor);
+            let new_pos = super::calculate_window_center_position(window_size, monitor);
             self.set_outer_position(new_pos);
         }
     }

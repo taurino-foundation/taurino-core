@@ -57,9 +57,7 @@ fn dialog_inner(err: &str, level: Level) {
         ) -> HRESULT {
             if msg == TDN_HYPERLINK_CLICKED {
                 let link = PCWSTR(lparam.0 as _);
-                let _ = unsafe {
-                    ShellExecuteW(None, None, link, None, None, SW_SHOWNORMAL)
-                };
+                let _ = unsafe { ShellExecuteW(None, None, link, None, None, SW_SHOWNORMAL) };
             }
 
             S_OK
@@ -85,9 +83,7 @@ fn dialog_inner(err: &str, level: Level) {
             ..Default::default()
         };
 
-        let _ = unsafe {
-            TaskDialogIndirect(&task_dialog_config, None, None, None)
-        };
+        let _ = unsafe { TaskDialogIndirect(&task_dialog_config, None, None, None) };
     }
 }
 

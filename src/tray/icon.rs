@@ -15,8 +15,7 @@ use crate::{
 use super::{TrayIconEvent, TrayIconId};
 
 type MenuHandler = Arc<dyn Fn(&TrayIcon, MenuEvent) + Send + Sync + 'static>;
-type TrayHandler =
-    Arc<dyn Fn(&TrayIcon, TrayIconEvent) + Send + Sync + 'static>;
+type TrayHandler = Arc<dyn Fn(&TrayIcon, TrayIconEvent) + Send + Sync + 'static>;
 
 struct HandlerEntry {
     tray: Weak<TrayIconInner>,
@@ -24,8 +23,7 @@ struct HandlerEntry {
     tray_event: Vec<TrayHandler>,
 }
 
-static HANDLERS: OnceLock<Mutex<HashMap<TrayIconId, HandlerEntry>>> =
-    OnceLock::new();
+static HANDLERS: OnceLock<Mutex<HashMap<TrayIconId, HandlerEntry>>> = OnceLock::new();
 static INSTALL_DISPATCH: Once = Once::new();
 
 fn handlers() -> &'static Mutex<HashMap<TrayIconId, HandlerEntry>> {
@@ -34,34 +32,27 @@ fn handlers() -> &'static Mutex<HashMap<TrayIconId, HandlerEntry>> {
 
 fn install_global_dispatch() {
     INSTALL_DISPATCH.call_once(|| {
-        tray_icon::TrayIconEvent::set_event_handler(Some(
-            |event: tray_icon::TrayIconEvent| {
-                let event: TrayIconEvent = event.into();
-                let id = event.id().clone();
-                let (tray, callbacks) = {
-                    let map = handlers().lock().unwrap();
-                    let Some(entry) = map.get(&id) else { return };
-                    (entry.tray.upgrade(), entry.tray_event.clone())
-                };
-                if let Some(inner) = tray {
-                    let tray = TrayIcon { inner };
-                    for callback in callbacks {
-                        callback(&tray, event.clone());
-                    }
+        tray_icon::TrayIconEvent::set_event_handler(Some(|event: tray_icon::TrayIconEvent| {
+            let event: TrayIconEvent = event.into();
+            let id = event.id().clone();
+            let (tray, callbacks) = {
+                let map = handlers().lock().unwrap();
+                let Some(entry) = map.get(&id) else { return };
+                (entry.tray.upgrade(), entry.tray_event.clone())
+            };
+            if let Some(inner) = tray {
+                let tray = TrayIcon { inner };
+                for callback in callbacks {
+                    callback(&tray, event.clone());
                 }
-            },
-        ));
+            }
+        }));
 
         muda::MenuEvent::set_event_handler(Some(|event: muda::MenuEvent| {
             let targets = {
                 let map = handlers().lock().unwrap();
                 map.values()
-                    .filter_map(|entry| {
-                        entry
-                            .tray
-                            .upgrade()
-                            .map(|tray| (tray, entry.menu.clone()))
-                    })
+                    .filter_map(|entry| entry.tray.upgrade().map(|tray| (tray, entry.menu.clone())))
                     .collect::<Vec<_>>()
             };
             let event: MenuEvent = event.into();
@@ -107,10 +98,7 @@ impl TrayIcon {
         install_global_dispatch();
         let id = inner.id().clone();
         let this = Self {
-            inner: Arc::new(TrayIconInner {
-                id: id.clone(),
-                inner,
-            }),
+            inner: Arc::new(TrayIconInner { id: id.clone(), inner }),
         };
         handlers().lock().unwrap().insert(
             id,
@@ -145,41 +133,25 @@ impl TrayIcon {
         }
     }
 
-    pub fn set_icon(
-        &self,
-        icon: Option<Image<'_>>,
-    ) -> crate::error::Result<()> {
+    pub fn set_icon(&self, icon: Option<Image<'_>>) -> crate::error::Result<()> {
         let icon = icon.map(TryInto::try_into).transpose()?;
         self.inner.inner.set_icon(icon).map_err(Into::into)
     }
 
-    pub fn set_menu<M: ContextMenu + 'static>(
-        &self,
-        menu: Option<M>,
-    ) -> crate::error::Result<()> {
-        self.inner
-            .inner
-            .set_menu(menu.map(|m| m.inner_context_owned()));
+    pub fn set_menu<M: ContextMenu + 'static>(&self, menu: Option<M>) -> crate::error::Result<()> {
+        self.inner.inner.set_menu(menu.map(|m| m.inner_context_owned()));
         Ok(())
     }
 
-    pub fn set_tooltip<S: AsRef<str>>(
-        &self,
-        tooltip: Option<S>,
-    ) -> crate::error::Result<()> {
+    pub fn set_tooltip<S: AsRef<str>>(&self, tooltip: Option<S>) -> crate::error::Result<()> {
         self.inner
             .inner
             .set_tooltip(tooltip.map(|s| s.as_ref().to_string()))
             .map_err(Into::into)
     }
 
-    pub fn set_title<S: AsRef<str>>(
-        &self,
-        title: Option<S>,
-    ) -> crate::error::Result<()> {
-        self.inner
-            .inner
-            .set_title(title.map(|s| s.as_ref().to_string()));
+    pub fn set_title<S: AsRef<str>>(&self, title: Option<S>) -> crate::error::Result<()> {
+        self.inner.inner.set_title(title.map(|s| s.as_ref().to_string()));
         Ok(())
     }
 
@@ -187,10 +159,7 @@ impl TrayIcon {
         self.inner.inner.set_visible(visible).map_err(Into::into)
     }
 
-    pub fn set_temp_dir_path<P: AsRef<Path>>(
-        &self,
-        path: Option<P>,
-    ) -> crate::error::Result<()> {
+    pub fn set_temp_dir_path<P: AsRef<Path>>(&self, path: Option<P>) -> crate::error::Result<()> {
         #[cfg(target_os = "linux")]
         self.inner
             .inner
@@ -199,10 +168,7 @@ impl TrayIcon {
         Ok(())
     }
 
-    pub fn set_icon_as_template(
-        &self,
-        #[allow(unused)] is_template: bool,
-    ) -> crate::error::Result<()> {
+    pub fn set_icon_as_template(&self, #[allow(unused)] is_template: bool) -> crate::error::Result<()> {
         #[cfg(target_os = "macos")]
         self.inner.inner.set_icon_as_template(is_template);
         Ok(())
@@ -226,10 +192,7 @@ impl TrayIcon {
         self.set_icon(icon)
     }
 
-    pub fn set_show_menu_on_left_click(
-        &self,
-        #[allow(unused)] enable: bool,
-    ) -> crate::error::Result<()> {
+    pub fn set_show_menu_on_left_click(&self, #[allow(unused)] enable: bool) -> crate::error::Result<()> {
         #[cfg(any(target_os = "macos", windows))]
         self.inner.inner.set_show_menu_on_left_click(enable);
         Ok(())

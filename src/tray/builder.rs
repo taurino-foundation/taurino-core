@@ -4,14 +4,10 @@ use muda::MenuEvent;
 
 use crate::{prelude::ContextMenu, utils::image::Image};
 
-use super::{
-    /* icon::{attach_menu_handler, attach_tray_handler}, */
-    TrayIcon, TrayIconEvent, TrayIconId,
-};
+use super::{/* icon::{attach_menu_handler, attach_tray_handler}, */ TrayIcon, TrayIconEvent, TrayIconId};
 
 type MenuHandler = Arc<dyn Fn(&TrayIcon, MenuEvent) + Send + Sync + 'static>;
-type TrayHandler =
-    Arc<dyn Fn(&TrayIcon, TrayIconEvent) + Send + Sync + 'static>;
+type TrayHandler = Arc<dyn Fn(&TrayIcon, TrayIconEvent) + Send + Sync + 'static>;
 
 /// [`TrayIcon`] builder without Tauri `AppHandle`, `Runtime` or `Manager`.
 #[derive(Default)]
@@ -68,10 +64,7 @@ impl TrayIconBuilder {
         self
     }
 
-    #[deprecated(
-        since = "2.2.0",
-        note = "Use `TrayIconBuilder::show_menu_on_left_click` instead."
-    )]
+    #[deprecated(since = "2.2.0", note = "Use `TrayIconBuilder::show_menu_on_left_click` instead.")]
     pub fn menu_on_left_click(mut self, enable: bool) -> Self {
         self.inner = self.inner.with_menu_on_left_click(enable);
         self

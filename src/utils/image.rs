@@ -7,17 +7,14 @@ use std::borrow::Cow;
 #[cfg(windows)]
 use windows::{
     Win32::{
-        Foundation::{
-            E_FAIL, ERROR_INVALID_PARAMETER, ERROR_NOT_SUPPORTED, WIN32_ERROR,
-        },
+        Foundation::{E_FAIL, ERROR_INVALID_PARAMETER, ERROR_NOT_SUPPORTED, WIN32_ERROR},
         Graphics::Gdi::{
-            BI_RGB, BITMAPINFO, BITMAPINFOHEADER, CreateCompatibleDC,
-            DIB_RGB_COLORS, DeleteDC, GetDIBits, HBITMAP,
+            BI_RGB, BITMAPINFO, BITMAPINFOHEADER, CreateCompatibleDC, DIB_RGB_COLORS, DeleteDC, GetDIBits, HBITMAP,
         },
         System::LibraryLoader::GetModuleHandleW,
         UI::WindowsAndMessaging::{
-            GetIconInfo, GetSystemMetrics, HICON, ICONINFO, IMAGE_ICON,
-            LR_DEFAULTCOLOR, LoadImageW, SM_CXICON, SM_CYICON,
+            GetIconInfo, GetSystemMetrics, HICON, ICONINFO, IMAGE_ICON, LR_DEFAULTCOLOR, LoadImageW, SM_CXICON,
+            SM_CYICON,
         },
     },
     core::{Owned, PCWSTR},
@@ -75,18 +72,13 @@ pub fn default_window_icon_from_app_icon_resource() -> Option<Image<'static>> {
         _ => 32,
     };
     let (width, height) = (metric(SM_CXICON), metric(SM_CYICON));
-    match Image::from_icon_resource(WINDOWS_APP_ICON_RESOURCE_ID, width, height)
-    {
+    match Image::from_icon_resource(WINDOWS_APP_ICON_RESOURCE_ID, width, height) {
         Ok(icon) => Some(icon),
         Err(e) => {
             // a logger is usually not installed yet when `generate_context!` runs
             #[cfg(debug_assertions)]
-            eprintln!(
-                "failed to load the default window icon from the application icon resource: {e}"
-            );
-            log::warn!(
-                "failed to load the default window icon from the application icon resource: {e}"
-            );
+            eprintln!("failed to load the default window icon from the application icon resource: {e}");
+            log::warn!("failed to load the default window icon from the application icon resource: {e}");
             None
         }
     }
@@ -101,20 +93,11 @@ const BYTES_PER_PIXEL: usize = 4;
 ///
 /// `hbm` must be a valid bitmap handle and `width` and `height` must be positive.
 #[cfg(windows)]
-unsafe fn read_bgra(
-    hbm: HBITMAP,
-    width: i32,
-    height: i32,
-) -> crate::error::Result<Vec<u8>> {
+unsafe fn read_bgra(hbm: HBITMAP, width: i32, height: i32) -> crate::error::Result<Vec<u8>> {
     let image_bytes = (width as usize)
         .checked_mul(height as usize)
         .and_then(|n| n.checked_mul(BYTES_PER_PIXEL))
-        .ok_or_else(|| {
-            resource_error(
-                ERROR_INVALID_PARAMETER,
-                "image size overflows usize",
-            )
-        })?;
+        .ok_or_else(|| resource_error(ERROR_INVALID_PARAMETER, "image size overflows usize"))?;
     let mut bgra = vec![0u8; image_bytes];
 
     let mut bitmap_info = BITMAPINFO::default();
@@ -138,11 +121,8 @@ unsafe fn read_bgra(
             DIB_RGB_COLORS,
         );
         // capture the error before `DeleteDC` can overwrite it
-        let error = (scan_lines != height).then(|| {
-            last_error_or(&format!(
-                "GetDIBits copied {scan_lines} of {height} scan lines"
-            ))
-        });
+        let error = (scan_lines != height)
+            .then(|| last_error_or(&format!("GetDIBits copied {scan_lines} of {height} scan lines")));
         let _ = DeleteDC(hdc);
         if let Some(error) = error {
             return Err(crate::error::Error::ImageFromResource(error));
@@ -154,10 +134,7 @@ unsafe fn read_bgra(
 
 #[cfg(windows)]
 fn resource_error(code: WIN32_ERROR, message: &str) -> crate::error::Error {
-    crate::error::Error::ImageFromResource(windows::core::Error::new(
-        code.to_hresult(),
-        message,
-    ))
+    crate::error::Error::ImageFromResource(windows::core::Error::new(code.to_hresult(), message))
 }
 
 /// Returns the calling thread's last error, or a generic `E_FAIL` with `message`
@@ -247,9 +224,7 @@ impl<'a> Image<'a> {
     ///
     /// Only `ico` and `png` are supported (based on activated feature flag).
 
-    pub fn from_path<P: AsRef<std::path::Path>>(
-        path: P,
-    ) -> crate::error::Result<Self> {
+    pub fn from_path<P: AsRef<std::path::Path>>(path: P) -> crate::error::Result<Self> {
         let bytes = std::fs::read(path)?;
         Self::from_bytes(&bytes)
     }
@@ -291,16 +266,15 @@ impl<'a> Image<'a> {
         width: u32,
         height: u32,
     ) -> crate::error::Result<Self> {
-        let (width_i32, height_i32) =
-            match (i32::try_from(width), i32::try_from(height)) {
-                (Ok(w), Ok(h)) if w > 0 && h > 0 => (w, h),
-                _ => {
-                    return Err(resource_error(
-                        ERROR_INVALID_PARAMETER,
-                        "width and height must be between 1 and i32::MAX",
-                    ));
-                }
-            };
+        let (width_i32, height_i32) = match (i32::try_from(width), i32::try_from(height)) {
+            (Ok(w), Ok(h)) if w > 0 && h > 0 => (w, h),
+            _ => {
+                return Err(resource_error(
+                    ERROR_INVALID_PARAMETER,
+                    "width and height must be between 1 and i32::MAX",
+                ));
+            }
+        };
 
         // keeps the wide string alive for the `LoadImageW` call
         let name: Vec<u16>;
@@ -333,10 +307,7 @@ impl<'a> Image<'a> {
         };
 
         let mut icon_info = ICONINFO::default();
-        unsafe {
-            GetIconInfo(*hicon, &mut icon_info)
-                .map_err(crate::error::Error::ImageFromResource)?
-        };
+        unsafe { GetIconInfo(*hicon, &mut icon_info).map_err(crate::error::Error::ImageFromResource)? };
         let hbm_mask = unsafe { Owned::new(icon_info.hbmMask) };
         let hbm_color = unsafe { Owned::new(icon_info.hbmColor) };
 
@@ -352,12 +323,7 @@ impl<'a> Image<'a> {
 
         // Color bitmaps without an alpha channel (e.g. 24bpp icons) read back with alpha = 0 on every pixel,
         // so recover the alpha channel from the AND mask: a set bit means the pixel is transparent.
-        if bgra
-            .as_chunks::<BYTES_PER_PIXEL>()
-            .0
-            .iter()
-            .all(|px| px[3] == 0)
-        {
+        if bgra.as_chunks::<BYTES_PER_PIXEL>().0.iter().all(|px| px[3] == 0) {
             let mask = unsafe { read_bgra(*hbm_mask, width_i32, height_i32)? };
             for (px, mask) in bgra
                 .as_chunks_mut::<BYTES_PER_PIXEL>()
@@ -424,8 +390,7 @@ impl TryFrom<Image<'_>> for muda::Icon {
     type Error = crate::error::Error;
 
     fn try_from(img: Image<'_>) -> Result<Self, Self::Error> {
-        muda::Icon::from_rgba(img.rgba.into_owned(), img.width, img.height)
-            .map_err(Into::into)
+        muda::Icon::from_rgba(img.rgba.into_owned(), img.width, img.height).map_err(Into::into)
     }
 }
 
@@ -433,16 +398,13 @@ impl TryFrom<Image<'_>> for tray_icon::Icon {
     type Error = crate::error::Error;
 
     fn try_from(img: Image<'_>) -> Result<Self, Self::Error> {
-        tray_icon::Icon::from_rgba(img.rgba.into_owned(), img.width, img.height)
-            .map_err(Into::into)
+        tray_icon::Icon::from_rgba(img.rgba.into_owned(), img.width, img.height).map_err(Into::into)
     }
 }
 
 #[cfg(all(test, windows))]
 mod tests {
-    use super::{
-        IconResource, Image, default_window_icon_from_app_icon_resource,
-    };
+    use super::{IconResource, Image, default_window_icon_from_app_icon_resource};
 
     /// The test executable has no icon resources, so every lookup must fail with an error
     /// (instead of panicking or returning a stretched placeholder).
@@ -452,8 +414,7 @@ mod tests {
             IconResource::Id(u16::MAX),
             IconResource::Name("tauri-image-test-missing-icon"),
         ] {
-            let error =
-                Image::from_icon_resource(resource, 32, 32).unwrap_err();
+            let error = Image::from_icon_resource(resource, 32, 32).unwrap_err();
             assert!(
                 matches!(error, crate::error::Error::ImageFromResource(_)),
                 "{resource:?}: {error:?}"
@@ -465,11 +426,8 @@ mod tests {
 
     #[test]
     fn from_icon_resource_rejects_invalid_sizes() {
-        for (width, height) in
-            [(0, 32), (32, 0), (u32::MAX, 32), (32, i32::MAX as u32 + 1)]
-        {
-            let error =
-                Image::from_icon_resource(1, width, height).unwrap_err();
+        for (width, height) in [(0, 32), (32, 0), (u32::MAX, 32), (32, i32::MAX as u32 + 1)] {
+            let error = Image::from_icon_resource(1, width, height).unwrap_err();
             assert!(
                 matches!(error, crate::error::Error::ImageFromResource(_)),
                 "{width}x{height}: {error:?}"

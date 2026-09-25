@@ -1,9 +1,6 @@
 use crate::error::{Error, Result};
 #[cfg(windows)]
-use crate::platform::prelude::{
-    attach_resize_handler, detach_resize_handler,
-    update_drag_hwnd_rgn_for_undecorated,
-};
+use crate::platform::prelude::{attach_resize_handler, detach_resize_handler, update_drag_hwnd_rgn_for_undecorated};
 use dpi::{PhysicalPosition, PhysicalSize, Position, Size};
 use std::{
     fmt,
@@ -37,15 +34,14 @@ use crate::{types::FocusState, utils::ArcMut};
 use crate::{
     platform::prelude::WindowExt,
     types::{
-        CloseRequestedHandler, Color, CursorIcon, Monitor, ProgressBarState,
-        ResizeDirection, Theme, TitleBarStyle, UserAttentionType,
-        WindowEventHandler, WindowSizeConstraints,
+        CloseRequestedHandler, Color, CursorIcon, Monitor, ProgressBarState, ResizeDirection, Theme, TitleBarStyle,
+        UserAttentionType, WindowEventHandler, WindowSizeConstraints,
     },
     utils::{
         Icon, WindowWebViewMetaData, find_monitor_for_position, inner_size,
         wrappers::{
-            CursorIconWrapper, MonitorHandleWrapper, ProgressBarStateWrapper,
-            TaoIcon, UserAttentionTypeWrapper, WindowEventWrapper,
+            CursorIconWrapper, MonitorHandleWrapper, ProgressBarStateWrapper, TaoIcon, UserAttentionTypeWrapper,
+            WindowEventWrapper,
         },
     },
     webview::{ManagedWebview, WebViewId},
@@ -89,10 +85,7 @@ impl fmt::Debug for ManagedWindow {
         f.debug_struct("ManagedWindow")
             .field("label", &self.metadata.window_label)
             .field("inner", &self.inner)
-            .field(
-                "has_close_requested_handler",
-                &self.close_requested_handler.is_some(),
-            )
+            .field("has_close_requested_handler", &self.close_requested_handler.is_some())
             .finish()
     }
 }
@@ -102,9 +95,9 @@ impl ManagedWindow {
     }
 
     pub fn inner_window(&self) -> Result<&Window> {
-        self.inner.as_deref().ok_or_else(|| {
-            Error::WindowNotInitialized(self.metadata.window_label.clone())
-        })
+        self.inner
+            .as_deref()
+            .ok_or_else(|| Error::WindowNotInitialized(self.metadata.window_label.clone()))
     }
 
     pub fn window_atomic_id(&self) -> WindowId {
@@ -120,10 +113,7 @@ impl ManagedWindow {
             .find(|webview| webview.metadata.webview_label == label)
             .ok_or_else(|| Error::WebviewNotFound(label.to_string()))
     }
-    pub fn get_webview_mut(
-        &mut self,
-        label: &str,
-    ) -> Result<&mut ManagedWebview> {
+    pub fn get_webview_mut(&mut self, label: &str) -> Result<&mut ManagedWebview> {
         self.webviews
             .iter_mut()
             .find(|webview| webview.metadata.webview_label == label)
@@ -139,10 +129,7 @@ impl ManagedWindow {
             if !resizable {
                 detach_resize_handler(window.hwnd());
             } else if !window.is_decorated() {
-                attach_resize_handler(
-                    window.hwnd(),
-                    window.has_undecorated_shadow(),
-                );
+                attach_resize_handler(window.hwnd(), window.has_undecorated_shadow());
             }
         }
 
@@ -159,10 +146,7 @@ impl ManagedWindow {
             if decorations {
                 detach_resize_handler(window.hwnd());
             } else if window.is_resizable() {
-                attach_resize_handler(
-                    window.hwnd(),
-                    window.has_undecorated_shadow(),
-                );
+                attach_resize_handler(window.hwnd(), window.has_undecorated_shadow());
             }
         }
 
@@ -189,9 +173,9 @@ impl ManagedWindow {
     }
     #[inline]
     fn window(&self) -> Result<&Window> {
-        self.inner.as_deref().ok_or_else(|| {
-            Error::WindowNotInitialized(self.metadata.window_label.clone())
-        })
+        self.inner
+            .as_deref()
+            .ok_or_else(|| Error::WindowNotInitialized(self.metadata.window_label.clone()))
     }
 
     pub fn label(&self) -> &str {
@@ -211,15 +195,11 @@ impl ManagedWindow {
     }
 
     pub fn inner_position(&self) -> Result<PhysicalPosition<i32>> {
-        self.window()?
-            .inner_position()
-            .map_err(|_| Error::FailedToSendMessage)
+        self.window()?.inner_position().map_err(|_| Error::FailedToSendMessage)
     }
 
     pub fn outer_position(&self) -> Result<PhysicalPosition<i32>> {
-        self.window()?
-            .outer_position()
-            .map_err(|_| Error::FailedToSendMessage)
+        self.window()?.outer_position().map_err(|_| Error::FailedToSendMessage)
     }
 
     pub fn inner_size(&self) -> Result<PhysicalSize<u32>> {
@@ -254,8 +234,7 @@ impl ManagedWindow {
             if self.has_children.load(Ordering::Relaxed) {
                 return Ok(matches!(
                     *self.focused_webview.lock().unwrap(),
-                    FocusState::WindowFocused
-                        | FocusState::WebviewFocused { .. }
+                    FocusState::WindowFocused | FocusState::WebviewFocused { .. }
                 ));
             }
         }
@@ -292,24 +271,14 @@ impl ManagedWindow {
     }
 
     pub fn current_monitor(&self) -> Result<Option<Monitor>> {
-        Ok(self
-            .window()?
-            .current_monitor()
-            .map(|m| MonitorHandleWrapper(m).into()))
+        Ok(self.window()?.current_monitor().map(|m| MonitorHandleWrapper(m).into()))
     }
 
     pub fn primary_monitor(&self) -> Result<Option<Monitor>> {
-        Ok(self
-            .window()?
-            .primary_monitor()
-            .map(|m| MonitorHandleWrapper(m).into()))
+        Ok(self.window()?.primary_monitor().map(|m| MonitorHandleWrapper(m).into()))
     }
 
-    pub fn monitor_from_point(
-        &self,
-        x: f64,
-        y: f64,
-    ) -> Result<Option<Monitor>> {
+    pub fn monitor_from_point(&self, x: f64, y: f64) -> Result<Option<Monitor>> {
         Ok(self
             .window()?
             .monitor_from_point(x, y)
@@ -343,10 +312,7 @@ impl ManagedWindow {
         target_os = "openbsd"
     ))]
     pub fn gtk_box(&self) -> Result<gtk::Box> {
-        self.window()?
-            .default_vbox()
-            .cloned()
-            .ok_or(Error::FailedToSendMessage)
+        self.window()?.default_vbox().cloned().ok_or(Error::FailedToSendMessage)
     }
 
     #[cfg(target_os = "android")]
@@ -366,9 +332,7 @@ impl ManagedWindow {
         })
     }
 
-    pub fn raw_window_handle(
-        &self,
-    ) -> Result<raw_window_handle::RawWindowHandle> {
+    pub fn raw_window_handle(&self) -> Result<raw_window_handle::RawWindowHandle> {
         use raw_window_handle::HasWindowHandle;
 
         self.window()?
@@ -394,14 +358,9 @@ impl ManagedWindow {
         Ok(())
     }
 
-    pub fn request_user_attention(
-        &self,
-        request_type: Option<UserAttentionType>,
-    ) -> Result<()> {
-        self.window()?.request_user_attention(
-            request_type
-                .map(|request| UserAttentionTypeWrapper::from(request).0),
-        );
+    pub fn request_user_attention(&self, request_type: Option<UserAttentionType>) -> Result<()> {
+        self.window()?
+            .request_user_attention(request_type.map(|request| UserAttentionTypeWrapper::from(request).0));
         Ok(())
     }
 
@@ -531,18 +490,14 @@ impl ManagedWindow {
         Ok(())
     }
 
-    pub fn set_size_constraints(
-        &self,
-        constraints: WindowSizeConstraints,
-    ) -> Result<()> {
-        self.window()?.set_inner_size_constraints(
-            tao::window::WindowSizeConstraints {
+    pub fn set_size_constraints(&self, constraints: WindowSizeConstraints) -> Result<()> {
+        self.window()?
+            .set_inner_size_constraints(tao::window::WindowSizeConstraints {
                 min_width: constraints.min_width,
                 min_height: constraints.min_height,
                 max_width: constraints.max_width,
                 max_height: constraints.max_height,
-            },
-        );
+            });
         Ok(())
     }
 
@@ -563,9 +518,7 @@ impl ManagedWindow {
     pub fn set_fullscreen_on_monitor(&self, position: Position) -> Result<()> {
         let window = self.window()?;
 
-        if let Some(monitor) =
-            find_monitor_for_position(window.available_monitors(), position)
-        {
+        if let Some(monitor) = find_monitor_for_position(window.available_monitors(), position) {
             window.set_fullscreen(Some(Fullscreen::Borderless(Some(monitor))));
         }
 
@@ -589,8 +542,7 @@ impl ManagedWindow {
     }
 
     pub fn set_icon(&self, icon: Icon<'_>) -> Result<()> {
-        self.window()?
-            .set_window_icon(Some(TaoIcon::try_from(icon)?.0));
+        self.window()?.set_window_icon(Some(TaoIcon::try_from(icon)?.0));
         Ok(())
     }
 
@@ -640,15 +592,11 @@ impl ManagedWindow {
     }
 
     pub fn set_cursor_icon(&self, icon: CursorIcon) -> Result<()> {
-        self.window()?
-            .set_cursor_icon(CursorIconWrapper::from(icon).0);
+        self.window()?.set_cursor_icon(CursorIconWrapper::from(icon).0);
         Ok(())
     }
 
-    pub fn set_cursor_position<P: Into<Position>>(
-        &self,
-        position: P,
-    ) -> Result<()> {
+    pub fn set_cursor_position<P: Into<Position>>(&self, position: P) -> Result<()> {
         self.window()?
             .set_cursor_position(position.into())
             .map_err(|_| Error::FailedToSendMessage)
@@ -661,28 +609,18 @@ impl ManagedWindow {
     }
 
     pub fn drag_window(&self) -> Result<()> {
-        self.window()?
-            .drag_window()
-            .map_err(|_| Error::FailedToSendMessage)
+        self.window()?.drag_window().map_err(|_| Error::FailedToSendMessage)
     }
 
     pub fn resize_drag_window(&self, direction: ResizeDirection) -> Result<()> {
         let direction = match direction {
             ResizeDirection::East => tao::window::ResizeDirection::East,
             ResizeDirection::North => tao::window::ResizeDirection::North,
-            ResizeDirection::NorthEast => {
-                tao::window::ResizeDirection::NorthEast
-            }
-            ResizeDirection::NorthWest => {
-                tao::window::ResizeDirection::NorthWest
-            }
+            ResizeDirection::NorthEast => tao::window::ResizeDirection::NorthEast,
+            ResizeDirection::NorthWest => tao::window::ResizeDirection::NorthWest,
             ResizeDirection::South => tao::window::ResizeDirection::South,
-            ResizeDirection::SouthEast => {
-                tao::window::ResizeDirection::SouthEast
-            }
-            ResizeDirection::SouthWest => {
-                tao::window::ResizeDirection::SouthWest
-            }
+            ResizeDirection::SouthEast => tao::window::ResizeDirection::SouthEast,
+            ResizeDirection::SouthWest => tao::window::ResizeDirection::SouthWest,
             ResizeDirection::West => tao::window::ResizeDirection::West,
         };
 
@@ -696,19 +634,11 @@ impl ManagedWindow {
         Ok(())
     }
 
-    pub fn set_badge_count(
-        &self,
-        count: Option<i64>,
-        desktop_filename: Option<String>,
-    ) -> Result<()> {
+    pub fn set_badge_count(&self, count: Option<i64>, desktop_filename: Option<String>) -> Result<()> {
         let _window = self.window()?;
 
         #[cfg(target_os = "ios")]
-        _window.set_badge_count(
-            count.map_or(0, |x| {
-                x.clamp(i32::MIN as i64, i32::MAX as i64) as i32
-            }),
-        );
+        _window.set_badge_count(count.map_or(0, |x| x.clamp(i32::MIN as i64, i32::MAX as i64) as i32));
 
         #[cfg(target_os = "macos")]
         _window.set_badge_label(count.map(|x| x.to_string()));
@@ -754,8 +684,7 @@ impl ManagedWindow {
     #[cfg(windows)]
     pub fn set_overlay_icon(&self, icon: Option<Icon<'_>>) -> Result<()> {
         let icon = icon.map(TaoIcon::try_from).transpose()?;
-        self.window()?
-            .set_overlay_icon(icon.as_ref().map(|icon| &icon.0));
+        self.window()?.set_overlay_icon(icon.as_ref().map(|icon| &icon.0));
         Ok(())
     }
 
@@ -796,10 +725,7 @@ impl ManagedWindow {
     }
 
     #[cfg(target_os = "macos")]
-    pub fn set_traffic_light_position<P: Into<dpi::Position>>(
-        &self,
-        position: P,
-    ) -> Result<()> {
+    pub fn set_traffic_light_position<P: Into<dpi::Position>>(&self, position: P) -> Result<()> {
         self.window()?.set_traffic_light_inset(position.into());
         Ok(())
     }

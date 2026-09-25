@@ -86,10 +86,7 @@ impl<'a> AboutMetadataBuilder<'a> {
     /// ## Platform-specific
     ///
     /// - **Windows / Linux:** Appended to the end of `version` in parentheses.
-    pub fn short_version<S: Into<String>>(
-        mut self,
-        short_version: Option<S>,
-    ) -> Self {
+    pub fn short_version<S: Into<String>>(mut self, short_version: Option<S>) -> Self {
         self.0.short_version = short_version.map(|s| s.into());
         self
     }
@@ -139,10 +136,7 @@ impl<'a> AboutMetadataBuilder<'a> {
     /// ## Platform-specific
     ///
     /// - **macOS:** Unsupported.
-    pub fn website_label<S: Into<String>>(
-        mut self,
-        website_label: Option<S>,
-    ) -> Self {
+    pub fn website_label<S: Into<String>>(mut self, website_label: Option<S>) -> Self {
         self.0.website_label = website_label.map(|s| s.into());
         self
     }
@@ -335,9 +329,7 @@ impl From<NativeIcon> for muda::NativeIcon {
             NativeIcon::Folder => muda::NativeIcon::Folder,
             NativeIcon::FolderBurnable => muda::NativeIcon::FolderBurnable,
             NativeIcon::FolderSmart => muda::NativeIcon::FolderSmart,
-            NativeIcon::FollowLinkFreestanding => {
-                muda::NativeIcon::FollowLinkFreestanding
-            }
+            NativeIcon::FollowLinkFreestanding => muda::NativeIcon::FollowLinkFreestanding,
             NativeIcon::FontPanel => muda::NativeIcon::FontPanel,
             NativeIcon::GoLeft => muda::NativeIcon::GoLeft,
             NativeIcon::GoRight => muda::NativeIcon::GoRight,
@@ -345,52 +337,32 @@ impl From<NativeIcon> for muda::NativeIcon {
             NativeIcon::IChatTheater => muda::NativeIcon::IChatTheater,
             NativeIcon::IconView => muda::NativeIcon::IconView,
             NativeIcon::Info => muda::NativeIcon::Info,
-            NativeIcon::InvalidDataFreestanding => {
-                muda::NativeIcon::InvalidDataFreestanding
-            }
-            NativeIcon::LeftFacingTriangle => {
-                muda::NativeIcon::LeftFacingTriangle
-            }
+            NativeIcon::InvalidDataFreestanding => muda::NativeIcon::InvalidDataFreestanding,
+            NativeIcon::LeftFacingTriangle => muda::NativeIcon::LeftFacingTriangle,
             NativeIcon::ListView => muda::NativeIcon::ListView,
             NativeIcon::LockLocked => muda::NativeIcon::LockLocked,
             NativeIcon::LockUnlocked => muda::NativeIcon::LockUnlocked,
             NativeIcon::MenuMixedState => muda::NativeIcon::MenuMixedState,
             NativeIcon::MenuOnState => muda::NativeIcon::MenuOnState,
             NativeIcon::MobileMe => muda::NativeIcon::MobileMe,
-            NativeIcon::MultipleDocuments => {
-                muda::NativeIcon::MultipleDocuments
-            }
+            NativeIcon::MultipleDocuments => muda::NativeIcon::MultipleDocuments,
             NativeIcon::Network => muda::NativeIcon::Network,
             NativeIcon::Path => muda::NativeIcon::Path,
-            NativeIcon::PreferencesGeneral => {
-                muda::NativeIcon::PreferencesGeneral
-            }
+            NativeIcon::PreferencesGeneral => muda::NativeIcon::PreferencesGeneral,
             NativeIcon::QuickLook => muda::NativeIcon::QuickLook,
-            NativeIcon::RefreshFreestanding => {
-                muda::NativeIcon::RefreshFreestanding
-            }
+            NativeIcon::RefreshFreestanding => muda::NativeIcon::RefreshFreestanding,
             NativeIcon::Refresh => muda::NativeIcon::Refresh,
             NativeIcon::Remove => muda::NativeIcon::Remove,
-            NativeIcon::RevealFreestanding => {
-                muda::NativeIcon::RevealFreestanding
-            }
-            NativeIcon::RightFacingTriangle => {
-                muda::NativeIcon::RightFacingTriangle
-            }
+            NativeIcon::RevealFreestanding => muda::NativeIcon::RevealFreestanding,
+            NativeIcon::RightFacingTriangle => muda::NativeIcon::RightFacingTriangle,
             NativeIcon::Share => muda::NativeIcon::Share,
             NativeIcon::Slideshow => muda::NativeIcon::Slideshow,
             NativeIcon::SmartBadge => muda::NativeIcon::SmartBadge,
             NativeIcon::StatusAvailable => muda::NativeIcon::StatusAvailable,
             NativeIcon::StatusNone => muda::NativeIcon::StatusNone,
-            NativeIcon::StatusPartiallyAvailable => {
-                muda::NativeIcon::StatusPartiallyAvailable
-            }
-            NativeIcon::StatusUnavailable => {
-                muda::NativeIcon::StatusUnavailable
-            }
-            NativeIcon::StopProgressFreestanding => {
-                muda::NativeIcon::StopProgressFreestanding
-            }
+            NativeIcon::StatusPartiallyAvailable => muda::NativeIcon::StatusPartiallyAvailable,
+            NativeIcon::StatusUnavailable => muda::NativeIcon::StatusUnavailable,
+            NativeIcon::StopProgressFreestanding => muda::NativeIcon::StopProgressFreestanding,
             NativeIcon::StopProgress => muda::NativeIcon::StopProgress,
             NativeIcon::TrashEmpty => muda::NativeIcon::TrashEmpty,
             NativeIcon::TrashFull => muda::NativeIcon::TrashFull,

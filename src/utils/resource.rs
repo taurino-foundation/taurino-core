@@ -41,9 +41,7 @@ impl dyn Resource {
     }
 
     #[inline(always)]
-    pub(crate) fn downcast_arc<T: Resource>(
-        self: &Arc<Self>,
-    ) -> Option<&Arc<T>> {
+    pub(crate) fn downcast_arc<T: Resource>(self: &Arc<Self>) -> Option<&Arc<T>> {
         if self.is::<T>() {
             // A resource is stored as `Arc<T>` in a BTreeMap
             // and is safe to cast to `Arc<T>` because of the runtime
@@ -130,10 +128,7 @@ impl ResourceTable {
     /// Returns a reference counted pointer to the resource of type `T` with the
     /// given `rid`. If `rid` is not present or has a type different than `T`,
     /// this function returns [`Error::BadResourceId`](crate::error::Error::BadResourceId).
-    pub fn get<T: Resource>(
-        &self,
-        rid: ResourceId,
-    ) -> crate::error::Result<Arc<T>> {
+    pub fn get<T: Resource>(&self, rid: ResourceId) -> crate::error::Result<Arc<T>> {
         self.index
             .get(&rid)
             .and_then(|rc| rc.downcast_arc::<T>())
@@ -143,10 +138,7 @@ impl ResourceTable {
 
     /// Returns a reference counted pointer to the resource of the given `rid`.
     /// If `rid` is not present, this function returns [`crate::error::Error::BadResourceId`].
-    pub fn get_any(
-        &self,
-        rid: ResourceId,
-    ) -> crate::error::Result<Arc<dyn Resource>> {
+    pub fn get_any(&self, rid: ResourceId) -> crate::error::Result<Arc<dyn Resource>> {
         self.index
             .get(&rid)
             .ok_or_else(|| crate::error::Error::BadResourceId(rid))
@@ -157,9 +149,7 @@ impl ResourceTable {
     ///
     /// Panics if the resource does not exist.
     pub fn replace<T: Resource>(&mut self, rid: ResourceId, resource: T) {
-        let result = self
-            .index
-            .insert(rid, Arc::new(resource) as Arc<dyn Resource>);
+        let result = self.index.insert(rid, Arc::new(resource) as Arc<dyn Resource>);
         assert!(result.is_some());
     }
 
@@ -173,10 +163,7 @@ impl ResourceTable {
     /// assume that `Arc::strong_count(&returned_arc)` is always equal to 1 on success.
     /// In particular, be really careful when you want to extract the inner value of
     /// type `T` from `Arc<T>`.
-    pub fn take<T: Resource>(
-        &mut self,
-        rid: ResourceId,
-    ) -> crate::error::Result<Arc<T>> {
+    pub fn take<T: Resource>(&mut self, rid: ResourceId) -> crate::error::Result<Arc<T>> {
         let resource = self.get::<T>(rid)?;
         self.index.remove(&rid);
         Ok(resource)
@@ -190,10 +177,7 @@ impl ResourceTable {
     /// we cannot assume that `Arc::strong_count(&returned_arc)` is always equal to 1
     /// on success. In particular, be really careful when you want to extract the
     /// inner value of type `T` from `Arc<T>`.
-    pub fn take_any(
-        &mut self,
-        rid: ResourceId,
-    ) -> crate::error::Result<Arc<dyn Resource>> {
+    pub fn take_any(&mut self, rid: ResourceId) -> crate::error::Result<Arc<dyn Resource>> {
         self.index
             .remove(&rid)
             .ok_or_else(|| crate::error::Error::BadResourceId(rid))
@@ -204,9 +188,7 @@ impl ResourceTable {
     /// purposes. Note that the order in
     /// which items appear is not specified.
     pub fn names(&self) -> impl Iterator<Item = (ResourceId, Cow<'_, str>)> {
-        self.index
-            .iter()
-            .map(|(&id, resource)| (id, resource.name()))
+        self.index.iter().map(|(&id, resource)| (id, resource.name()))
     }
 
     /// Removes the resource with the given `rid` from the resource table. If the

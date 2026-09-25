@@ -15,9 +15,9 @@ fn main() -> crate::Result<()> {
     // -------------------------------------------------------------------------
     let web_context: WebContextStore = Default::default();
     let window_builder = WindowBuilder::new()
-        .add_webview_builder(WebViewBuilder::new().with_url(
-            WebviewUrl::External(Url::parse("https://example.com").unwrap()),
-        ))
+        .add_webview_builder(
+            WebViewBuilder::new().with_url(WebviewUrl::External(Url::parse("https://example.com").unwrap())),
+        )
         .title("Tao + Wry")
         .center()
         .inner_size(800.0, 600.0)
@@ -37,12 +37,7 @@ fn main() -> crate::Result<()> {
         &event_loop,
         1.into(),
         web_context.clone(),
-        None::<
-            fn(
-                wry::WebViewBuilder<'_>,
-                WebviewUrl,
-            ) -> crate::Result<wry::WebViewBuilder<'_>>,
-        >,
+        None::<fn(wry::WebViewBuilder<'_>, WebviewUrl) -> crate::Result<wry::WebViewBuilder<'_>>>,
     )?;
 
     let window = Arc::new(window);
@@ -74,9 +69,7 @@ fn main() -> crate::Result<()> {
         *control_flow = ControlFlow::Wait;
 
         match event {
-            Event::WindowEvent {
-                event, window_id, ..
-            } if window_id == window.id() => {
+            Event::WindowEvent { event, window_id, .. } if window_id == window.id() => {
                 window.emit_window_event(&event);
 
                 match event {

@@ -1,8 +1,5 @@
 use super::{
-    item::{
-        CheckMenuItem, IconMenuItem, IsMenuItem, Menu, MenuItem, MenuItemKind,
-        PredefinedMenuItem, Submenu,
-    },
+    item::{CheckMenuItem, IconMenuItem, IsMenuItem, Menu, MenuItem, MenuItemKind, PredefinedMenuItem, Submenu},
     metadata::{AboutMetadata, NativeIcon},
 };
 use crate::error::Result;
@@ -54,9 +51,7 @@ impl MenuItemBuilder {
 
     pub fn build(self) -> Result<MenuItem> {
         match self.id {
-            Some(id) => {
-                MenuItem::with_id(id, self.text, self.enabled, self.accelerator)
-            }
+            Some(id) => MenuItem::with_id(id, self.text, self.enabled, self.accelerator),
             None => MenuItem::new(self.text, self.enabled, self.accelerator),
         }
     }
@@ -110,19 +105,8 @@ impl CheckMenuItemBuilder {
 
     pub fn build(self) -> Result<CheckMenuItem> {
         match self.id {
-            Some(id) => CheckMenuItem::with_id(
-                id,
-                self.text,
-                self.enabled,
-                self.checked,
-                self.accelerator,
-            ),
-            None => CheckMenuItem::new(
-                self.text,
-                self.enabled,
-                self.checked,
-                self.accelerator,
-            ),
+            Some(id) => CheckMenuItem::with_id(id, self.text, self.enabled, self.checked, self.accelerator),
+            None => CheckMenuItem::new(self.text, self.enabled, self.checked, self.accelerator),
         }
     }
 }
@@ -186,32 +170,14 @@ impl<'a> IconMenuItemBuilder<'a> {
 
     pub fn build(self) -> Result<IconMenuItem> {
         match (self.id, self.icon, self.native_icon) {
-            (Some(id), Some(icon), _) => IconMenuItem::with_id(
-                id,
-                self.text,
-                self.enabled,
-                Some(icon),
-                self.accelerator,
-            ),
-            (None, Some(icon), _) => IconMenuItem::new(
-                self.text,
-                self.enabled,
-                Some(icon),
-                self.accelerator,
-            ),
-            (Some(id), None, native) => IconMenuItem::with_id_and_native_icon(
-                id,
-                self.text,
-                self.enabled,
-                native,
-                self.accelerator,
-            ),
-            (None, None, native) => IconMenuItem::with_native_icon(
-                self.text,
-                self.enabled,
-                native,
-                self.accelerator,
-            ),
+            (Some(id), Some(icon), _) => {
+                IconMenuItem::with_id(id, self.text, self.enabled, Some(icon), self.accelerator)
+            }
+            (None, Some(icon), _) => IconMenuItem::new(self.text, self.enabled, Some(icon), self.accelerator),
+            (Some(id), None, native) => {
+                IconMenuItem::with_id_and_native_icon(id, self.text, self.enabled, native, self.accelerator)
+            }
+            (None, None, native) => IconMenuItem::with_native_icon(self.text, self.enabled, native, self.accelerator),
         }
     }
 }
@@ -257,66 +223,34 @@ impl MenuBuilder {
         self
     }
 
-    pub fn text<I: Into<MenuId>, S: AsRef<str>>(
-        mut self,
-        id: I,
-        text: S,
-    ) -> Self {
-        self.items.push(
-            MenuItem::with_id(id, text, true, None::<&str>)
-                .map(MenuItemKind::MenuItem),
-        );
+    pub fn text<I: Into<MenuId>, S: AsRef<str>>(mut self, id: I, text: S) -> Self {
+        self.items
+            .push(MenuItem::with_id(id, text, true, None::<&str>).map(MenuItemKind::MenuItem));
         self
     }
 
-    pub fn check<I: Into<MenuId>, S: AsRef<str>>(
-        mut self,
-        id: I,
-        text: S,
-    ) -> Self {
-        self.items.push(
-            CheckMenuItem::with_id(id, text, true, true, None::<&str>)
-                .map(MenuItemKind::Check),
-        );
+    pub fn check<I: Into<MenuId>, S: AsRef<str>>(mut self, id: I, text: S) -> Self {
+        self.items
+            .push(CheckMenuItem::with_id(id, text, true, true, None::<&str>).map(MenuItemKind::Check));
         self
     }
 
-    pub fn icon<I: Into<MenuId>, S: AsRef<str>>(
-        mut self,
-        id: I,
-        text: S,
-        icon: Image<'_>,
-    ) -> Self {
-        self.items.push(
-            IconMenuItem::with_id(id, text, true, Some(icon), None::<&str>)
-                .map(MenuItemKind::Icon),
-        );
+    pub fn icon<I: Into<MenuId>, S: AsRef<str>>(mut self, id: I, text: S, icon: Image<'_>) -> Self {
+        self.items
+            .push(IconMenuItem::with_id(id, text, true, Some(icon), None::<&str>).map(MenuItemKind::Icon));
         self
     }
 
-    pub fn native_icon<I: Into<MenuId>, S: AsRef<str>>(
-        mut self,
-        id: I,
-        text: S,
-        icon: NativeIcon,
-    ) -> Self {
+    pub fn native_icon<I: Into<MenuId>, S: AsRef<str>>(mut self, id: I, text: S, icon: NativeIcon) -> Self {
         self.items.push(
-            IconMenuItem::with_id_and_native_icon(
-                id,
-                text,
-                true,
-                Some(icon),
-                None::<&str>,
-            )
-            .map(MenuItemKind::Icon),
+            IconMenuItem::with_id_and_native_icon(id, text, true, Some(icon), None::<&str>).map(MenuItemKind::Icon),
         );
         self
     }
 
     pub fn separator(mut self) -> Self {
-        self.items.push(
-            PredefinedMenuItem::separator().map(MenuItemKind::Predefined),
-        );
+        self.items
+            .push(PredefinedMenuItem::separator().map(MenuItemKind::Predefined));
         self
     }
     pub fn copy(mut self) -> Self {
@@ -330,15 +264,13 @@ impl MenuBuilder {
         self
     }
     pub fn paste(mut self) -> Self {
-        self.items.push(
-            PredefinedMenuItem::paste(None).map(MenuItemKind::Predefined),
-        );
+        self.items
+            .push(PredefinedMenuItem::paste(None).map(MenuItemKind::Predefined));
         self
     }
     pub fn select_all(mut self) -> Self {
-        self.items.push(
-            PredefinedMenuItem::select_all(None).map(MenuItemKind::Predefined),
-        );
+        self.items
+            .push(PredefinedMenuItem::select_all(None).map(MenuItemKind::Predefined));
         self
     }
     pub fn undo(mut self) -> Self {
@@ -352,21 +284,18 @@ impl MenuBuilder {
         self
     }
     pub fn minimize(mut self) -> Self {
-        self.items.push(
-            PredefinedMenuItem::minimize(None).map(MenuItemKind::Predefined),
-        );
+        self.items
+            .push(PredefinedMenuItem::minimize(None).map(MenuItemKind::Predefined));
         self
     }
     pub fn maximize(mut self) -> Self {
-        self.items.push(
-            PredefinedMenuItem::maximize(None).map(MenuItemKind::Predefined),
-        );
+        self.items
+            .push(PredefinedMenuItem::maximize(None).map(MenuItemKind::Predefined));
         self
     }
     pub fn fullscreen(mut self) -> Self {
-        self.items.push(
-            PredefinedMenuItem::fullscreen(None).map(MenuItemKind::Predefined),
-        );
+        self.items
+            .push(PredefinedMenuItem::fullscreen(None).map(MenuItemKind::Predefined));
         self
     }
     pub fn hide(mut self) -> Self {
@@ -375,22 +304,18 @@ impl MenuBuilder {
         self
     }
     pub fn hide_others(mut self) -> Self {
-        self.items.push(
-            PredefinedMenuItem::hide_others(None).map(MenuItemKind::Predefined),
-        );
+        self.items
+            .push(PredefinedMenuItem::hide_others(None).map(MenuItemKind::Predefined));
         self
     }
     pub fn show_all(mut self) -> Self {
-        self.items.push(
-            PredefinedMenuItem::show_all(None).map(MenuItemKind::Predefined),
-        );
+        self.items
+            .push(PredefinedMenuItem::show_all(None).map(MenuItemKind::Predefined));
         self
     }
     pub fn close_window(mut self) -> Self {
-        self.items.push(
-            PredefinedMenuItem::close_window(None)
-                .map(MenuItemKind::Predefined),
-        );
+        self.items
+            .push(PredefinedMenuItem::close_window(None).map(MenuItemKind::Predefined));
         self
     }
     pub fn quit(mut self) -> Self {
@@ -399,24 +324,19 @@ impl MenuBuilder {
         self
     }
     pub fn services(mut self) -> Self {
-        self.items.push(
-            PredefinedMenuItem::services(None).map(MenuItemKind::Predefined),
-        );
+        self.items
+            .push(PredefinedMenuItem::services(None).map(MenuItemKind::Predefined));
         self
     }
     pub fn bring_all_to_front(mut self) -> Self {
-        self.items.push(
-            PredefinedMenuItem::bring_all_to_front(None)
-                .map(MenuItemKind::Predefined),
-        );
+        self.items
+            .push(PredefinedMenuItem::bring_all_to_front(None).map(MenuItemKind::Predefined));
         self
     }
 
     pub fn about(mut self, metadata: Option<AboutMetadata<'_>>) -> Self {
-        self.items.push(
-            PredefinedMenuItem::about(None, metadata)
-                .map(MenuItemKind::Predefined),
-        );
+        self.items
+            .push(PredefinedMenuItem::about(None, metadata).map(MenuItemKind::Predefined));
         self
     }
 
@@ -503,62 +423,31 @@ impl<'a> SubmenuBuilder<'a> {
         self
     }
 
-    pub fn text_item<I: Into<MenuId>, S: AsRef<str>>(
-        mut self,
-        id: I,
-        text: S,
-    ) -> Self {
-        self.items.push(
-            MenuItem::with_id(id, text, true, None::<&str>)
-                .map(MenuItemKind::MenuItem),
-        );
+    pub fn text_item<I: Into<MenuId>, S: AsRef<str>>(mut self, id: I, text: S) -> Self {
+        self.items
+            .push(MenuItem::with_id(id, text, true, None::<&str>).map(MenuItemKind::MenuItem));
         self
     }
 
-    pub fn check<I: Into<MenuId>, S: AsRef<str>>(
-        mut self,
-        id: I,
-        text: S,
-    ) -> Self {
-        self.items.push(
-            CheckMenuItem::with_id(id, text, true, true, None::<&str>)
-                .map(MenuItemKind::Check),
-        );
+    pub fn check<I: Into<MenuId>, S: AsRef<str>>(mut self, id: I, text: S) -> Self {
+        self.items
+            .push(CheckMenuItem::with_id(id, text, true, true, None::<&str>).map(MenuItemKind::Check));
         self
     }
 
     pub fn separator(mut self) -> Self {
-        self.items.push(
-            PredefinedMenuItem::separator().map(MenuItemKind::Predefined),
-        );
+        self.items
+            .push(PredefinedMenuItem::separator().map(MenuItemKind::Predefined));
         self
     }
 
     pub fn build(self) -> Result<Submenu> {
         let submenu = match (self.id, self.icon, self.native_icon) {
-            (Some(id), Some(icon), _) => Submenu::with_id_and_icon(
-                id,
-                self.text,
-                self.enabled,
-                Some(icon),
-            )?,
-            (None, Some(icon), _) => {
-                Submenu::new_with_icon(self.text, self.enabled, Some(icon))?
-            }
-            (Some(id), None, Some(icon)) => Submenu::with_id_and_native_icon(
-                id,
-                self.text,
-                self.enabled,
-                Some(icon),
-            )?,
-            (None, None, Some(icon)) => Submenu::new_with_native_icon(
-                self.text,
-                self.enabled,
-                Some(icon),
-            )?,
-            (Some(id), None, None) => {
-                Submenu::with_id(id, self.text, self.enabled)?
-            }
+            (Some(id), Some(icon), _) => Submenu::with_id_and_icon(id, self.text, self.enabled, Some(icon))?,
+            (None, Some(icon), _) => Submenu::new_with_icon(self.text, self.enabled, Some(icon))?,
+            (Some(id), None, Some(icon)) => Submenu::with_id_and_native_icon(id, self.text, self.enabled, Some(icon))?,
+            (None, None, Some(icon)) => Submenu::new_with_native_icon(self.text, self.enabled, Some(icon))?,
+            (Some(id), None, None) => Submenu::with_id(id, self.text, self.enabled)?,
             (None, None, None) => Submenu::new(self.text, self.enabled)?,
         };
         for item in self.items {

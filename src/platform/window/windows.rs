@@ -34,18 +34,14 @@ impl super::WindowExt for tao::window::Window {
                 }
             }
 
-            let new_pos =
-                super::calculate_window_center_position(window_size, monitor);
+            let new_pos = super::calculate_window_center_position(window_size, monitor);
             self.set_outer_position(new_pos);
         }
     }
 
     fn draw_surface(
         &self,
-        surface: &mut softbuffer::Surface<
-            std::sync::Arc<tao::window::Window>,
-            std::sync::Arc<tao::window::Window>,
-        >,
+        surface: &mut softbuffer::Surface<std::sync::Arc<tao::window::Window>, std::sync::Arc<tao::window::Window>>,
         background_color: Option<tao::window::RGBA>,
     ) {
         let size = self.inner_size();
@@ -56,9 +52,7 @@ impl super::WindowExt for tao::window::Window {
             surface.resize(width, height).unwrap();
             let mut buffer = surface.buffer_mut().unwrap();
             let color = background_color
-                .map(|(r, g, b, _)| {
-                    (b as u32) | ((g as u32) << 8) | ((r as u32) << 16)
-                })
+                .map(|(r, g, b, _)| (b as u32) | ((g as u32) << 8) | ((r as u32) << 16))
                 .unwrap_or(0);
             buffer.fill(color);
             let _ = buffer.present();

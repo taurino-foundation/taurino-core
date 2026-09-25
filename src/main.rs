@@ -29,3 +29,5 @@ pub mod native {
     pub use webview2_com;
     pub use wry;
 }
+
+fn main() {}

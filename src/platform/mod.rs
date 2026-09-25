@@ -9,8 +9,7 @@ pub mod prelude {
     pub use super::dialog::error;
     pub use super::monitor::MonitorExt;
     pub use super::undecorated_resizing::{
-        attach_resize_handler, detach_resize_handler,
-        update_drag_hwnd_rgn_for_undecorated,
+        attach_resize_handler, detach_resize_handler, update_drag_hwnd_rgn_for_undecorated,
     };
     #[cfg(windows)]
     pub use super::util::{encode_wide, get_system_metrics_for_dpi, hwnd_dpi};

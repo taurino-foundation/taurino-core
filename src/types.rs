@@ -1,7 +1,4 @@
-use crate::utils::{
-    ArcMutHashMap, NewWindowFeatures, WebContext, WindowWebViewMetaData,
-    wrappers::WindowEvent,
-};
+use crate::utils::{ArcMutHashMap, NewWindowFeatures, WebContext, WindowWebViewMetaData, wrappers::WindowEvent};
 #[cfg(not(any(target_os = "android", target_os = "ios")))]
 use crate::webview::ManagedWebview;
 use dpi::{PhysicalPosition, PhysicalSize, PixelUnit, Position, Size};
@@ -20,22 +17,16 @@ use serde_with::skip_serializing_none;
 use url::Url;
 pub use window_effects::{WindowEffect, WindowEffectState};
 
-pub type WindowEventHandler =
-    Arc<dyn Fn(&WindowWebViewMetaData, &WindowEvent) + Send + Sync + 'static>;
+pub type WindowEventHandler = Arc<dyn Fn(&WindowWebViewMetaData, &WindowEvent) + Send + Sync + 'static>;
 
 pub type WebContextStore = ArcMutHashMap<Option<PathBuf>, WebContext>;
-pub type CloseRequestedHandler =
-    Arc<dyn Fn(Sender<bool>) + Send + Sync + 'static>;
+pub type CloseRequestedHandler = Arc<dyn Fn(Sender<bool>) + Send + Sync + 'static>;
 #[cfg(windows)]
 #[derive(Debug)]
 pub enum FocusState {
     WindowFocused,
-    WebviewFocused {
-        webview_label: String,
-    },
-    Blured {
-        last_focused_webview_label: Option<String>,
-    },
+    WebviewFocused { webview_label: String },
+    Blured { last_focused_webview_label: Option<String> },
 }
 
 #[cfg(windows)]
@@ -80,28 +71,16 @@ mod window_effects {
         )]
         AppearanceBased,
         /// **macOS 10.14-**
-        #[deprecated(
-            since = "macOS 10.14",
-            note = "Use a semantic material instead."
-        )]
+        #[deprecated(since = "macOS 10.14", note = "Use a semantic material instead.")]
         Light,
         /// **macOS 10.14-**
-        #[deprecated(
-            since = "macOS 10.14",
-            note = "Use a semantic material instead."
-        )]
+        #[deprecated(since = "macOS 10.14", note = "Use a semantic material instead.")]
         Dark,
         /// **macOS 10.14-**
-        #[deprecated(
-            since = "macOS 10.14",
-            note = "Use a semantic material instead."
-        )]
+        #[deprecated(since = "macOS 10.14", note = "Use a semantic material instead.")]
         MediumLight,
         /// **macOS 10.14-**
-        #[deprecated(
-            since = "macOS 10.14",
-            note = "Use a semantic material instead."
-        )]
+        #[deprecated(since = "macOS 10.14", note = "Use a semantic material instead.")]
         UltraDark,
         /// **macOS 10.10+**
         Titlebar,
@@ -197,10 +176,7 @@ pub enum TitleBarStyle {
 }
 
 impl Serialize for TitleBarStyle {
-    fn serialize<S>(
-        &self,
-        serializer: S,
-    ) -> std::result::Result<S::Ok, S::Error>
+    fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
     where
         S: Serializer,
     {
@@ -247,10 +223,7 @@ pub enum Theme {
 }
 
 impl Serialize for Theme {
-    fn serialize<S>(
-        &self,
-        serializer: S,
-    ) -> std::result::Result<S::Ok, S::Error>
+    fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
     where
         S: Serializer,
     {
@@ -641,14 +614,10 @@ impl FromStr for Color {
             }
         };
 
-        let r =
-            u8::from_str_radix(&color[0..2], 16).map_err(|e| e.to_string())?;
-        let g =
-            u8::from_str_radix(&color[2..4], 16).map_err(|e| e.to_string())?;
-        let b =
-            u8::from_str_radix(&color[4..6], 16).map_err(|e| e.to_string())?;
-        let a =
-            u8::from_str_radix(&color[6..8], 16).map_err(|e| e.to_string())?;
+        let r = u8::from_str_radix(&color[0..2], 16).map_err(|e| e.to_string())?;
+        let g = u8::from_str_radix(&color[2..4], 16).map_err(|e| e.to_string())?;
+        let b = u8::from_str_radix(&color[4..6], 16).map_err(|e| e.to_string())?;
+        let a = u8::from_str_radix(&color[6..8], 16).map_err(|e| e.to_string())?;
 
         Ok(Color(r, g, b, a))
     }
@@ -684,9 +653,7 @@ impl<'de> Deserialize<'de> for Color {
     {
         let color = InnerColor::deserialize(deserializer)?;
         let color = match color {
-            InnerColor::String(string) => {
-                string.parse().map_err(serde::de::Error::custom)?
-            }
+            InnerColor::String(string) => string.parse().map_err(serde::de::Error::custom)?,
             InnerColor::Rgb(rgb) => Color(rgb.0, rgb.1, rgb.2, 255),
             InnerColor::Rgba(rgb) => rgb.into(),
             InnerColor::RgbaObject {
@@ -1561,8 +1528,7 @@ pub struct InitializationScript {
 }
 
 /// IPC handler.
-pub type WebviewIpcHandler =
-    Box<dyn Fn(&WindowWebViewMetaData, Request<String>) + Send>;
+pub type WebviewIpcHandler = Box<dyn Fn(&WindowWebViewMetaData, Request<String>) + Send>;
 
 /// Download event.
 
@@ -1603,16 +1569,12 @@ pub enum DownloadEventOwned {
 impl<'a> From<DownloadEvent<'a>> for DownloadEventOwned {
     fn from(event: DownloadEvent<'a>) -> Self {
         match event {
-            DownloadEvent::Requested { url, destination } => {
-                DownloadEventOwned::Requested {
-                    url,
-                    destination: destination.clone(),
-                }
-            }
+            DownloadEvent::Requested { url, destination } => DownloadEventOwned::Requested {
+                url,
+                destination: destination.clone(),
+            },
 
-            DownloadEvent::Finished { url, path, success } => {
-                DownloadEventOwned::Finished { url, path, success }
-            }
+            DownloadEvent::Finished { url, path, success } => DownloadEventOwned::Finished { url, path, success },
         }
     }
 }
@@ -1640,50 +1602,31 @@ pub enum NewWindowResponse {
     Deny,
 }
 
-pub type UriSchemeProtocolHandler = dyn Fn(
-        &WindowWebViewMetaData,
-        &str,
-        http::Request<Vec<u8>>,
-        Box<dyn FnOnce(http::Response<Cow<'static, [u8]>>) + Send>,
-    ) + Send
+pub type UriSchemeProtocolHandler = dyn Fn(&WindowWebViewMetaData, &str, http::Request<Vec<u8>>, Box<dyn FnOnce(http::Response<Cow<'static, [u8]>>) + Send>)
+    + Send
     + Sync
     + 'static;
 
-pub type WebResourceRequestHandler = dyn Fn(
-        &WindowWebViewMetaData,
-        http::Request<Vec<u8>>,
-        &mut http::Response<Cow<'static, [u8]>>,
-    ) + Send
-    + Sync;
+pub type WebResourceRequestHandler =
+    dyn Fn(&WindowWebViewMetaData, http::Request<Vec<u8>>, &mut http::Response<Cow<'static, [u8]>>) + Send + Sync;
 
-pub type NavigationHandler =
-    dyn Fn(&WindowWebViewMetaData, &Url) -> bool + Send;
+pub type NavigationHandler = dyn Fn(&WindowWebViewMetaData, &Url) -> bool + Send;
 
-pub type NewWindowHandler = dyn Fn(&WindowWebViewMetaData, Url, NewWindowFeatures) -> NewWindowResponse
-    + 'static;
+pub type NewWindowHandler = dyn Fn(&WindowWebViewMetaData, Url, NewWindowFeatures) -> NewWindowResponse + 'static;
 
-pub type OnPageLoadHandler =
-    dyn Fn(&WindowWebViewMetaData, Url, PageLoadEvent) + Send;
+pub type OnPageLoadHandler = dyn Fn(&WindowWebViewMetaData, Url, PageLoadEvent) + Send;
 
-pub type DocumentTitleChangedHandler =
-    dyn Fn(&WindowWebViewMetaData, String) + Send + 'static;
+pub type DocumentTitleChangedHandler = dyn Fn(&WindowWebViewMetaData, String) + Send + 'static;
 
-pub type DownloadHandler =
-    dyn Fn(&WindowWebViewMetaData, DownloadEvent) -> bool + Send + Sync;
+pub type DownloadHandler = dyn Fn(&WindowWebViewMetaData, DownloadEvent) -> bool + Send + Sync;
 
-pub type PermissionRequestHandler = dyn Fn(&WindowWebViewMetaData, PermissionKind) -> PermissionResponse
-    + Send
-    + Sync;
+pub type PermissionRequestHandler = dyn Fn(&WindowWebViewMetaData, PermissionKind) -> PermissionResponse + Send + Sync;
 
 #[cfg(any(target_os = "macos", target_os = "ios"))]
-pub type OnWebContentProcessTerminateHandler =
-    dyn Fn(&WindowWebViewMetaData) + Send;
+pub type OnWebContentProcessTerminateHandler = dyn Fn(&WindowWebViewMetaData) + Send;
 
 #[cfg(target_os = "ios")]
-pub type InputAccessoryViewBuilderFn = dyn Fn(
-        &WindowWebViewMetaData,
-        &objc2_ui_kit::UIView,
-    ) -> Option<objc2::rc::Retained<objc2_ui_kit::UIView>>
+pub type InputAccessoryViewBuilderFn = dyn Fn(&WindowWebViewMetaData, &objc2_ui_kit::UIView) -> Option<objc2::rc::Retained<objc2_ui_kit::UIView>>
     + Send
     + Sync
     + 'static;

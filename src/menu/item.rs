@@ -141,11 +141,7 @@ impl_menu_item!(IconMenuItem, Icon);
 // -----------------------------------------------------------------------------
 
 impl MenuItem {
-    pub fn new<T: AsRef<str>, A: AsRef<str>>(
-        text: T,
-        enabled: bool,
-        accelerator: Option<A>,
-    ) -> Result<Self> {
+    pub fn new<T: AsRef<str>, A: AsRef<str>>(text: T, enabled: bool, accelerator: Option<A>) -> Result<Self> {
         let accelerator = accelerator.and_then(|s| s.as_ref().parse().ok());
         let inner = muda::MenuItem::new(text.as_ref(), enabled, accelerator);
         Ok(Self(Arc::new(MenuItemInner::new(inner))))
@@ -158,8 +154,7 @@ impl MenuItem {
         accelerator: Option<A>,
     ) -> Result<Self> {
         let accelerator = accelerator.and_then(|s| s.as_ref().parse().ok());
-        let inner =
-            muda::MenuItem::with_id(id, text.as_ref(), enabled, accelerator);
+        let inner = muda::MenuItem::with_id(id, text.as_ref(), enabled, accelerator);
         Ok(Self(Arc::new(MenuItemInner::new(inner))))
     }
 
@@ -185,10 +180,7 @@ impl MenuItem {
         Ok(())
     }
 
-    pub fn set_accelerator<S: AsRef<str>>(
-        &self,
-        accelerator: Option<S>,
-    ) -> Result<()> {
+    pub fn set_accelerator<S: AsRef<str>>(&self, accelerator: Option<S>) -> Result<()> {
         let accel = accelerator.and_then(|s| s.as_ref().parse().ok());
         self.0.inner.set_accelerator(accel).map_err(Into::into)
     }
@@ -206,12 +198,7 @@ impl CheckMenuItem {
         accelerator: Option<A>,
     ) -> Result<Self> {
         let accelerator = accelerator.and_then(|s| s.as_ref().parse().ok());
-        let inner = muda::CheckMenuItem::new(
-            text.as_ref(),
-            enabled,
-            checked,
-            accelerator,
-        );
+        let inner = muda::CheckMenuItem::new(text.as_ref(), enabled, checked, accelerator);
         Ok(Self(Arc::new(CheckMenuItemInner::new(inner))))
     }
 
@@ -223,13 +210,7 @@ impl CheckMenuItem {
         accelerator: Option<A>,
     ) -> Result<Self> {
         let accelerator = accelerator.and_then(|s| s.as_ref().parse().ok());
-        let inner = muda::CheckMenuItem::with_id(
-            id,
-            text.as_ref(),
-            enabled,
-            checked,
-            accelerator,
-        );
+        let inner = muda::CheckMenuItem::with_id(id, text.as_ref(), enabled, checked, accelerator);
         Ok(Self(Arc::new(CheckMenuItemInner::new(inner))))
     }
 
@@ -254,10 +235,7 @@ impl CheckMenuItem {
         Ok(())
     }
 
-    pub fn set_accelerator<S: AsRef<str>>(
-        &self,
-        accelerator: Option<S>,
-    ) -> Result<()> {
+    pub fn set_accelerator<S: AsRef<str>>(&self, accelerator: Option<S>) -> Result<()> {
         let accel = accelerator.and_then(|s| s.as_ref().parse().ok());
         self.0.inner.set_accelerator(accel).map_err(Into::into)
     }
@@ -285,8 +263,7 @@ impl IconMenuItem {
     ) -> Result<Self> {
         let accelerator = accelerator.and_then(|s| s.as_ref().parse().ok());
         let icon = icon.map(TryInto::try_into).transpose()?;
-        let inner =
-            muda::IconMenuItem::new(text.as_ref(), enabled, icon, accelerator);
+        let inner = muda::IconMenuItem::new(text.as_ref(), enabled, icon, accelerator);
         Ok(Self(Arc::new(IconMenuItemInner::new(inner))))
     }
 
@@ -299,13 +276,7 @@ impl IconMenuItem {
     ) -> Result<Self> {
         let accelerator = accelerator.and_then(|s| s.as_ref().parse().ok());
         let icon = icon.map(TryInto::try_into).transpose()?;
-        let inner = muda::IconMenuItem::with_id(
-            id,
-            text.as_ref(),
-            enabled,
-            icon,
-            accelerator,
-        );
+        let inner = muda::IconMenuItem::with_id(id, text.as_ref(), enabled, icon, accelerator);
         Ok(Self(Arc::new(IconMenuItemInner::new(inner))))
     }
 
@@ -316,20 +287,11 @@ impl IconMenuItem {
         accelerator: Option<A>,
     ) -> Result<Self> {
         let accelerator = accelerator.and_then(|s| s.as_ref().parse().ok());
-        let inner = muda::IconMenuItem::with_native_icon(
-            text.as_ref(),
-            enabled,
-            icon.map(Into::into),
-            accelerator,
-        );
+        let inner = muda::IconMenuItem::with_native_icon(text.as_ref(), enabled, icon.map(Into::into), accelerator);
         Ok(Self(Arc::new(IconMenuItemInner::new(inner))))
     }
 
-    pub fn with_id_and_native_icon<
-        I: Into<MenuId>,
-        T: AsRef<str>,
-        A: AsRef<str>,
-    >(
+    pub fn with_id_and_native_icon<I: Into<MenuId>, T: AsRef<str>, A: AsRef<str>>(
         id: I,
         text: T,
         enabled: bool,
@@ -337,13 +299,8 @@ impl IconMenuItem {
         accelerator: Option<A>,
     ) -> Result<Self> {
         let accelerator = accelerator.and_then(|s| s.as_ref().parse().ok());
-        let inner = muda::IconMenuItem::with_id_and_native_icon(
-            id,
-            text.as_ref(),
-            enabled,
-            icon.map(Into::into),
-            accelerator,
-        );
+        let inner =
+            muda::IconMenuItem::with_id_and_native_icon(id, text.as_ref(), enabled, icon.map(Into::into), accelerator);
         Ok(Self(Arc::new(IconMenuItemInner::new(inner))))
     }
 
@@ -368,10 +325,7 @@ impl IconMenuItem {
         Ok(())
     }
 
-    pub fn set_accelerator<S: AsRef<str>>(
-        &self,
-        accelerator: Option<S>,
-    ) -> Result<()> {
+    pub fn set_accelerator<S: AsRef<str>>(&self, accelerator: Option<S>) -> Result<()> {
         let accel = accelerator.and_then(|s| s.as_ref().parse().ok());
         self.0.inner.set_accelerator(accel).map_err(Into::into)
     }
@@ -393,21 +347,13 @@ impl IconMenuItem {
 impl MenuItemKind {
     pub(crate) fn from_muda(item: muda::MenuItemKind) -> Self {
         match item {
-            muda::MenuItemKind::MenuItem(v) => {
-                Self::MenuItem(MenuItem(Arc::new(MenuItemInner::new(v))))
+            muda::MenuItemKind::MenuItem(v) => Self::MenuItem(MenuItem(Arc::new(MenuItemInner::new(v)))),
+            muda::MenuItemKind::Submenu(v) => Self::Submenu(Submenu(Arc::new(SubmenuInner::new(v)))),
+            muda::MenuItemKind::Predefined(v) => {
+                Self::Predefined(PredefinedMenuItem(Arc::new(PredefinedMenuItemInner::new(v))))
             }
-            muda::MenuItemKind::Submenu(v) => {
-                Self::Submenu(Submenu(Arc::new(SubmenuInner::new(v))))
-            }
-            muda::MenuItemKind::Predefined(v) => Self::Predefined(
-                PredefinedMenuItem(Arc::new(PredefinedMenuItemInner::new(v))),
-            ),
-            muda::MenuItemKind::Check(v) => {
-                Self::Check(CheckMenuItem(Arc::new(CheckMenuItemInner::new(v))))
-            }
-            muda::MenuItemKind::Icon(v) => {
-                Self::Icon(IconMenuItem(Arc::new(IconMenuItemInner::new(v))))
-            }
+            muda::MenuItemKind::Check(v) => Self::Check(CheckMenuItem(Arc::new(CheckMenuItemInner::new(v)))),
+            muda::MenuItemKind::Icon(v) => Self::Icon(IconMenuItem(Arc::new(IconMenuItemInner::new(v)))),
         }
     }
 }
@@ -473,10 +419,7 @@ impl PredefinedMenuItem {
         Self::wrap(muda::PredefinedMenuItem::bring_all_to_front(text))
     }
 
-    pub fn about(
-        text: Option<&str>,
-        metadata: Option<AboutMetadata<'_>>,
-    ) -> Result<Self> {
+    pub fn about(text: Option<&str>, metadata: Option<AboutMetadata<'_>>) -> Result<Self> {
         let metadata = metadata.map(TryInto::try_into).transpose()?;
         Self::wrap(muda::PredefinedMenuItem::about(text, metadata))
     }

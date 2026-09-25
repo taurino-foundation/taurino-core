@@ -34,11 +34,8 @@ impl Drop for ManagedWebview {
         if Rc::get_mut(&mut self.inner).is_some() {
             let mut context_store = self.context_store.lock().unwrap();
 
-            if let Some(web_context) = context_store.get_mut(&self.context_key)
-            {
-                web_context
-                    .referenced_by_webviews
-                    .remove(&self.metadata.webview_label);
+            if let Some(web_context) = context_store.get_mut(&self.context_key) {
+                web_context.referenced_by_webviews.remove(&self.metadata.webview_label);
 
                 // https://github.com/tauri-apps/tauri/issues/14626
                 // Because WebKit does not close its network process even when no webviews are running,
@@ -80,11 +77,7 @@ impl ManagedWebview {
             .map_err(|_| crate::error::Error::FailedToSendMessage)
     }
 
-    pub fn evaluate_script_with_callback<F>(
-        &self,
-        script: &str,
-        callback: F,
-    ) -> crate::error::Result<()>
+    pub fn evaluate_script_with_callback<F>(&self, script: &str, callback: F) -> crate::error::Result<()>
     where
         F: Fn(String) + Send + 'static,
     {
@@ -118,20 +111,14 @@ impl ManagedWebview {
     }
 
     pub fn print(&self) -> crate::error::Result<()> {
-        self.inner
-            .print()
-            .map_err(|_| crate::error::Error::FailedToSendMessage)
+        self.inner.print().map_err(|_| crate::error::Error::FailedToSendMessage)
     }
 
     // -------------------------------------------------------------------------
     // Bounds
     // -------------------------------------------------------------------------
 
-    pub fn set_bounds(
-        &self,
-        window: &Window,
-        bounds: crate::types::Rect,
-    ) -> crate::error::Result<()> {
+    pub fn set_bounds(&self, window: &Window, bounds: crate::types::Rect) -> crate::error::Result<()> {
         let bounds: RectWrapper = bounds.into();
         let bounds = bounds.0;
 
@@ -142,8 +129,7 @@ impl ManagedWebview {
 
             let position = bounds.position.to_logical::<f32>(scale_factor);
 
-            let window_size =
-                window.inner_size().to_logical::<f32>(scale_factor);
+            let window_size = window.inner_size().to_logical::<f32>(scale_factor);
 
             b.width_rate = size.width / window_size.width;
 
@@ -159,11 +145,7 @@ impl ManagedWebview {
             .map_err(|_| crate::error::Error::FailedToSendMessage)
     }
 
-    pub fn set_size(
-        &self,
-        window: &Window,
-        size: Size,
-    ) -> crate::error::Result<()> {
+    pub fn set_size(&self, window: &Window, size: Size) -> crate::error::Result<()> {
         let mut bounds = self
             .inner
             .bounds()
@@ -175,8 +157,7 @@ impl ManagedWebview {
         let size = size.to_logical::<f32>(scale_factor);
 
         if let Some(b) = &mut *self.bounds.lock().unwrap() {
-            let window_size =
-                window.inner_size().to_logical::<f32>(scale_factor);
+            let window_size = window.inner_size().to_logical::<f32>(scale_factor);
 
             b.width_rate = size.width / window_size.width;
 
@@ -188,11 +169,7 @@ impl ManagedWebview {
             .map_err(|_| crate::error::Error::FailedToSendMessage)
     }
 
-    pub fn set_position(
-        &self,
-        window: &Window,
-        position: Position,
-    ) -> crate::error::Result<()> {
+    pub fn set_position(&self, window: &Window, position: Position) -> crate::error::Result<()> {
         let mut bounds = self
             .inner
             .bounds()
@@ -205,8 +182,7 @@ impl ManagedWebview {
         let position = position.to_logical::<f32>(scale_factor);
 
         if let Some(b) = &mut *self.bounds.lock().unwrap() {
-            let window_size =
-                window.inner_size().to_logical::<f32>(scale_factor);
+            let window_size = window.inner_size().to_logical::<f32>(scale_factor);
 
             b.x_rate = position.x / window_size.width;
 
@@ -228,14 +204,9 @@ impl ManagedWebview {
             .map_err(|_| crate::error::Error::FailedToSendMessage)
     }
 
-    pub fn set_background_color(
-        &self,
-        color: Option<crate::types::Color>,
-    ) -> crate::error::Result<()> {
+    pub fn set_background_color(&self, color: Option<crate::types::Color>) -> crate::error::Result<()> {
         self.inner
-            .set_background_color(
-                color.map(Into::into).unwrap_or((255, 255, 255, 255)),
-            )
+            .set_background_color(color.map(Into::into).unwrap_or((255, 255, 255, 255)))
             .map_err(|_| crate::error::Error::FailedToSendMessage)
     }
 
@@ -266,20 +237,14 @@ impl ManagedWebview {
             .map_err(|_| crate::error::Error::FailedToSendMessage)
     }
 
-    pub fn position(
-        &self,
-        window: &Window,
-    ) -> crate::error::Result<PhysicalPosition<i32>> {
+    pub fn position(&self, window: &Window) -> crate::error::Result<PhysicalPosition<i32>> {
         self.inner
             .bounds()
             .map(|bounds| bounds.position.to_physical(window.scale_factor()))
             .map_err(|_| crate::error::Error::FailedToSendMessage)
     }
 
-    pub fn size(
-        &self,
-        window: &Window,
-    ) -> crate::error::Result<PhysicalSize<u32>> {
+    pub fn size(&self, window: &Window) -> crate::error::Result<PhysicalSize<u32>> {
         self.inner
             .bounds()
             .map(|bounds| bounds.size.to_physical(window.scale_factor()))
@@ -291,16 +256,10 @@ impl ManagedWebview {
     // -------------------------------------------------------------------------
 
     pub fn set_focus(&self) -> crate::error::Result<()> {
-        self.inner
-            .focus()
-            .map_err(|_| crate::error::Error::FailedToSendMessage)
+        self.inner.focus().map_err(|_| crate::error::Error::FailedToSendMessage)
     }
 
-    pub fn set_auto_resize(
-        &self,
-        window: &Window,
-        auto_resize: bool,
-    ) -> crate::error::Result<()> {
+    pub fn set_auto_resize(&self, window: &Window, auto_resize: bool) -> crate::error::Result<()> {
         let bounds = self
             .inner
             .bounds()
@@ -361,19 +320,13 @@ impl ManagedWebview {
             .map_err(|_| crate::error::Error::FailedToSendMessage)
     }
 
-    pub fn delete_cookie(
-        &self,
-        cookie: &Cookie<'_>,
-    ) -> crate::error::Result<()> {
+    pub fn delete_cookie(&self, cookie: &Cookie<'_>) -> crate::error::Result<()> {
         self.inner
             .delete_cookie(cookie)
             .map_err(|_| crate::error::Error::FailedToSendMessage)
     }
 
-    pub fn cookies_for_url(
-        &self,
-        url: &Url,
-    ) -> crate::error::Result<Vec<Cookie<'static>>> {
+    pub fn cookies_for_url(&self, url: &Url) -> crate::error::Result<Vec<Cookie<'static>>> {
         self.inner
             .cookies_for_url(url.as_str())
             .map_err(|_| crate::error::Error::FailedToSendMessage)

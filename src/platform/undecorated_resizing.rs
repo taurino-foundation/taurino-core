@@ -118,9 +118,7 @@ mod windows {
         let parent = HWND(hwnd as _);
 
         // return early if we already attached
-        if unsafe { FindWindowExW(Some(parent), None, CLASS_NAME, WINDOW_NAME) }
-            .is_ok()
-        {
+        if unsafe { FindWindowExW(Some(parent), None, CLASS_NAME, WINDOW_NAME) }.is_ok() {
             return;
         }
 
@@ -130,11 +128,7 @@ mod windows {
             lpfnWndProc: Some(drag_resize_window_proc),
             cbClsExtra: 0,
             cbWndExtra: 0,
-            hInstance: unsafe {
-                HINSTANCE(
-                    GetModuleHandleW(PCWSTR::null()).unwrap_or_default().0,
-                )
-            },
+            hInstance: unsafe { HINSTANCE(GetModuleHandleW(PCWSTR::null()).unwrap_or_default().0) },
             hIcon: HICON::default(),
             hCursor: HCURSOR::default(),
             hbrBackground: HBRUSH::default(),
@@ -175,12 +169,7 @@ mod windows {
         };
 
         unsafe {
-            set_drag_hwnd_rgn(
-                drag_window,
-                width,
-                height,
-                has_undecorated_shadows,
-            );
+            set_drag_hwnd_rgn(drag_window, width, height, has_undecorated_shadows);
 
             let _ = SetWindowPos(
                 drag_window,
@@ -189,11 +178,7 @@ mod windows {
                 0,
                 0,
                 0,
-                SWP_ASYNCWINDOWPOS
-                    | SWP_NOACTIVATE
-                    | SWP_NOMOVE
-                    | SWP_NOOWNERZORDER
-                    | SWP_NOSIZE,
+                SWP_ASYNCWINDOWPOS | SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOOWNERZORDER | SWP_NOSIZE,
             );
 
             let data = UndecoratedResizingData {
@@ -234,10 +219,7 @@ mod windows {
                         0,
                         0,
                         0,
-                        SWP_ASYNCWINDOWPOS
-                            | SWP_NOACTIVATE
-                            | SWP_NOOWNERZORDER
-                            | SWP_NOMOVE,
+                        SWP_ASYNCWINDOWPOS | SWP_NOACTIVATE | SWP_NOOWNERZORDER | SWP_NOMOVE,
                     );
                 } else {
                     // otherwise updat the cutout region
@@ -253,18 +235,10 @@ mod windows {
                             0,
                             width,
                             height,
-                            SWP_ASYNCWINDOWPOS
-                                | SWP_NOACTIVATE
-                                | SWP_NOOWNERZORDER
-                                | SWP_NOMOVE,
+                            SWP_ASYNCWINDOWPOS | SWP_NOACTIVATE | SWP_NOOWNERZORDER | SWP_NOMOVE,
                         );
 
-                        set_drag_hwnd_rgn(
-                            child,
-                            width,
-                            height,
-                            has_undecorated_shadows,
-                        );
+                        set_drag_hwnd_rgn(child, width, height, has_undecorated_shadows);
                     }
                 }
             }
@@ -295,8 +269,7 @@ mod windows {
         match msg {
             WM_CREATE => {
                 let data = lparam.0 as *mut CREATESTRUCTW;
-                let data =
-                    (*data).lpCreateParams as *mut UndecoratedResizingData;
+                let data = (*data).lpCreateParams as *mut UndecoratedResizingData;
                 (*data).child = child;
                 SetWindowLongPtrW(child, GWLP_USERDATA, data as _);
             }
@@ -328,25 +301,13 @@ mod windows {
                     return DefWindowProcW(child, msg, wparam, lparam);
                 }
 
-                let (cx, cy) =
-                    (GET_X_LPARAM(lparam) as i32, GET_Y_LPARAM(lparam) as i32);
+                let (cx, cy) = (GET_X_LPARAM(lparam) as i32, GET_Y_LPARAM(lparam) as i32);
 
                 let dpi = unsafe { util::hwnd_dpi(child) };
-                let border_x =
-                    util::get_system_metrics_for_dpi(SM_CXFRAME, dpi);
-                let border_y =
-                    util::get_system_metrics_for_dpi(SM_CYFRAME, dpi);
+                let border_x = util::get_system_metrics_for_dpi(SM_CXFRAME, dpi);
+                let border_y = util::get_system_metrics_for_dpi(SM_CYFRAME, dpi);
 
-                let res = hit_test(
-                    rect.left,
-                    rect.top,
-                    rect.right,
-                    rect.bottom,
-                    cx,
-                    cy,
-                    border_x,
-                    border_y,
-                );
+                let res = hit_test(rect.left, rect.top, rect.right, rect.bottom, cx, cy, border_x, border_y);
 
                 return LRESULT(res.to_win32() as _);
             }
@@ -366,8 +327,7 @@ mod windows {
                     return DefWindowProcW(child, msg, wparam, lparam);
                 }
 
-                let (cx, cy) =
-                    (GET_X_LPARAM(lparam) as i32, GET_Y_LPARAM(lparam) as i32);
+                let (cx, cy) = (GET_X_LPARAM(lparam) as i32, GET_Y_LPARAM(lparam) as i32);
 
                 // if the window has undecorated shadows,
                 // it should always be the top border,
@@ -381,21 +341,10 @@ mod windows {
                     }
 
                     let dpi = unsafe { util::hwnd_dpi(child) };
-                    let border_x =
-                        util::get_system_metrics_for_dpi(SM_CXFRAME, dpi);
-                    let border_y =
-                        util::get_system_metrics_for_dpi(SM_CYFRAME, dpi);
+                    let border_x = util::get_system_metrics_for_dpi(SM_CXFRAME, dpi);
+                    let border_y = util::get_system_metrics_for_dpi(SM_CYFRAME, dpi);
 
-                    hit_test(
-                        rect.left,
-                        rect.top,
-                        rect.right,
-                        rect.bottom,
-                        cx,
-                        cy,
-                        border_x,
-                        border_y,
-                    )
+                    hit_test(rect.left, rect.top, rect.right, rect.bottom, cx, cy, border_x, border_y)
                 };
 
                 if res != HitTestResult::NoWhere {
@@ -436,21 +385,14 @@ mod windows {
     pub fn detach_resize_handler(hwnd: isize) {
         let hwnd = HWND(hwnd as _);
 
-        let Ok(child) = (unsafe {
-            FindWindowExW(Some(hwnd), None, CLASS_NAME, WINDOW_NAME)
-        }) else {
+        let Ok(child) = (unsafe { FindWindowExW(Some(hwnd), None, CLASS_NAME, WINDOW_NAME) }) else {
             return;
         };
 
         let _ = unsafe { DestroyWindow(child) };
     }
 
-    unsafe fn set_drag_hwnd_rgn(
-        hwnd: HWND,
-        width: i32,
-        height: i32,
-        only_top: bool,
-    ) {
+    unsafe fn set_drag_hwnd_rgn(hwnd: HWND, width: i32, height: i32, only_top: bool) {
         // The window used for drag resizing an undecorated window
         // is a child HWND that covers the whole window
         // and so we need create a cut out in the middle for the parent and other child
@@ -480,10 +422,7 @@ mod windows {
         }
     }
 
-    pub fn update_drag_hwnd_rgn_for_undecorated(
-        hwnd: isize,
-        has_undecorated_shadows: bool,
-    ) {
+    pub fn update_drag_hwnd_rgn_for_undecorated(hwnd: isize, has_undecorated_shadows: bool) {
         let hwnd = HWND(hwnd as _);
 
         let mut rect = RECT::default();
@@ -494,15 +433,11 @@ mod windows {
         let width = rect.right - rect.left;
         let height = rect.bottom - rect.top;
 
-        let Ok(child) = (unsafe {
-            FindWindowExW(Some(hwnd), None, CLASS_NAME, WINDOW_NAME)
-        }) else {
+        let Ok(child) = (unsafe { FindWindowExW(Some(hwnd), None, CLASS_NAME, WINDOW_NAME) }) else {
             return;
         };
 
-        unsafe {
-            set_drag_hwnd_rgn(child, width, height, has_undecorated_shadows)
-        };
+        unsafe { set_drag_hwnd_rgn(child, width, height, has_undecorated_shadows) };
 
         unsafe {
             SendMessageW(
@@ -555,9 +490,7 @@ mod gtk {
     impl HitTestResult {
         fn to_gtk_edge(self) -> gtk::gdk::WindowEdge {
             match self {
-                HitTestResult::Client | HitTestResult::NoWhere => {
-                    gtk::gdk::WindowEdge::__Unknown(0)
-                }
+                HitTestResult::Client | HitTestResult::NoWhere => gtk::gdk::WindowEdge::__Unknown(0),
                 HitTestResult::Left => gtk::gdk::WindowEdge::West,
                 HitTestResult::Right => gtk::gdk::WindowEdge::East,
                 HitTestResult::Top => gtk::gdk::WindowEdge::North,
@@ -586,29 +519,55 @@ mod gtk {
                 | gtk::gdk::EventMask::TOUCH_MASK,
         );
 
-        webview.connect_button_press_event(
-            move |webview: &webkit2gtk::WebView,
-                  event: &gtk::gdk::EventButton| {
-                if event.button() == 1 {
-                    // This one should be GtkBox
-                    if let Some(window) =
-                        webview.parent().and_then(|w| w.parent())
-                    {
-                        // Safe to unwrap unless this is not from tao
-                        let window: gtk::Window = window.downcast().unwrap();
-                        if !window.is_decorated()
-                            && window.is_resizable()
-                            && !window.is_maximized()
-                        {
-                            if let Some(window) = window.window() {
-                                let (root_x, root_y) = event.root();
+        webview.connect_button_press_event(move |webview: &webkit2gtk::WebView, event: &gtk::gdk::EventButton| {
+            if event.button() == 1 {
+                // This one should be GtkBox
+                if let Some(window) = webview.parent().and_then(|w| w.parent()) {
+                    // Safe to unwrap unless this is not from tao
+                    let window: gtk::Window = window.downcast().unwrap();
+                    if !window.is_decorated() && window.is_resizable() && !window.is_maximized() {
+                        if let Some(window) = window.window() {
+                            let (root_x, root_y) = event.root();
+                            let (window_x, window_y) = window.position();
+                            let (client_x, client_y) = (root_x - window_x as f64, root_y - window_y as f64);
+                            let border = window.scale_factor() * BORDERLESS_RESIZE_INSET;
+                            let edge = hit_test(
+                                0.0,
+                                0.0,
+                                window.width() as f64,
+                                window.height() as f64,
+                                client_x,
+                                client_y,
+                                border as _,
+                                border as _,
+                            )
+                            .to_gtk_edge();
+
+                            // we ignore the `__Unknown` variant so the webview receives the click correctly if it is not on the edges.
+                            match edge {
+                                WindowEdge::__Unknown(_) => (),
+                                _ => window.begin_resize_drag(edge, 1, root_x as i32, root_y as i32, event.time()),
+                            }
+                        }
+                    }
+                }
+            }
+
+            Propagation::Proceed
+        });
+
+        webview.connect_touch_event(move |webview: &webkit2gtk::WebView, event: &gtk::gdk::Event| {
+            // This one should be GtkBox
+            if let Some(window) = webview.parent().and_then(|w| w.parent()) {
+                // Safe to unwrap unless this is not from tao
+                let window: gtk::Window = window.downcast().unwrap();
+                if !window.is_decorated() && window.is_resizable() && !window.is_maximized() {
+                    if let Some(window) = window.window() {
+                        if let Some((root_x, root_y)) = event.root_coords() {
+                            if let Some(device) = event.device() {
                                 let (window_x, window_y) = window.position();
-                                let (client_x, client_y) = (
-                                    root_x - window_x as f64,
-                                    root_y - window_y as f64,
-                                );
-                                let border = window.scale_factor()
-                                    * BORDERLESS_RESIZE_INSET;
+                                let (client_x, client_y) = (root_x - window_x as f64, root_y - window_y as f64);
+                                let border = window.scale_factor() * BORDERLESS_RESIZE_INSET;
                                 let edge = hit_test(
                                     0.0,
                                     0.0,
@@ -621,12 +580,13 @@ mod gtk {
                                 )
                                 .to_gtk_edge();
 
-                                // we ignore the `__Unknown` variant so the webview receives the click correctly if it is not on the edges.
+                                // we ignore the `__Unknown` variant so the window receives the click correctly if it is not on the edges.
                                 match edge {
                                     WindowEdge::__Unknown(_) => (),
-                                    _ => window.begin_resize_drag(
+                                    _ => window.begin_resize_drag_for_device(
                                         edge,
-                                        1,
+                                        &device,
+                                        0,
                                         root_x as i32,
                                         root_y as i32,
                                         event.time(),
@@ -636,67 +596,9 @@ mod gtk {
                         }
                     }
                 }
+            }
 
-                Propagation::Proceed
-            },
-        );
-
-        webview.connect_touch_event(
-            move |webview: &webkit2gtk::WebView, event: &gtk::gdk::Event| {
-                // This one should be GtkBox
-                if let Some(window) = webview.parent().and_then(|w| w.parent())
-                {
-                    // Safe to unwrap unless this is not from tao
-                    let window: gtk::Window = window.downcast().unwrap();
-                    if !window.is_decorated()
-                        && window.is_resizable()
-                        && !window.is_maximized()
-                    {
-                        if let Some(window) = window.window() {
-                            if let Some((root_x, root_y)) = event.root_coords()
-                            {
-                                if let Some(device) = event.device() {
-                                    let (window_x, window_y) =
-                                        window.position();
-                                    let (client_x, client_y) = (
-                                        root_x - window_x as f64,
-                                        root_y - window_y as f64,
-                                    );
-                                    let border = window.scale_factor()
-                                        * BORDERLESS_RESIZE_INSET;
-                                    let edge = hit_test(
-                                        0.0,
-                                        0.0,
-                                        window.width() as f64,
-                                        window.height() as f64,
-                                        client_x,
-                                        client_y,
-                                        border as _,
-                                        border as _,
-                                    )
-                                    .to_gtk_edge();
-
-                                    // we ignore the `__Unknown` variant so the window receives the click correctly if it is not on the edges.
-                                    match edge {
-                                        WindowEdge::__Unknown(_) => (),
-                                        _ => window
-                                            .begin_resize_drag_for_device(
-                                                edge,
-                                                &device,
-                                                0,
-                                                root_x as i32,
-                                                root_y as i32,
-                                                event.time(),
-                                            ),
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-
-                Propagation::Proceed
-            },
-        );
+            Propagation::Proceed
+        });
     }
 }

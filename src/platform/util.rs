@@ -34,9 +34,7 @@ mod imp {
         assert_eq!(function.chars().last(), Some('\0'));
 
         // Library names we will use are ASCII so we can use the A version to avoid string conversion.
-        let module =
-            unsafe { LoadLibraryW(PCWSTR::from_raw(library.as_ptr())) }
-                .unwrap_or_default();
+        let module = unsafe { LoadLibraryW(PCWSTR::from_raw(library.as_ptr())) }.unwrap_or_default();
         if module.is_invalid() {
             return None;
         }
@@ -46,11 +44,8 @@ mod imp {
 
     macro_rules! get_function {
         ($lib:expr, $func:ident) => {
-            $crate::platform::util::get_function_impl(
-                $lib,
-                concat!(stringify!($func), '\0'),
-            )
-            .map(|f| unsafe { std::mem::transmute::<_, $func>(f) })
+            $crate::platform::util::get_function_impl($lib, concat!(stringify!($func), '\0'))
+                .map(|f| unsafe { std::mem::transmute::<_, $func>(f) })
         };
     }
 
@@ -61,10 +56,7 @@ mod imp {
         dpi_x: *mut u32,
         dpi_y: *mut u32,
     ) -> HRESULT;
-    type GetSystemMetricsForDpi = unsafe extern "system" fn(
-        nindex: SYSTEM_METRICS_INDEX,
-        dpi: u32,
-    ) -> i32;
+    type GetSystemMetricsForDpi = unsafe extern "system" fn(nindex: SYSTEM_METRICS_INDEX, dpi: u32) -> i32;
 
     static GET_DPI_FOR_WINDOW: Lazy<Option<GetDpiForWindow>> =
         Lazy::new(|| get_function!("user32.dll", GetDpiForWindow));
@@ -94,14 +86,7 @@ mod imp {
 
             let mut dpi_x = 0;
             let mut dpi_y = 0;
-            if GetDpiForMonitor(
-                monitor,
-                MDT_EFFECTIVE_DPI,
-                &mut dpi_x,
-                &mut dpi_y,
-            )
-            .is_ok()
-            {
+            if GetDpiForMonitor(monitor, MDT_EFFECTIVE_DPI, &mut dpi_x, &mut dpi_y).is_ok() {
                 dpi_x
             } else {
                 USER_DEFAULT_SCREEN_DPI
@@ -122,10 +107,7 @@ mod imp {
     }
 
     #[allow(non_snake_case)]
-    pub unsafe fn get_system_metrics_for_dpi(
-        nindex: SYSTEM_METRICS_INDEX,
-        dpi: u32,
-    ) -> i32 {
+    pub unsafe fn get_system_metrics_for_dpi(nindex: SYSTEM_METRICS_INDEX, dpi: u32) -> i32 {
         if let Some(GetSystemMetricsForDpi) = *GET_SYSTEM_METRICS_FOR_DPI {
             GetSystemMetricsForDpi(nindex, dpi)
         } else {
