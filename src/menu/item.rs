@@ -76,6 +76,172 @@ impl Clone for MenuItemKind {
 }
 
 impl MenuItemKind {
+    // -------------------------------------------------------------------------
+    // type
+    // -------------------------------------------------------------------------
+
+    pub fn as_menu_item(&self) -> Option<&MenuItem> {
+        match self {
+            Self::MenuItem(item) => Some(item),
+            _ => None,
+        }
+    }
+
+    pub fn as_submenu(&self) -> Option<&Submenu> {
+        match self {
+            Self::Submenu(item) => Some(item),
+            _ => None,
+        }
+    }
+
+    pub fn as_predefined(&self) -> Option<&PredefinedMenuItem> {
+        match self {
+            Self::Predefined(item) => Some(item),
+            _ => None,
+        }
+    }
+
+    pub fn as_check(&self) -> Option<&CheckMenuItem> {
+        match self {
+            Self::Check(item) => Some(item),
+            _ => None,
+        }
+    }
+
+    pub fn as_icon(&self) -> Option<&IconMenuItem> {
+        match self {
+            Self::Icon(item) => Some(item),
+            _ => None,
+        }
+    }
+
+    pub fn is_menu_item(&self) -> bool {
+        matches!(self, Self::MenuItem(_))
+    }
+
+    pub fn is_submenu(&self) -> bool {
+        matches!(self, Self::Submenu(_))
+    }
+
+    pub fn is_predefined(&self) -> bool {
+        matches!(self, Self::Predefined(_))
+    }
+
+    pub fn is_check(&self) -> bool {
+        matches!(self, Self::Check(_))
+    }
+
+    pub fn is_icon(&self) -> bool {
+        matches!(self, Self::Icon(_))
+    }
+
+    // -------------------------------------------------------------------------
+    // generic state
+    // -------------------------------------------------------------------------
+
+    pub fn text(&self) -> Result<String> {
+        match self {
+            Self::MenuItem(item) => item.text(),
+            Self::Submenu(item) => item.text(),
+            Self::Predefined(item) => item.text(),
+            Self::Check(item) => item.text(),
+            Self::Icon(item) => item.text(),
+        }
+    }
+
+    pub fn set_text<S: AsRef<str>>(&self, text: S) -> Result<()> {
+        match self {
+            Self::MenuItem(item) => item.set_text(text),
+            Self::Submenu(item) => item.set_text(text),
+            Self::Predefined(item) => item.set_text(text),
+            Self::Check(item) => item.set_text(text),
+            Self::Icon(item) => item.set_text(text),
+        }
+    }
+
+    pub fn is_enabled(&self) -> Option<Result<bool>> {
+        match self {
+            Self::MenuItem(item) => Some(item.is_enabled()),
+            Self::Submenu(item) => Some(item.is_enabled()),
+            Self::Check(item) => Some(item.is_enabled()),
+            Self::Icon(item) => Some(item.is_enabled()),
+            Self::Predefined(_) => None,
+        }
+    }
+
+    pub fn set_enabled(&self, enabled: bool) -> Option<Result<()>> {
+        match self {
+            Self::MenuItem(item) => Some(item.set_enabled(enabled)),
+            Self::Submenu(item) => Some(item.set_enabled(enabled)),
+            Self::Check(item) => Some(item.set_enabled(enabled)),
+            Self::Icon(item) => Some(item.set_enabled(enabled)),
+            Self::Predefined(_) => None,
+        }
+    }
+
+    pub fn is_checked(&self) -> Option<Result<bool>> {
+        match self {
+            Self::Check(item) => Some(item.is_checked()),
+            _ => None,
+        }
+    }
+
+    pub fn set_checked(&self, checked: bool) -> Option<Result<()>> {
+        match self {
+            Self::Check(item) => Some(item.set_checked(checked)),
+            _ => None,
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // tree
+    // -------------------------------------------------------------------------
+
+    pub fn children(&self) -> Result<Vec<MenuItemKind>> {
+        match self {
+            Self::Submenu(submenu) => submenu.items(),
+            _ => Ok(Vec::new()),
+        }
+    }
+
+    pub fn has_children(&self) -> bool {
+        matches!(self, Self::Submenu(_))
+    }
+
+    pub fn find(&self, id: &MenuId) -> Result<Option<MenuItemKind>> {
+        if self.id() == id {
+            return Ok(Some(self.clone()));
+        }
+
+        if let Self::Submenu(submenu) = self {
+            for child in submenu.items()? {
+                if let Some(found) = child.find(id)? {
+                    return Ok(Some(found));
+                }
+            }
+        }
+
+        Ok(None)
+    }
+
+    pub fn descendants(&self) -> Result<Vec<MenuItemKind>> {
+        let mut result = Vec::new();
+        self.collect_descendants(&mut result)?;
+        Ok(result)
+    }
+
+    fn collect_descendants(&self, result: &mut Vec<MenuItemKind>) -> Result<()> {
+        if let Self::Submenu(submenu) = self {
+            for child in submenu.items()? {
+                result.push(child.clone());
+                child.collect_descendants(result)?;
+            }
+        }
+
+        Ok(())
+    }
+
+
     pub fn id(&self) -> &MenuId {
         match self {
             Self::MenuItem(v) => v.id(),
@@ -94,6 +260,22 @@ impl MenuItemKind {
             Self::Check(v) => v.inner_muda(),
             Self::Icon(v) => v.inner_muda(),
         }
+    }
+
+
+    pub fn visit<F>(&self, visitor: &mut F) -> Result<()>
+    where
+        F: FnMut(&MenuItemKind) -> Result<()>,
+    {
+        visitor(self)?;
+
+        if let Self::Submenu(submenu) = self {
+            for child in submenu.items()? {
+                child.visit(visitor)?;
+            }
+        }
+
+        Ok(())
     }
 }
 
