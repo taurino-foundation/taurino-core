@@ -6,6 +6,12 @@ use crate::error::Result;
 use crate::utils::image::Image;
 use muda::MenuId;
 use std::sync::Arc;
+
+
+
+
+
+
 impl Menu {
     /// Direct children only.
     pub fn get(&self, id: &MenuId) -> Result<Option<MenuItemKind>> {
@@ -14,7 +20,16 @@ impl Menu {
             .into_iter()
             .find(|item| item.id() == id))
     }
+    pub fn visit<F>(&self, mut visitor: F) -> Result<()>
+    where
+        F: FnMut(&MenuItemKind) -> Result<()>,
+    {
+        for item in self.items()? {
+            item.visit(&mut visitor)?;
+        }
 
+        Ok(())
+    }
     /// Search the entire menu tree recursively.
     pub fn find(&self, id: &MenuId) -> Result<Option<MenuItemKind>> {
         for item in self.items()? {
