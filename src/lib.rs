@@ -16,7 +16,7 @@ pub mod prelude {
         types::*,
         utils::*,
         webview::{ManagedWebview, WebViewBuilder},
-        window::{ManagedWindow, WindowBuilder},
+        window::{ManagedWindow, WindowBuilder, WindowMenu},
     };
 }
 
