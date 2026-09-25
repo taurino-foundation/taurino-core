@@ -444,25 +444,27 @@ impl ManagedWindow {
     /// The actual destruction remains on the event-loop side. This is deliberate:
     /// `ManagedWindow` stores the native window in an `Arc`, so dropping only this
     /// handle is not a reliable cross-owner close mechanism.
-    pub fn close(&self) -> Result<bool> {
-        self.window()?;
+pub fn close(&self) -> Result<bool> {
+    self.window()?;
 
-        let Some(handler) = &self.close_requested_handler else {
-            return Ok(true);
-        };
+    let Some(handler) = &self.close_requested_handler else {
+        return Ok(true);
+    };
 
-        let (tx, rx) = std::sync::mpsc::channel();
-        handler(tx);
+    let (tx, rx) = std::sync::mpsc::channel();
+    handler(tx);
 
-        match rx.recv_timeout(Duration::from_millis(100)) {
-            // true = prevent close
-            Ok(true) => Ok(false),
-            // false = allow close
-            Ok(false) => Ok(true),
-            // timeout / disconnect = allow by default
-            Err(_) => Ok(true),
-        }
+    match rx.recv() {
+        // true = prevent close
+        Ok(true) => Ok(false),
+
+        // false = allow close
+        Ok(false) => Ok(true),
+
+        // disconnect = allow by default
+        Err(_) => Ok(true),
     }
+}
     /// Immediately detaches this wrapper from the native window.
     ///
     /// Prefer `close()` when an event loop owns window lifetime.
