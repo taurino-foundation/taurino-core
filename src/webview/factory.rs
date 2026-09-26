@@ -15,12 +15,35 @@ use crate::{
     utils::{wrappers::RectWrapper, NewWindowFeatures, WindowWebViewMetaData},
     webview::{builder::WebViewBuilder, ManagedWebview},
 };
+
+use crate::utils::{from_wry_permission_kind, parse_proxy_url, to_wry_permission_response};
+
 #[cfg(any(target_os = "macos", target_os = "ios"))]
 use wry::WebViewBuilderExtDarwin;
-#[cfg(windows)]
-use wry::WebViewExtWindows;
 
-use crate::utils::{from_wry_permission_kind, to_wry_permission_response};
+#[cfg(any(target_os = "macos", target_os = "ios"))]
+use wry::WebViewBuilderExtDarwin;
+
+#[cfg(target_os = "macos")]
+use wry::{WebViewBuilderExtMacos, WebViewExtMacOS};
+
+#[cfg(target_os = "ios")]
+use wry::WebViewBuilderExtIos;
+
+#[cfg(target_os = "android")]
+use wry::WebViewBuilderExtAndroid;
+
+#[cfg(windows)]
+use wry::{WebViewBuilderExtWindows, WebViewExtWindows};
+
+#[cfg(any(
+    target_os = "linux",
+    target_os = "dragonfly",
+    target_os = "freebsd",
+    target_os = "netbsd",
+    target_os = "openbsd",
+))]
+use wry::WebViewBuilderExtUnix;
 
 use std::collections::{
     hash_map::Entry::{Occupied, Vacant},
@@ -48,24 +71,74 @@ where
     );
 
     let WebViewBuilder {
-        uri_scheme_protocols,
-        ipc_handler,
-        navigation_handler,
-        new_window_handler,
-        document_title_changed_handler,
-        url,
-        on_page_load_handler,
-        download_handler,
-        permission_request_handler,
         #[cfg(any(target_os = "macos", target_os = "ios"))]
         on_web_content_process_terminate_handler,
+
         #[cfg(target_os = "android")]
         on_webview_created,
-        data_directory,
-        label,
-        bounds,
+
+        #[cfg(target_os = "ios")]
+        input_accessory_view_builder,
+
+        #[cfg(target_os = "ios")]
+        limit_navigations_to_app_bound_domains,
+
+        #[cfg(any(
+            target_os = "linux",
+            target_os = "dragonfly",
+            target_os = "freebsd",
+            target_os = "netbsd",
+            target_os = "openbsd",
+        ))]
+        related_view,
+
+        #[cfg(target_os = "macos")]
+        webview_configuration,
+
+        #[cfg(windows)]
+        environment,
+
+        accept_first_mouse,
+        additional_browser_args,
+        #[cfg(any(target_os = "macos", target_os = "ios"))]
+        allow_link_preview,
         auto_resize,
+        background_color,
+        background_throttling,
+        bounds,
+        browser_extensions_enabled,
+        clipboard,
+        data_directory,
+        #[cfg(any(target_os = "macos", target_os = "ios"))]
+        data_store_identifier,
+        devtools,
+        document_title_changed_handler,
+        download_handler,
+        drag_drop_handler_enabled: _,
+        extensions_path,
+        focus,
+        general_autofill_enabled,
+        incognito,
+        initialization_scripts,
+        ipc_handler,
+        javascript_disabled,
         kind,
+        label,
+        navigation_handler,
+        new_window_handler,
+        on_page_load_handler,
+        permission_request_handler,
+        proxy_url,
+        scroll_bar_style,
+        #[cfg(target_os = "macos")]
+        traffic_light_position,
+        transparent,
+        uri_scheme_protocols,
+        url,
+        use_https_scheme,
+        user_agent,
+        window_effects: _,
+        zoom_hotkeys_enabled,
         ..
     } = builder;
 
@@ -92,8 +165,184 @@ where
         }
     };
 
-    let mut webview_builder = wry::WebViewBuilder::new_with_web_context(&mut web_context.inner);
+    let mut webview_builder = wry::WebViewBuilder::new_with_web_context(&mut web_context.inner)
+        .with_id(&label)
+        .with_focused(focus)
+        .with_transparent(transparent)
+        .with_accept_first_mouse(accept_first_mouse)
+        .with_incognito(incognito)
+        .with_clipboard(clipboard)
+        .with_hotkeys_zoom(zoom_hotkeys_enabled)
+        .with_general_autofill_enabled(general_autofill_enabled);
 
+    #[cfg(target_os = "macos")]
+    if let Some(webview_configuration) = webview_configuration {
+        webview_builder = webview_builder.with_webview_configuration(webview_configuration);
+    }
+
+    #[cfg(windows)]
+    {
+        webview_builder = webview_builder.with_https_scheme(use_https_scheme);
+    }
+
+    #[cfg(target_os = "android")]
+    {
+        webview_builder = webview_builder.with_https_scheme(use_https_scheme);
+    }
+
+    if let Some(background_throttling) = background_throttling {
+        webview_builder = webview_builder.with_background_throttling(match background_throttling {
+            crate::types::BackgroundThrottlingPolicy::Disabled => wry::BackgroundThrottlingPolicy::Disabled,
+
+            crate::types::BackgroundThrottlingPolicy::Suspend => wry::BackgroundThrottlingPolicy::Suspend,
+
+            crate::types::BackgroundThrottlingPolicy::Throttle => wry::BackgroundThrottlingPolicy::Throttle,
+        });
+    }
+
+    if javascript_disabled {
+        webview_builder = webview_builder.with_javascript_disabled();
+    }
+
+    if let Some(background_color) = background_color {
+        webview_builder = webview_builder.with_background_color(background_color.into());
+    }
+
+    if let Some(user_agent) = user_agent {
+        webview_builder = webview_builder.with_user_agent(user_agent);
+    }
+
+    #[cfg(windows)]
+    {
+        if let Some(additional_browser_args) = additional_browser_args {
+            webview_builder = webview_builder.with_additional_browser_args(additional_browser_args);
+        }
+
+        if let Some(environment) = environment {
+            webview_builder = webview_builder.with_environment(environment);
+        }
+
+        webview_builder = webview_builder.with_theme(match window.theme() {
+            tao::window::Theme::Dark => wry::Theme::Dark,
+            tao::window::Theme::Light => wry::Theme::Light,
+            _ => wry::Theme::Light,
+        });
+
+        webview_builder = webview_builder.with_scroll_bar_style(match scroll_bar_style {
+            crate::types::ScrollBarStyle::Default => wry::ScrollBarStyle::Default,
+
+            crate::types::ScrollBarStyle::FluentOverlay => wry::ScrollBarStyle::FluentOverlay,
+        });
+
+        webview_builder = webview_builder.with_browser_extensions_enabled(browser_extensions_enabled);
+    }
+
+    #[cfg(any(
+        windows,
+        target_os = "linux",
+        target_os = "dragonfly",
+        target_os = "freebsd",
+        target_os = "netbsd",
+        target_os = "openbsd",
+    ))]
+    if let Some(path) = extensions_path {
+        webview_builder = webview_builder.with_extensions_path(path);
+    }
+
+    #[cfg(any(
+        target_os = "linux",
+        target_os = "dragonfly",
+        target_os = "freebsd",
+        target_os = "netbsd",
+        target_os = "openbsd",
+    ))]
+    if let Some(related_view) = related_view {
+        webview_builder = webview_builder.with_related_view(related_view);
+    }
+
+    #[cfg(any(target_os = "macos", target_os = "ios"))]
+    {
+        if let Some(data_store_identifier) = data_store_identifier {
+            webview_builder = webview_builder.with_data_store_identifier(data_store_identifier);
+        }
+
+        webview_builder = webview_builder.with_allow_link_preview(allow_link_preview);
+    }
+
+    #[cfg(any(target_os = "macos", target_os = "ios"))]
+    {
+        if let Some(data_store_identifier) = data_store_identifier {
+            webview_builder = webview_builder.with_data_store_identifier(data_store_identifier);
+        }
+
+        webview_builder = webview_builder.with_allow_link_preview(allow_link_preview);
+    }
+
+    #[cfg(target_os = "ios")]
+    {
+        webview_builder =
+            webview_builder.with_limit_navigations_to_app_bound_domains(limit_navigations_to_app_bound_domains);
+
+        if let Some(input_accessory_view_builder) = input_accessory_view_builder {
+            webview_builder =
+                webview_builder.with_input_accessory_view_builder(move |webview| input_accessory_view_builder(webview));
+        }
+    }
+
+    #[cfg(any(target_os = "macos", target_os = "ios"))]
+    {
+        if let Some(data_store_identifier) = data_store_identifier {
+            webview_builder = webview_builder.with_data_store_identifier(data_store_identifier);
+        }
+
+        webview_builder = webview_builder.with_allow_link_preview(allow_link_preview);
+    }
+    #[cfg(target_os = "macos")]
+    if let Some(position) = traffic_light_position {
+        webview_builder = webview_builder.with_traffic_light_inset(position);
+    }
+
+    #[cfg(target_os = "ios")]
+    {
+        webview_builder =
+            webview_builder.with_limit_navigations_to_app_bound_domains(limit_navigations_to_app_bound_domains);
+
+        if let Some(input_accessory_view_builder) = input_accessory_view_builder {
+            webview_builder =
+                webview_builder.with_input_accessory_view_builder(move |webview| input_accessory_view_builder(webview));
+        }
+    }
+
+    for script in initialization_scripts {
+        webview_builder =
+            webview_builder.with_initialization_script_for_main_only(script.script, script.for_main_frame_only);
+    }
+
+    #[cfg(any(debug_assertions, feature = "devtools"))]
+    {
+        webview_builder = webview_builder.with_devtools(devtools.unwrap_or(true));
+    }
+
+    #[cfg(target_os = "android")]
+    if let Some(on_webview_created) = on_webview_created {
+        let metadata = metadata.clone();
+
+        webview_builder = webview_builder.on_webview_created(move |ctx| {
+            on_webview_created(
+                &metadata,
+                crate::utils::CreationContext {
+                    env: ctx.env,
+                    activity: ctx.activity,
+                    webview: ctx.webview,
+                },
+            )
+        });
+    }
+    if let Some(proxy_url) = proxy_url {
+        let config = parse_proxy_url(&proxy_url)?;
+
+        webview_builder = webview_builder.with_proxy_config(config);
+    }
     let webview_bounds = if let Some(bounds) = bounds {
         let bounds: RectWrapper = bounds.into();
         let bounds = bounds.0;
@@ -260,6 +509,24 @@ where
         });
     }
 
+    #[cfg(target_os = "ios")]
+    {
+        webview_builder =
+            webview_builder.with_limit_navigations_to_app_bound_domains(limit_navigations_to_app_bound_domains);
+
+        if let Some(input_accessory_view_builder) = input_accessory_view_builder {
+            webview_builder = webview_builder
+                .with_input_accessory_view_builder(move |webview| input_accessory_view_builder.0(webview));
+        }
+    }
+
+    #[cfg(target_os = "macos")]
+    {
+        if let Some(position) = &traffic_light_position {
+            webview_builder = webview_builder.with_traffic_light_inset(*position);
+        }
+    }
+
     for (scheme, protocol) in uri_scheme_protocols {
         let metadata = metadata.clone();
         webview_builder =
@@ -281,11 +548,37 @@ where
         });
     }
 
-    let webview = Rc::new(
-        webview_builder
-            .build(window)
-            .map_err(|e| crate::error::Error::CreateWebview(Box::new(e)))?,
-    );
+    let webview = if kind {
+        webview_builder.build(window)
+    } else {
+        #[cfg(any(target_os = "windows", target_os = "macos",))]
+        {
+            webview_builder.build_as_child(window)
+        }
+
+        #[cfg(any(
+            target_os = "linux",
+            target_os = "dragonfly",
+            target_os = "freebsd",
+            target_os = "netbsd",
+            target_os = "openbsd",
+        ))]
+        {
+            use tao::platform::unix::WindowExtUnix;
+
+            let container = window.default_vbox().expect("Tao window has no GTK container");
+
+            webview_builder.build_gtk(container)
+        }
+
+        #[cfg(any(target_os = "android", target_os = "ios",))]
+        {
+            webview_builder.build(window)
+        }
+    }
+    .map_err(|e| crate::error::Error::CreateWebview(Box::new(e)))?;
+
+    let webview = Rc::new(webview);
     Ok(ManagedWebview {
         metadata,
         context_store: web_context_store.clone(),

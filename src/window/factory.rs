@@ -228,7 +228,7 @@ where
         None => setup_menu,
     };
 
-    let has_children = pending_webviews.len() > 1 || pending_webviews.iter().any(|builder| builder.kind);
+    let has_multiple_webviews = pending_webviews.len() > 1;
 
     let mut webviews = Vec::with_capacity(pending_webviews.len());
 
@@ -281,7 +281,7 @@ where
         menu: Arc::new(Mutex::new(menu)),
         on_window_event,
         metadata,
-        has_children: AtomicBool::new(has_children),
+        has_children: AtomicBool::new(has_multiple_webviews),
         webviews,
 
         #[cfg(windows)]

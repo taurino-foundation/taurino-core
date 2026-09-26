@@ -22,6 +22,7 @@ pub fn map_to_menu_theme(theme: Theme) -> muda::MenuTheme {
     match theme {
         Theme::Light => muda::MenuTheme::Light,
         Theme::Dark => muda::MenuTheme::Dark,
+        #[allow(unreachable_patterns)]
         _ => muda::MenuTheme::Auto,
     }
 }
