@@ -34,15 +34,20 @@ use tao::platform::macos::WindowBuilderExtMacOS;
 use tao::platform::unix::WindowBuilderExtUnix;
 
 use crate::prelude::{
-    calculate_window_center_position, find_monitor_for_position, ManagedWindow, MonitorExt, RawWindow, WebContextStore,
-    WebViewId, WebviewUrl, WindowBuilder, WindowExt, WindowId, WindowMenu, WindowWebViewMetaData,
+    calculate_window_center_position, find_monitor_for_position, ManagedWindow, MonitorExt,
+    RawWindow, WebContextStore, WebViewId, WebviewUrl, WindowBuilder, WindowExt, WindowId,
+    WindowMenu, WindowWebViewMetaData,
 };
 #[cfg(windows)]
 use crate::types::FocusState;
 #[cfg(any(target_os = "macos", target_os = "linux"))]
 use tao::window::Fullscreen;
 
-pub fn create_window<T, S, F: Fn(RawWindow) -> crate::prelude::Result<WindowMenu> + Send + 'static>(
+pub fn create_window<
+    T,
+    S,
+    F: Fn(RawWindow) -> crate::prelude::Result<WindowMenu> + Send + 'static,
+>(
     builder: WindowBuilder,
     window_target: &EventLoopWindowTarget<T>,
     window_id: WindowId,
@@ -52,7 +57,10 @@ pub fn create_window<T, S, F: Fn(RawWindow) -> crate::prelude::Result<WindowMenu
 ) -> crate::error::Result<ManagedWindow>
 where
     T: 'static,
-    S: for<'a> Fn(wry::WebViewBuilder<'a>, WebviewUrl) -> crate::error::Result<wry::WebViewBuilder<'a>>
+    S: for<'a> Fn(
+            wry::WebViewBuilder<'a>,
+            WebviewUrl,
+        ) -> crate::error::Result<wry::WebViewBuilder<'a>>
         + Clone
         + Send
         + 'static,
@@ -128,7 +136,9 @@ where
 
             #[cfg(windows)]
             if inner.window.decorations {
-                use windows::Win32::UI::WindowsAndMessaging::{AdjustWindowRect, WS_OVERLAPPEDWINDOW};
+                use windows::Win32::UI::WindowsAndMessaging::{
+                    AdjustWindowRect, WS_OVERLAPPEDWINDOW,
+                };
 
                 let mut rect = windows::Win32::Foundation::RECT::default();
 
@@ -153,13 +163,17 @@ where
 
                 if window_size.width > constraint.width || window_size.height > constraint.height {
                     if window_size.width > constraint.width {
-                        inner_size.width = inner_size.width.saturating_sub(window_size.width - constraint.width);
+                        inner_size.width = inner_size
+                            .width
+                            .saturating_sub(window_size.width - constraint.width);
 
                         window_size.width = constraint.width;
                     }
 
                     if window_size.height > constraint.height {
-                        inner_size.height = inner_size.height.saturating_sub(window_size.height - constraint.height);
+                        inner_size.height = inner_size
+                            .height
+                            .saturating_sub(window_size.height - constraint.height);
 
                         window_size.height = constraint.height;
                     }
@@ -181,13 +195,16 @@ where
     }
 
     #[cfg(any(target_os = "macos", target_os = "linux"))]
-    let (initial_position, is_fullscreen) = (inner.window.position, inner.window.fullscreen.is_some());
+    let (initial_position, is_fullscreen) =
+        (inner.window.position, inner.window.fullscreen.is_some());
 
     // If fullscreen is requested with an explicit position, resolve the target
     // monitor up front so the window is created fullscreen on that display.
     #[cfg(any(target_os = "macos", target_os = "linux"))]
     if let (true, Some(position)) = (is_fullscreen, initial_position) {
-        if let Some(target_monitor) = find_monitor_for_position(window_target.available_monitors(), position) {
+        if let Some(target_monitor) =
+            find_monitor_for_position(window_target.available_monitors(), position)
+        {
             inner.window.fullscreen = Some(Fullscreen::Borderless(Some(target_monitor)));
         }
     }
@@ -239,8 +256,13 @@ where
 
         let webview_label = webview_builder.label.clone();
 
-        let webview_metadata =
-            WindowWebViewMetaData::new(window_id, webview_id, window.id(), label.clone(), webview_label)?;
+        let webview_metadata = WindowWebViewMetaData::new(
+            window_id,
+            webview_id,
+            window.id(),
+            label.clone(),
+            webview_label,
+        )?;
 
         if window_webview_metadata.is_none() {
             window_webview_metadata = Some(webview_metadata.clone());
@@ -256,7 +278,8 @@ where
         webviews.push(webview);
     }
 
-    let metadata = window_webview_metadata.ok_or(crate::error::Error::WebviewNotFound("root".to_string()))?;
+    let metadata =
+        window_webview_metadata.ok_or(crate::error::Error::WebviewNotFound("root".to_string()))?;
 
     let window = Arc::new(window);
 

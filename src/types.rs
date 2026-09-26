@@ -1,8 +1,13 @@
-use crate::utils::{wrappers::WindowEvent, ArcMutHashMap, NewWindowFeatures, WebContext, WindowWebViewMetaData};
+use crate::utils::{
+    wrappers::WindowEvent, ArcMutHashMap, NewWindowFeatures, WebContext, WindowWebViewMetaData,
+};
 #[cfg(not(any(target_os = "android", target_os = "ios")))]
 use crate::webview::ManagedWebview;
+use dpi::LogicalPosition;
 use dpi::{PhysicalPosition, PhysicalSize, PixelUnit, Position, Size};
 use http::Request;
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use serde_with::skip_serializing_none;
 use std::{
     borrow::Cow,
     fmt::{self, Display},
@@ -10,22 +15,23 @@ use std::{
     str::FromStr,
     sync::{mpsc::Sender, Arc},
 };
-
-use dpi::LogicalPosition;
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
-use serde_with::skip_serializing_none;
 use url::Url;
 pub use window_effects::{WindowEffect, WindowEffectState};
 
-pub type WindowEventHandler = Arc<dyn Fn(&WindowWebViewMetaData, &WindowEvent) + Send + Sync + 'static>;
+pub type WindowEventHandler =
+    Arc<dyn Fn(&WindowWebViewMetaData, &WindowEvent) + Send + Sync + 'static>;
 pub type WebContextStore = ArcMutHashMap<Option<PathBuf>, WebContext>;
 pub type CloseRequestedHandler = Arc<dyn Fn(Sender<bool>) + Send + Sync + 'static>;
 #[cfg(windows)]
 #[derive(Debug)]
 pub enum FocusState {
     WindowFocused,
-    WebviewFocused { webview_label: String },
-    Blured { last_focused_webview_label: Option<String> },
+    WebviewFocused {
+        webview_label: String,
+    },
+    Blured {
+        last_focused_webview_label: Option<String>,
+    },
 }
 
 #[cfg(windows)]
@@ -1580,7 +1586,9 @@ impl<'a> From<DownloadEvent<'a>> for DownloadEventOwned {
                 destination: destination.clone(),
             },
 
-            DownloadEvent::Finished { url, path, success } => DownloadEventOwned::Finished { url, path, success },
+            DownloadEvent::Finished { url, path, success } => {
+                DownloadEventOwned::Finished { url, path, success }
+            }
         }
     }
 }
@@ -1608,17 +1616,19 @@ pub enum NewWindowResponse {
     Deny,
 }
 
-pub type UriSchemeProtocolHandler = dyn Fn(&WindowWebViewMetaData, &str, http::Request<Vec<u8>>, Box<dyn FnOnce(http::Response<Cow<'static, [u8]>>) + Send>)
+pub type UriSchemeProtocolHandler = dyn Fn(&WindowWebViewMetaData, http::Request<Vec<u8>>, wry::RequestAsyncResponder)
     + Send
     + Sync
     + 'static;
 
-pub type WebResourceRequestHandler =
-    dyn Fn(&WindowWebViewMetaData, http::Request<Vec<u8>>, &mut http::Response<Cow<'static, [u8]>>) + Send + Sync;
+pub type WebResourceRequestHandler = dyn Fn(&WindowWebViewMetaData, http::Request<Vec<u8>>, &mut http::Response<Cow<'static, [u8]>>)
+    + Send
+    + Sync;
 
 pub type NavigationHandler = dyn Fn(&WindowWebViewMetaData, &Url) -> bool + Send;
 
-pub type NewWindowHandler = dyn Fn(&WindowWebViewMetaData, Url, NewWindowFeatures) -> NewWindowResponse + 'static;
+pub type NewWindowHandler =
+    dyn Fn(&WindowWebViewMetaData, Url, NewWindowFeatures) -> NewWindowResponse + 'static;
 
 pub type OnPageLoadHandler = dyn Fn(&WindowWebViewMetaData, Url, PageLoadEvent) + Send;
 
@@ -1626,13 +1636,17 @@ pub type DocumentTitleChangedHandler = dyn Fn(&WindowWebViewMetaData, String) + 
 
 pub type DownloadHandler = dyn Fn(&WindowWebViewMetaData, DownloadEvent) -> bool + Send + Sync;
 
-pub type PermissionRequestHandler = dyn Fn(&WindowWebViewMetaData, PermissionKind) -> PermissionResponse + Send + Sync;
+pub type PermissionRequestHandler =
+    dyn Fn(&WindowWebViewMetaData, PermissionKind) -> PermissionResponse + Send + Sync;
 
 #[cfg(any(target_os = "macos", target_os = "ios"))]
 pub type OnWebContentProcessTerminateHandler = dyn Fn(&WindowWebViewMetaData) + Send;
 
 #[cfg(target_os = "ios")]
-pub type InputAccessoryViewBuilderFn = dyn Fn(&WindowWebViewMetaData, &objc2_ui_kit::UIView) -> Option<objc2::rc::Retained<objc2_ui_kit::UIView>>
+pub type InputAccessoryViewBuilderFn = dyn Fn(
+        &WindowWebViewMetaData,
+        &objc2_ui_kit::UIView,
+    ) -> Option<objc2::rc::Retained<objc2_ui_kit::UIView>>
     + Send
     + Sync
     + 'static;

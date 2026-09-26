@@ -55,13 +55,16 @@ where
 
 pub mod prelude {
     // Builders
-    pub use super::builder::{CheckMenuItemBuilder, IconMenuItemBuilder, MenuBuilder, MenuItemBuilder, SubmenuBuilder};
+    pub use super::builder::{
+        CheckMenuItemBuilder, IconMenuItemBuilder, MenuBuilder, MenuItemBuilder, SubmenuBuilder,
+    };
 
     // Traits
     pub use super::context::ContextMenu;
 
     pub use super::item::{
-        CheckMenuItem, IconMenuItem, IsMenuItem, Menu, MenuItem, MenuItemKind, PredefinedMenuItem, Submenu,
+        CheckMenuItem, IconMenuItem, IsMenuItem, Menu, MenuItem, MenuItemKind, PredefinedMenuItem,
+        Submenu,
     };
 
     // Metadata / enums

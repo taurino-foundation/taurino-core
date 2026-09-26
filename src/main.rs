@@ -64,9 +64,9 @@ fn main() -> Result<()> {
 
     let window_builder = WindowBuilder::new()
         .theme(Some(Theme::Dark))
-        .add_webview_builder(
-            WebViewBuilder::new().with_url(Some(WebviewUrl::External(Url::parse("https://tauri.app").unwrap()))),
-        )
+        .add_webview_builder(WebViewBuilder::new().with_url(Some(WebviewUrl::External(
+            Url::parse("https://tauri.app").unwrap(),
+        ))))
         .title("Tao + Wry + Menu")
         .center()
         .inner_size(800.0, 600.0)
@@ -123,7 +123,8 @@ fn main() -> Result<()> {
                 ],
             )?;
 
-            let dark_mode = CheckMenuItem::with_id("view.dark_mode", "Dark Mode", true, true, None::<&str>)?;
+            let dark_mode =
+                CheckMenuItem::with_id("view.dark_mode", "Dark Mode", true, true, None::<&str>)?;
 
             let view_menu = Submenu::with_id_and_items(
                 "view",
@@ -141,8 +142,13 @@ fn main() -> Result<()> {
             #[cfg(target_os = "windows")]
             #[cfg(target_os = "windows")]
             {
-                let theme = theme.map(map_to_menu_theme).unwrap_or(muda::MenuTheme::Auto);
-                let _ = unsafe { menu.inner().init_for_hwnd_with_theme(raw_window.hwnd as _, theme) };
+                let theme = theme
+                    .map(map_to_menu_theme)
+                    .unwrap_or(muda::MenuTheme::Auto);
+                let _ = unsafe {
+                    menu.inner()
+                        .init_for_hwnd_with_theme(raw_window.hwnd as _, theme)
+                };
             }
 
             #[cfg(any(
@@ -211,7 +217,9 @@ fn main() -> Result<()> {
             // -----------------------------------------------------------------
             // Window events
             // -----------------------------------------------------------------
-            Event::WindowEvent { event, window_id, .. } if window_id == window.id() => {
+            Event::WindowEvent {
+                event, window_id, ..
+            } if window_id == window.id() => {
                 window.emit_window_event(&event);
 
                 match event {

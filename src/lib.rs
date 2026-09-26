@@ -33,9 +33,10 @@ pub mod prelude {
     // -------------------------------------------------------------------------
 
     pub use super::utils::{
-        assert_label_is_valid, find_monitor_for_position, from_wry_permission_kind, inner_size, is_label_valid,
-        map_theme, parse_proxy_url, to_wry_permission_response, ArcMut, ArcMutHashMap, Icon, NewWindowFeatures,
-        NewWindowOpener, RawWindow, WebContext, WindowWebViewMetaData,
+        assert_label_is_valid, find_monitor_for_position, from_wry_permission_kind, inner_size,
+        is_label_valid, map_theme, parse_proxy_url, to_wry_permission_response, ArcMut,
+        ArcMutHashMap, Icon, NewWindowFeatures, NewWindowOpener, RawWindow, WebContext,
+        WindowWebViewMetaData,
     };
 
     #[cfg(target_os = "android")]
@@ -192,7 +193,10 @@ pub mod native {
     // Mobile
     // -------------------------------------------------------------------------
 
-    #[cfg(any(target_os = "android", all(target_vendor = "apple", not(target_os = "macos")),))]
+    #[cfg(any(
+        target_os = "android",
+        all(target_vendor = "apple", not(target_os = "macos")),
+    ))]
     pub mod mobile {
         pub use bytes;
         pub use reqwest;

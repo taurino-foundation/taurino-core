@@ -5,10 +5,12 @@ use url::Url;
 
 use crate::{
     types::{
-        BackgroundThrottlingPolicy, Color, DocumentTitleChangedHandler, DownloadEvent, DownloadHandler,
-        InitializationScript, NavigationHandler, NewWindowHandler, NewWindowResponse, OnPageLoadHandler, PageLoadEvent,
-        PermissionKind, PermissionRequestHandler, PermissionResponse, Rect, ScrollBarStyle, UriSchemeProtocolHandler,
-        WebContextStore, WebviewIpcHandler, WebviewUrl, WindowEffectsConfig,
+        BackgroundThrottlingPolicy, Color, DocumentTitleChangedHandler, DownloadEvent,
+        DownloadHandler, InitializationScript, NavigationHandler, NewWindowHandler,
+        NewWindowResponse, OnPageLoadHandler, PageLoadEvent, PermissionKind,
+        PermissionRequestHandler, PermissionResponse, Rect, ScrollBarStyle,
+        UriSchemeProtocolHandler, WebContextStore, WebviewIpcHandler, WebviewUrl,
+        WindowEffectsConfig,
     },
     utils::{NewWindowFeatures, WindowWebViewMetaData},
     webview::{factory::create_webview, ManagedWebview},
@@ -41,7 +43,8 @@ pub struct WebViewBuilder {
     pub drag_drop_handler_enabled: bool,
 
     #[cfg(windows)]
-    pub environment: Option<webview2_com::Microsoft::Web::WebView2::Win32::ICoreWebView2Environment>,
+    pub environment:
+        Option<webview2_com::Microsoft::Web::WebView2::Win32::ICoreWebView2Environment>,
 
     pub extensions_path: Option<PathBuf>,
     pub focus: bool,
@@ -71,7 +74,14 @@ pub struct WebViewBuilder {
     #[cfg(target_os = "android")]
     #[allow(clippy::type_complexity)]
     pub on_webview_created: Option<
-        Box<dyn Fn(&WindowWebViewMetaData, CreationContext<'_, '_>) -> Result<(), jni::errors::Error> + Send + Sync>,
+        Box<
+            dyn Fn(
+                    &WindowWebViewMetaData,
+                    CreationContext<'_, '_>,
+                ) -> Result<(), jni::errors::Error>
+                + Send
+                + Sync,
+        >,
     >,
 
     pub permission_request_handler: Option<Box<PermissionRequestHandler>>,
@@ -324,7 +334,10 @@ impl WebViewBuilder {
 
     #[cfg(target_os = "ios")]
     /// Sets the input accessory builder.
-    pub fn with_input_accessory_view_builder(mut self, value: Option<Box<InputAccessoryViewBuilderFn>>) -> Self {
+    pub fn with_input_accessory_view_builder(
+        mut self,
+        value: Option<Box<InputAccessoryViewBuilderFn>>,
+    ) -> Self {
         self.input_accessory_view_builder = value;
         self
     }
@@ -406,7 +419,12 @@ impl WebViewBuilder {
         mut self,
         value: Option<
             Box<
-                dyn Fn(&WindowWebViewMetaData, CreationContext<'_, '_>) -> Result<(), jni::errors::Error> + Send + Sync,
+                dyn Fn(
+                        &WindowWebViewMetaData,
+                        CreationContext<'_, '_>,
+                    ) -> Result<(), jni::errors::Error>
+                    + Send
+                    + Sync,
             >,
         >,
     ) -> Self {
@@ -461,7 +479,10 @@ impl WebViewBuilder {
     }
 
     /// Sets custom URI protocols.
-    pub fn with_uri_scheme_protocols(mut self, value: HashMap<String, Box<UriSchemeProtocolHandler>>) -> Self {
+    pub fn with_uri_scheme_protocols(
+        mut self,
+        value: HashMap<String, Box<UriSchemeProtocolHandler>>,
+    ) -> Self {
         self.uri_scheme_protocols = value;
         self
     }
@@ -514,11 +535,20 @@ impl WebViewBuilder {
         before_webview_creation: Option<F>,
     ) -> crate::error::Result<ManagedWebview>
     where
-        F: for<'a> Fn(wry::WebViewBuilder<'a>, WebviewUrl) -> crate::error::Result<wry::WebViewBuilder<'a>>
+        F: for<'a> Fn(
+                wry::WebViewBuilder<'a>,
+                WebviewUrl,
+            ) -> crate::error::Result<wry::WebViewBuilder<'a>>
             + Send
             + 'static,
     {
-        create_webview(self, window, metadata.clone(), web_context, before_webview_creation)
+        create_webview(
+            self,
+            window,
+            metadata.clone(),
+            web_context,
+            before_webview_creation,
+        )
     }
 }
 

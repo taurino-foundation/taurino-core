@@ -10,12 +10,13 @@ use windows::{
     Win32::{
         Foundation::{ERROR_INVALID_PARAMETER, ERROR_NOT_SUPPORTED, E_FAIL, WIN32_ERROR},
         Graphics::Gdi::{
-            CreateCompatibleDC, DeleteDC, GetDIBits, BITMAPINFO, BITMAPINFOHEADER, BI_RGB, DIB_RGB_COLORS, HBITMAP,
+            CreateCompatibleDC, DeleteDC, GetDIBits, BITMAPINFO, BITMAPINFOHEADER, BI_RGB,
+            DIB_RGB_COLORS, HBITMAP,
         },
         System::LibraryLoader::GetModuleHandleW,
         UI::WindowsAndMessaging::{
-            GetIconInfo, GetSystemMetrics, LoadImageW, HICON, ICONINFO, IMAGE_ICON, LR_DEFAULTCOLOR, SM_CXICON,
-            SM_CYICON,
+            GetIconInfo, GetSystemMetrics, LoadImageW, HICON, ICONINFO, IMAGE_ICON,
+            LR_DEFAULTCOLOR, SM_CXICON, SM_CYICON,
         },
     },
 };
@@ -77,8 +78,12 @@ pub fn default_window_icon_from_app_icon_resource() -> Option<Image<'static>> {
         Err(e) => {
             // a logger is usually not installed yet when `generate_context!` runs
             #[cfg(debug_assertions)]
-            eprintln!("failed to load the default window icon from the application icon resource: {e}");
-            log::warn!("failed to load the default window icon from the application icon resource: {e}");
+            eprintln!(
+                "failed to load the default window icon from the application icon resource: {e}"
+            );
+            log::warn!(
+                "failed to load the default window icon from the application icon resource: {e}"
+            );
             None
         }
     }
@@ -121,8 +126,11 @@ unsafe fn read_bgra(hbm: HBITMAP, width: i32, height: i32) -> crate::error::Resu
             DIB_RGB_COLORS,
         );
         // capture the error before `DeleteDC` can overwrite it
-        let error = (scan_lines != height)
-            .then(|| last_error_or(&format!("GetDIBits copied {scan_lines} of {height} scan lines")));
+        let error = (scan_lines != height).then(|| {
+            last_error_or(&format!(
+                "GetDIBits copied {scan_lines} of {height} scan lines"
+            ))
+        });
         let _ = DeleteDC(hdc);
         if let Some(error) = error {
             return Err(crate::error::Error::ImageFromResource(error));
@@ -307,7 +315,9 @@ impl<'a> Image<'a> {
         };
 
         let mut icon_info = ICONINFO::default();
-        unsafe { GetIconInfo(*hicon, &mut icon_info).map_err(crate::error::Error::ImageFromResource)? };
+        unsafe {
+            GetIconInfo(*hicon, &mut icon_info).map_err(crate::error::Error::ImageFromResource)?
+        };
         let hbm_mask = unsafe { Owned::new(icon_info.hbmMask) };
         let hbm_color = unsafe { Owned::new(icon_info.hbmColor) };
 
@@ -323,7 +333,12 @@ impl<'a> Image<'a> {
 
         // Color bitmaps without an alpha channel (e.g. 24bpp icons) read back with alpha = 0 on every pixel,
         // so recover the alpha channel from the AND mask: a set bit means the pixel is transparent.
-        if bgra.as_chunks::<BYTES_PER_PIXEL>().0.iter().all(|px| px[3] == 0) {
+        if bgra
+            .as_chunks::<BYTES_PER_PIXEL>()
+            .0
+            .iter()
+            .all(|px| px[3] == 0)
+        {
             let mask = unsafe { read_bgra(*hbm_mask, width_i32, height_i32)? };
             for (px, mask) in bgra
                 .as_chunks_mut::<BYTES_PER_PIXEL>()

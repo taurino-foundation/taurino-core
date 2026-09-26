@@ -8,7 +8,8 @@ impl super::MonitorExt for tao::monitor::MonitorHandle {
         let rect = self.gdk_monitor().workarea();
         let scale_factor = self.scale_factor();
         PhysicalRect {
-            size: LogicalSize::new(rect.width() as u32, rect.height() as u32).to_physical(scale_factor),
+            size: LogicalSize::new(rect.width() as u32, rect.height() as u32)
+                .to_physical(scale_factor),
             position: LogicalPosition::new(rect.x(), rect.y()).to_physical(scale_factor),
         }
     }

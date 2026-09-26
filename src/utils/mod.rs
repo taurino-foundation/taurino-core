@@ -74,7 +74,11 @@ impl NewWindowFeatures {
         position: Option<dpi::LogicalPosition<f64>>,
         opener: NewWindowOpener,
     ) -> Self {
-        Self { opener, position, size }
+        Self {
+            opener,
+            position,
+            size,
+        }
     }
 
     /// Returns the opener.
@@ -243,7 +247,11 @@ pub fn from_wry_permission_kind(kind: wry::PermissionKind) -> PermissionKind {
 }
 
 #[cfg(target_os = "macos")]
-pub fn inner_size(window: &Window, webviews: &[ManagedWebview], has_children: bool) -> PhysicalSize<u32> {
+pub fn inner_size(
+    window: &Window,
+    webviews: &[ManagedWebview],
+    has_children: bool,
+) -> PhysicalSize<u32> {
     if !has_children && !webviews.is_empty() {
         let webview = webviews.first().unwrap();
         let view = unsafe { Retained::cast_unchecked::<objc2_app_kit::NSView>(webview.webview()) };
@@ -257,7 +265,11 @@ pub fn inner_size(window: &Window, webviews: &[ManagedWebview], has_children: bo
 
 #[cfg(not(target_os = "macos"))]
 #[allow(unused_variables)]
-pub fn inner_size(window: &Window, webviews: &[ManagedWebview], has_children: bool) -> PhysicalSize<u32> {
+pub fn inner_size(
+    window: &Window,
+    webviews: &[ManagedWebview],
+    has_children: bool,
+) -> PhysicalSize<u32> {
     window.inner_size()
 }
 

@@ -35,7 +35,9 @@ impl Drop for ManagedWebview {
             let mut context_store = self.context_store.lock().unwrap();
 
             if let Some(web_context) = context_store.get_mut(&self.context_key) {
-                web_context.referenced_by_webviews.remove(&self.metadata.webview_label);
+                web_context
+                    .referenced_by_webviews
+                    .remove(&self.metadata.webview_label);
 
                 // https://github.com/tauri-apps/tauri/issues/14626
                 // Because WebKit does not close its network process even when no webviews are running,
@@ -77,7 +79,11 @@ impl ManagedWebview {
             .map_err(|_| crate::error::Error::FailedToSendMessage)
     }
 
-    pub fn evaluate_script_with_callback<F>(&self, script: &str, callback: F) -> crate::error::Result<()>
+    pub fn evaluate_script_with_callback<F>(
+        &self,
+        script: &str,
+        callback: F,
+    ) -> crate::error::Result<()>
     where
         F: Fn(String) + Send + 'static,
     {
@@ -111,14 +117,20 @@ impl ManagedWebview {
     }
 
     pub fn print(&self) -> crate::error::Result<()> {
-        self.inner.print().map_err(|_| crate::error::Error::FailedToSendMessage)
+        self.inner
+            .print()
+            .map_err(|_| crate::error::Error::FailedToSendMessage)
     }
 
     // -------------------------------------------------------------------------
     // Bounds
     // -------------------------------------------------------------------------
 
-    pub fn set_bounds(&self, window: &Window, bounds: crate::types::Rect) -> crate::error::Result<()> {
+    pub fn set_bounds(
+        &self,
+        window: &Window,
+        bounds: crate::types::Rect,
+    ) -> crate::error::Result<()> {
         let bounds: RectWrapper = bounds.into();
         let bounds = bounds.0;
 
@@ -204,7 +216,10 @@ impl ManagedWebview {
             .map_err(|_| crate::error::Error::FailedToSendMessage)
     }
 
-    pub fn set_background_color(&self, color: Option<crate::types::Color>) -> crate::error::Result<()> {
+    pub fn set_background_color(
+        &self,
+        color: Option<crate::types::Color>,
+    ) -> crate::error::Result<()> {
         self.inner
             .set_background_color(color.map(Into::into).unwrap_or((255, 255, 255, 255)))
             .map_err(|_| crate::error::Error::FailedToSendMessage)
@@ -256,7 +271,9 @@ impl ManagedWebview {
     // -------------------------------------------------------------------------
 
     pub fn set_focus(&self) -> crate::error::Result<()> {
-        self.inner.focus().map_err(|_| crate::error::Error::FailedToSendMessage)
+        self.inner
+            .focus()
+            .map_err(|_| crate::error::Error::FailedToSendMessage)
     }
 
     pub fn set_auto_resize(&self, window: &Window, auto_resize: bool) -> crate::error::Result<()> {

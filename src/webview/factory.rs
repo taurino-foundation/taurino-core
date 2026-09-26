@@ -60,7 +60,10 @@ pub fn create_webview<F>(
     befor_webview_creation: Option<F>,
 ) -> crate::error::Result<ManagedWebview>
 where
-    F: for<'a> Fn(wry::WebViewBuilder<'a>, WebviewUrl) -> crate::error::Result<wry::WebViewBuilder<'a>>
+    F: for<'a> Fn(
+            wry::WebViewBuilder<'a>,
+            WebviewUrl,
+        ) -> crate::error::Result<wry::WebViewBuilder<'a>>
         + Send
         + 'static,
 {
@@ -156,7 +159,11 @@ where
         }
         Vacant(vacant) => {
             let mut web_context = WryWebContext::new(web_context_key.clone());
-            web_context.set_allows_automation(if automation_enabled { is_first_context } else { false });
+            web_context.set_allows_automation(if automation_enabled {
+                is_first_context
+            } else {
+                false
+            });
             vacant.insert(WebContext {
                 inner: web_context,
                 referenced_by_webviews: [label.clone()].into(),
@@ -192,11 +199,17 @@ where
 
     if let Some(background_throttling) = background_throttling {
         webview_builder = webview_builder.with_background_throttling(match background_throttling {
-            crate::types::BackgroundThrottlingPolicy::Disabled => wry::BackgroundThrottlingPolicy::Disabled,
+            crate::types::BackgroundThrottlingPolicy::Disabled => {
+                wry::BackgroundThrottlingPolicy::Disabled
+            }
 
-            crate::types::BackgroundThrottlingPolicy::Suspend => wry::BackgroundThrottlingPolicy::Suspend,
+            crate::types::BackgroundThrottlingPolicy::Suspend => {
+                wry::BackgroundThrottlingPolicy::Suspend
+            }
 
-            crate::types::BackgroundThrottlingPolicy::Throttle => wry::BackgroundThrottlingPolicy::Throttle,
+            crate::types::BackgroundThrottlingPolicy::Throttle => {
+                wry::BackgroundThrottlingPolicy::Throttle
+            }
         });
     }
 
@@ -234,7 +247,8 @@ where
             crate::types::ScrollBarStyle::FluentOverlay => wry::ScrollBarStyle::FluentOverlay,
         });
 
-        webview_builder = webview_builder.with_browser_extensions_enabled(browser_extensions_enabled);
+        webview_builder =
+            webview_builder.with_browser_extensions_enabled(browser_extensions_enabled);
     }
 
     #[cfg(any(
@@ -280,12 +294,13 @@ where
 
     #[cfg(target_os = "ios")]
     {
-        webview_builder =
-            webview_builder.with_limit_navigations_to_app_bound_domains(limit_navigations_to_app_bound_domains);
+        webview_builder = webview_builder
+            .with_limit_navigations_to_app_bound_domains(limit_navigations_to_app_bound_domains);
 
         if let Some(input_accessory_view_builder) = input_accessory_view_builder {
-            webview_builder =
-                webview_builder.with_input_accessory_view_builder(move |webview| input_accessory_view_builder(webview));
+            webview_builder = webview_builder.with_input_accessory_view_builder(move |webview| {
+                input_accessory_view_builder(webview)
+            });
         }
     }
 
@@ -304,18 +319,19 @@ where
 
     #[cfg(target_os = "ios")]
     {
-        webview_builder =
-            webview_builder.with_limit_navigations_to_app_bound_domains(limit_navigations_to_app_bound_domains);
+        webview_builder = webview_builder
+            .with_limit_navigations_to_app_bound_domains(limit_navigations_to_app_bound_domains);
 
         if let Some(input_accessory_view_builder) = input_accessory_view_builder {
-            webview_builder =
-                webview_builder.with_input_accessory_view_builder(move |webview| input_accessory_view_builder(webview));
+            webview_builder = webview_builder.with_input_accessory_view_builder(move |webview| {
+                input_accessory_view_builder(webview)
+            });
         }
     }
 
     for script in initialization_scripts {
-        webview_builder =
-            webview_builder.with_initialization_script_for_main_only(script.script, script.for_main_frame_only);
+        webview_builder = webview_builder
+            .with_initialization_script_for_main_only(script.script, script.for_main_frame_only);
     }
 
     #[cfg(any(debug_assertions, feature = "devtools"))]
@@ -388,8 +404,12 @@ where
         webview_builder = match befor_webview_creation {
             Some(callback) => callback(webview_builder, url)?,
             None => match url {
-                WebviewUrl::External(u) | WebviewUrl::CustomProtocol(u) => webview_builder.with_url(u.to_string()),
-                WebviewUrl::App(path) => webview_builder.with_url(path.to_string_lossy().to_string()),
+                WebviewUrl::External(u) | WebviewUrl::CustomProtocol(u) => {
+                    webview_builder.with_url(u.to_string())
+                }
+                WebviewUrl::App(path) => {
+                    webview_builder.with_url(path.to_string_lossy().to_string())
+                }
             },
         };
     }
@@ -432,7 +452,9 @@ where
 
                 NewWindowResponse::Create { webview } => wry::NewWindowResponse::Create {
                     #[cfg(target_os = "macos")]
-                    webview: wry::WebViewExtMacOS::webview(&*webview.inner).as_super().into(),
+                    webview: wry::WebViewExtMacOS::webview(&*webview.inner)
+                        .as_super()
+                        .into(),
 
                     #[cfg(any(
                         target_os = "linux",
@@ -482,15 +504,22 @@ where
                 return false;
             };
 
-            started_handler(&started_metadata, DownloadEvent::Requested { url, destination })
+            started_handler(
+                &started_metadata,
+                DownloadEvent::Requested { url, destination },
+            )
         });
 
         let completed_metadata = metadata.clone();
-        webview_builder = webview_builder.with_download_completed_handler(move |url, path, success| {
-            if let Ok(url) = url.parse() {
-                let _ = download_handler(&completed_metadata, DownloadEvent::Finished { url, path, success });
-            }
-        });
+        webview_builder =
+            webview_builder.with_download_completed_handler(move |url, path, success| {
+                if let Ok(url) = url.parse() {
+                    let _ = download_handler(
+                        &completed_metadata,
+                        DownloadEvent::Finished { url, path, success },
+                    );
+                }
+            });
     }
 
     if let Some(page_load_handler) = on_page_load_handler {
@@ -511,12 +540,13 @@ where
 
     #[cfg(target_os = "ios")]
     {
-        webview_builder =
-            webview_builder.with_limit_navigations_to_app_bound_domains(limit_navigations_to_app_bound_domains);
+        webview_builder = webview_builder
+            .with_limit_navigations_to_app_bound_domains(limit_navigations_to_app_bound_domains);
 
         if let Some(input_accessory_view_builder) = input_accessory_view_builder {
-            webview_builder = webview_builder
-                .with_input_accessory_view_builder(move |webview| input_accessory_view_builder.0(webview));
+            webview_builder = webview_builder.with_input_accessory_view_builder(move |webview| {
+                input_accessory_view_builder.0(webview)
+            });
         }
     }
 
@@ -529,23 +559,41 @@ where
 
     for (scheme, protocol) in uri_scheme_protocols {
         let metadata = metadata.clone();
-        webview_builder =
-            webview_builder.with_asynchronous_custom_protocol(scheme, move |webview_id, request, responder| {
-                protocol(
-                    &metadata,
-                    webview_id,
-                    request,
-                    Box::new(move |response| responder.respond(response)),
-                );
-            });
+        // on Linux the custom protocols are associated with the web context
+        // and you cannot register a scheme more than once
+        #[cfg(any(
+            target_os = "linux",
+            target_os = "dragonfly",
+            target_os = "freebsd",
+            target_os = "netbsd",
+            target_os = "openbsd"
+        ))]
+        {
+            if web_context.registered_custom_protocols.contains(&scheme) {
+                continue;
+            }
+
+            web_context
+                .registered_custom_protocols
+                .insert(scheme.clone());
+        }
+
+        webview_builder = webview_builder.with_asynchronous_custom_protocol(
+            scheme,
+            move |_, request, responder| {
+                protocol(&metadata, request, responder);
+            },
+        );
     }
 
     #[cfg(any(target_os = "macos", target_os = "ios"))]
-    if let Some(on_web_content_process_terminate_handler) = on_web_content_process_terminate_handler {
+    if let Some(on_web_content_process_terminate_handler) = on_web_content_process_terminate_handler
+    {
         let metadata = metadata.clone();
-        webview_builder = webview_builder.with_on_web_content_process_terminate_handler(move || {
-            on_web_content_process_terminate_handler(&metadata);
-        });
+        webview_builder =
+            webview_builder.with_on_web_content_process_terminate_handler(move || {
+                on_web_content_process_terminate_handler(&metadata);
+            });
     }
 
     let webview = if kind {
@@ -566,7 +614,9 @@ where
         {
             use tao::platform::unix::WindowExtUnix;
 
-            let container = window.default_vbox().expect("Tao window has no GTK container");
+            let container = window
+                .default_vbox()
+                .expect("Tao window has no GTK container");
 
             webview_builder.build_gtk(container)
         }
@@ -582,7 +632,11 @@ where
     Ok(ManagedWebview {
         metadata,
         context_store: web_context_store.clone(),
-        context_key: if automation_enabled { None } else { web_context_key },
+        context_key: if automation_enabled {
+            None
+        } else {
+            web_context_key
+        },
         bounds: Arc::new(Mutex::new(webview_bounds)),
         inner: webview,
     })
