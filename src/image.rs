@@ -6,21 +6,21 @@ use std::borrow::Cow;
 
 #[cfg(windows)]
 use windows::{
+    core::{Owned, PCWSTR},
     Win32::{
-        Foundation::{E_FAIL, ERROR_INVALID_PARAMETER, ERROR_NOT_SUPPORTED, WIN32_ERROR},
+        Foundation::{ERROR_INVALID_PARAMETER, ERROR_NOT_SUPPORTED, E_FAIL, WIN32_ERROR},
         Graphics::Gdi::{
-            BI_RGB, BITMAPINFO, BITMAPINFOHEADER, CreateCompatibleDC, DIB_RGB_COLORS, DeleteDC, GetDIBits, HBITMAP,
+            CreateCompatibleDC, DeleteDC, GetDIBits, BITMAPINFO, BITMAPINFOHEADER, BI_RGB, DIB_RGB_COLORS, HBITMAP,
         },
         System::LibraryLoader::GetModuleHandleW,
         UI::WindowsAndMessaging::{
-            GetIconInfo, GetSystemMetrics, HICON, ICONINFO, IMAGE_ICON, LR_DEFAULTCOLOR, LoadImageW, SM_CXICON,
+            GetIconInfo, GetSystemMetrics, LoadImageW, HICON, ICONINFO, IMAGE_ICON, LR_DEFAULTCOLOR, SM_CXICON,
             SM_CYICON,
         },
     },
-    core::{Owned, PCWSTR},
 };
 
-use crate::utils::{Icon, resource::Resource};
+use crate::resource::Resource;
 
 /// Resource id of the application icon that `build` embeds into Windows executables
 /// and that `tauri::image::Image::from_app_icon_resource` reads back.
@@ -376,7 +376,7 @@ impl<'a> Image<'a> {
     }
 }
 
-impl<'a> From<Image<'a>> for Icon<'a> {
+impl<'a> From<Image<'a>> for crate::prelude::Icon<'a> {
     fn from(img: Image<'a>) -> Self {
         Self {
             rgba: img.rgba,
@@ -404,7 +404,7 @@ impl TryFrom<Image<'_>> for tray_icon::Icon {
 
 #[cfg(all(test, windows))]
 mod tests {
-    use super::{IconResource, Image, default_window_icon_from_app_icon_resource};
+    use super::{default_window_icon_from_app_icon_resource, IconResource, Image};
 
     /// The test executable has no icon resources, so every lookup must fail with an error
     /// (instead of panicking or returning a stretched placeholder).

@@ -1,10 +1,13 @@
 use std::{path::Path, sync::Arc};
 
 use muda::MenuEvent;
+use tray_icon::TrayIconId;
 
-use crate::{prelude::ContextMenu, utils::image::Image};
-
-use super::{/* icon::{attach_menu_handler, attach_tray_handler}, */ TrayIcon, TrayIconEvent, TrayIconId};
+use crate::{
+    image::Image,
+    prelude::ContextMenu,
+    tray::{event::TrayIconEvent, icon::TrayIcon},
+};
 
 type MenuHandler = Arc<dyn Fn(&TrayIcon, MenuEvent) + Send + Sync + 'static>;
 type TrayHandler = Arc<dyn Fn(&TrayIcon, TrayIconEvent) + Send + Sync + 'static>;

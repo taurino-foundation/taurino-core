@@ -3,10 +3,7 @@ use super::{
     metadata::{AboutMetadata, NativeIcon},
 };
 use crate::error::Result;
-use crate::{
-    menu::sealed::IsMenuItemBase,
-    utils::{image::Image, resource::Resource},
-};
+use crate::{image::Image, menu::sealed::IsMenuItemBase, resource::Resource};
 use muda::MenuId;
 use std::sync::Arc;
 

@@ -5,22 +5,26 @@ use std::sync::Mutex;
 use std::{rc::Rc, sync::Arc};
 use tao::window::Window;
 
-#[cfg(windows)]
-use wry::WebViewExtWindows;
+#[cfg(target_os = "macos")]
+use objc2::ClassType;
 
 #[cfg(not(any(target_os = "android", target_os = "ios")))]
 use crate::{types::WebContextStore, utils::WebContext};
 use crate::{
     types::{DownloadEvent, NewWindowResponse, PageLoadEvent, WebviewBounds, WebviewUrl},
-    utils::{NewWindowFeatures, WindowWebViewMetaData, wrappers::RectWrapper},
-    webview::{ManagedWebview, builder::WebViewBuilder},
+    utils::{wrappers::RectWrapper, NewWindowFeatures, WindowWebViewMetaData},
+    webview::{builder::WebViewBuilder, ManagedWebview},
 };
+#[cfg(any(target_os = "macos", target_os = "ios"))]
+use wry::WebViewBuilderExtDarwin;
+#[cfg(windows)]
+use wry::WebViewExtWindows;
 
 use crate::utils::{from_wry_permission_kind, to_wry_permission_response};
 
 use std::collections::{
-    HashSet,
     hash_map::Entry::{Occupied, Vacant},
+    HashSet,
 };
 
 use wry::WebContext as WryWebContext;
@@ -179,7 +183,7 @@ where
 
                 NewWindowResponse::Create { webview } => wry::NewWindowResponse::Create {
                     #[cfg(target_os = "macos")]
-                    webview: wry::WebViewExtMacOS::webview(webview).as_super().into(),
+                    webview: wry::WebViewExtMacOS::webview(&*webview.inner).as_super().into(),
 
                     #[cfg(any(
                         target_os = "linux",
@@ -272,7 +276,7 @@ where
     #[cfg(any(target_os = "macos", target_os = "ios"))]
     if let Some(on_web_content_process_terminate_handler) = on_web_content_process_terminate_handler {
         let metadata = metadata.clone();
-        webview_builder = webview_builder.with_on_web_content_process_terminated_handler(move || {
+        webview_builder = webview_builder.with_on_web_content_process_terminate_handler(move || {
             on_web_content_process_terminate_handler(&metadata);
         });
     }
@@ -284,9 +288,9 @@ where
     );
     Ok(ManagedWebview {
         metadata,
-        inner: webview,
         context_store: web_context_store.clone(),
         context_key: if automation_enabled { None } else { web_context_key },
         bounds: Arc::new(Mutex::new(webview_bounds)),
+        inner: webview,
     })
 }

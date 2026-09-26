@@ -4,7 +4,7 @@ use http::{
     status::InvalidStatusCode,
 };
 
-use crate::utils::resource::ResourceId;
+use crate::resource::ResourceId;
 
 /// The result type of `tauri-utils`.
 pub type Result<T> = std::result::Result<T, Error>;

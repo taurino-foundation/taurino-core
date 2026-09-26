@@ -1,18 +1,16 @@
-mod dialog;
-mod monitor;
-mod undecorated_resizing;
-mod util;
-mod webview;
-mod window;
+pub(crate) mod dialog;
+pub(crate) mod monitor;
 
-pub mod prelude {
-    pub use super::dialog::error;
-    pub use super::monitor::MonitorExt;
-    pub use super::undecorated_resizing::{
-        attach_resize_handler, detach_resize_handler, update_drag_hwnd_rgn_for_undecorated,
-    };
-    #[cfg(windows)]
-    pub use super::util::{encode_wide, get_system_metrics_for_dpi, hwnd_dpi};
-    pub use super::webview::Webview;
-    pub use super::window::{WindowExt, calculate_window_center_position};
-}
+#[cfg(any(
+    windows,
+    target_os = "linux",
+    target_os = "dragonfly",
+    target_os = "freebsd",
+    target_os = "netbsd",
+    target_os = "openbsd",
+))]
+pub(crate) mod undecorated_resizing;
+
+pub(crate) mod util;
+pub(crate) mod webview;
+pub(crate) mod window;

@@ -4,7 +4,7 @@
 // SPDX-License-Identifier: MIT
 
 use std::{
-    any::{Any, TypeId, type_name},
+    any::{type_name, Any, TypeId},
     borrow::Cow,
     collections::BTreeMap,
     sync::Arc,
@@ -206,6 +206,7 @@ impl ResourceTable {
 
     /// Removes and frees all resources stored. Note that the
     /// resource's `close()` method is *not* called.
+    #[allow(dead_code)]
     pub(crate) fn clear(&mut self) {
         self.index.clear()
     }

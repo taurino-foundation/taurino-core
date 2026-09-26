@@ -1,4 +1,4 @@
-use crate::utils::{ArcMutHashMap, NewWindowFeatures, WebContext, WindowWebViewMetaData, wrappers::WindowEvent};
+use crate::utils::{wrappers::WindowEvent, ArcMutHashMap, NewWindowFeatures, WebContext, WindowWebViewMetaData};
 #[cfg(not(any(target_os = "android", target_os = "ios")))]
 use crate::webview::ManagedWebview;
 use dpi::{PhysicalPosition, PhysicalSize, PixelUnit, Position, Size};
@@ -8,7 +8,7 @@ use std::{
     fmt::{self, Display},
     path::PathBuf,
     str::FromStr,
-    sync::{Arc, mpsc::Sender},
+    sync::{mpsc::Sender, Arc},
 };
 
 use dpi::LogicalPosition;
@@ -18,7 +18,6 @@ use url::Url;
 pub use window_effects::{WindowEffect, WindowEffectState};
 
 pub type WindowEventHandler = Arc<dyn Fn(&WindowWebViewMetaData, &WindowEvent) + Send + Sync + 'static>;
-
 pub type WebContextStore = ArcMutHashMap<Option<PathBuf>, WebContext>;
 pub type CloseRequestedHandler = Arc<dyn Fn(Sender<bool>) + Send + Sync + 'static>;
 #[cfg(windows)]
@@ -210,6 +209,13 @@ impl Display for TitleBarStyle {
             }
         )
     }
+}
+
+#[cfg(target_os = "android")]
+pub struct CreationContext<'a, 'b> {
+    pub env: &'a mut jni::JNIEnv<'b>,
+    pub activity: &'a jni::objects::JObject<'b>,
+    pub webview: &'a jni::objects::JObject<'b>,
 }
 
 /// System theme.

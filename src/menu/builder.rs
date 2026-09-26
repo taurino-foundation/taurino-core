@@ -3,7 +3,7 @@ use super::{
     metadata::{AboutMetadata, NativeIcon},
 };
 use crate::error::Result;
-use crate::utils::image::Image;
+use crate::image::Image;
 use muda::MenuId;
 
 // -----------------------------------------------------------------------------

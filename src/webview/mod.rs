@@ -2,22 +2,22 @@ use dpi::{PhysicalPosition, PhysicalSize, Position, Size};
 use std::{ops::Deref, path::PathBuf, rc::Rc};
 use tao::window::Window;
 use url::Url;
-use wry::{WebView, cookie::Cookie};
+use wry::{cookie::Cookie, WebView};
 mod builder;
 pub(crate) mod factory;
 use crate::{
     types::{WebContextStore, WebviewBounds},
-    utils::{ArcMut, WindowWebViewMetaData, wrappers::RectWrapper},
+    utils::{wrappers::RectWrapper, ArcMut, WindowWebViewMetaData},
 };
 
 pub use self::builder::WebViewBuilder;
 #[derive(Clone)]
 pub struct ManagedWebview {
     pub(crate) metadata: WindowWebViewMetaData,
-    pub inner: Rc<WebView>,
     pub context_store: WebContextStore,
     pub context_key: Option<PathBuf>,
     pub bounds: ArcMut<Option<WebviewBounds>>,
+    pub inner: Rc<WebView>,
 }
 
 impl Deref for ManagedWebview {

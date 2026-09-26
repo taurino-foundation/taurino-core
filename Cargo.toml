@@ -1,50 +1,164 @@
 [package]
 name = "taurino-core"
 version = "0.1.0"
-edition = "2024"
+edition = "2021"
 
 [dependencies]
 anyhow = "1"
-tokio = {version = "1",features = ["macros","rt-multi-thread","time","fs", "sync"]}
-http = "1"
-serde = { version = "1", features = ["derive"] }
-wry = { version = "0.56.0", default-features = false, features = [
-  "os-webview",
-  "linux-body",
-] }
-image = { version = "0.25", default-features = false}
-tao = { version = "0.37.0", default-features = false, features = ["rwh_06"] }
-thiserror = "2.0.20"
-log = "0.4.34"
-serde_json = "1.0.151"
 dpi = { version = "0.1.2", features = ["serde"] }
-raw-window-handle = "0.6"
-url = { version = "2" , features = ["serde"] }
-serde_with = "3"
-infer = "0.22.0"
-tray-icon = { version = "0.25.1" , features = ["serde"] }
-muda = "0.20.0"
-global-hotkey = "0.8.0"
-getrandom = "0.4.3"
 dunce = "1.0.5"
+getrandom = "0.4.3"
+http = "1"
+image = { version = "0.25", default-features = false }
+infer = "0.22.0"
+log = "0.4.34"
+raw-window-handle = "0.6"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1.0.151"
+serde_with = "3"
+thiserror = "2.0.20"
+tokio = { version = "1", features = ["fs", "macros", "rt-multi-thread", "sync", "time"] }
+url = { version = "2", features = ["serde"] }
+tao = { version = "0.37.0", default-features = false, features = ["rwh_06"] }
+wry = { version = "0.56.1", default-features = false, features = ["os-webview"] }
 
-[target."cfg(windows)".dependencies]
+# -----------------------------------------------------------------------------
+# Desktop
+# -----------------------------------------------------------------------------
+
+[target.'cfg(any(target_os = "linux", target_os = "dragonfly", target_os = "freebsd", target_os = "netbsd", target_os = "openbsd", target_os = "windows", target_os = "macos"))'.dependencies]
+global-hotkey = { version = "0.8.0", features = ["serde"] }
+muda = { version = "0.20.0", default-features = false, features = ["serde"] }
+tray-icon = { version = "0.25.1", default-features = false, features = ["serde"] }
+
+# -----------------------------------------------------------------------------
+# Linux / BSD
+# -----------------------------------------------------------------------------
+
+[target.'cfg(any(target_os = "linux", target_os = "dragonfly", target_os = "freebsd", target_os = "netbsd", target_os = "openbsd"))'.dependencies]
+gtk = { version = "0.18", features = ["v3_24"] }
+muda = { version = "0.20.0", default-features = false, features = ["gtk3", "serde"] }
+percent-encoding = "2"
+tray-icon = { version = "0.25.1", default-features = false, features = ["libappindicator", "serde"] }
+webkit2gtk = { version = "2", features = ["v2_40"] }
+
+# -----------------------------------------------------------------------------
+# Windows
+# -----------------------------------------------------------------------------
+
+[target.'cfg(windows)'.dependencies]
 once_cell = "1.21.4"
-softbuffer = "0.4.8"
+softbuffer = { version = "0.4.8", default-features = false }
 webview2-com = "0.38"
-windows = "0.62.2"
+window-vibrancy = "0.8.1"
 windows-sys = "0.61.2"
 
+[target.'cfg(windows)'.dependencies.windows]
+version = "0.62.2"
+features = [
+    "Win32_Foundation",
+    "Win32_Graphics_Dwm",
+    "Win32_Graphics_Gdi",
+    "Win32_System_LibraryLoader",
+    "Win32_System_WinRT",
+    "Win32_UI",
+    "Win32_UI_Controls",
+    "Win32_UI_Shell",
+    "Win32_UI_WindowsAndMessaging",
+]
+
+# -----------------------------------------------------------------------------
+# Apple
+# -----------------------------------------------------------------------------
+
+[target.'cfg(target_vendor = "apple")'.dependencies]
+objc2 = "0.6"
+
+# -----------------------------------------------------------------------------
+# macOS
+# -----------------------------------------------------------------------------
+
+[target.'cfg(target_os = "macos")'.dependencies]
+embed_plist = "1.2"
+objc2-app-kit = { version = "0.3.2", default-features = false, features = [
+    "NSApplication",
+    "NSColor",
+    "NSGraphics",
+    "NSImage",
+    "NSResponder",
+    "NSScreen",
+    "NSView",
+    "NSWindow",
+    "block2",
+    "std",
+] }
+
+objc2-foundation = { version = "0.3.2", default-features = false, features = [
+    "NSData",
+    "NSEnumerator",
+    "NSThread",
+    "std",
+] }
+
+objc2-web-kit = { version = "0.3.2", default-features = false, features = [
+    "WKUserContentController",
+    "WKWebView",
+    "WKWebViewConfiguration",
+    "objc2-app-kit",
+] }
+
+plist = "1"
+window-vibrancy = "0.8.1"
+
+# -----------------------------------------------------------------------------
+# Apple mobile
+# -----------------------------------------------------------------------------
+
+[target.'cfg(all(target_vendor = "apple", not(target_os = "macos")))'.dependencies]
+libc = "0.2"
+objc2-ui-kit = { version = "0.3.2", default-features = false, features = [
+    "UIApplication",
+    "UIResponder",
+    "UIScene",
+    "UISceneOptions",
+    "UIView",
+] }
+swift-rs = "1.0.8"
+
+# -----------------------------------------------------------------------------
+# Android
+# -----------------------------------------------------------------------------
+
+[target.'cfg(target_os = "android")'.dependencies]
+jni = "0.21"
+
+# -----------------------------------------------------------------------------
+# Mobile
+# -----------------------------------------------------------------------------
+
+[target.'cfg(any(target_os = "android", all(target_vendor = "apple", not(target_os = "macos"))))'.dependencies]
+bytes = { version = "1", features = ["serde"] }
+reqwest = { version = "0.13", default-features = false, features = ["json", "stream"] }
+rustls = { version = "0.23", default-features = false, features = ["ring"], optional = true }
+
+# -----------------------------------------------------------------------------
+# Features
+# -----------------------------------------------------------------------------
 
 [features]
-default = ["x11", "dbus"]
-devtools = ["wry/devtools"]
-x11 = ["tao/x11", "wry/x11"]
-macos-private-api = []
-# TODO: Remove in v3 - wry does not have this feature anymore
-objc-exception = []
-# tracing = ["dep:tracing", "wry/tracing"]
-macos-proxy = ["wry/mac-proxy"]
-unstable = []
-common-controls-v6 = ["windows/Win32_UI_Controls", "windows/Win32_UI_Shell"]
+default = ["dbus", "x11"]
+
+common-controls-v6 = [
+    "windows/Win32_UI_Controls",
+    "windows/Win32_UI_Shell",
+]
+
 dbus = ["tao/dbus"]
+devtools = ["wry/devtools"]
+macos-private-api = []
+macos-proxy = ["wry/mac-proxy"]
+objc-exception = []
+tracing = ["wry/tracing"]
+unstable = []
+x11 = ["tao/x11", "wry/x11"]
+

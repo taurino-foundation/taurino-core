@@ -1,6 +1,6 @@
 use serde::Deserialize;
 
-use crate::utils::image::Image;
+use crate::image::Image;
 
 /// Application metadata for the [`PredefinedMenuItem::about`].
 #[derive(Debug, Clone, Default)]

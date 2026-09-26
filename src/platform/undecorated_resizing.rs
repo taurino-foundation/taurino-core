@@ -80,13 +80,13 @@ fn hit_test(
 mod windows {
     use crate::platform::util;
 
-    use super::{HitTestResult, hit_test};
+    use super::{hit_test, HitTestResult};
 
+    use windows::core::*;
     use windows::Win32::System::LibraryLoader::*;
     use windows::Win32::UI::WindowsAndMessaging::*;
     use windows::Win32::{Foundation::*, UI::Shell::SetWindowSubclass};
     use windows::Win32::{Graphics::Gdi::*, UI::Shell::DefSubclassProc};
-    use windows::core::*;
 
     impl HitTestResult {
         fn to_win32(self) -> i32 {
@@ -483,7 +483,7 @@ mod windows {
 
 #[cfg(not(windows))]
 mod gtk {
-    use super::{HitTestResult, hit_test};
+    use super::{hit_test, HitTestResult};
 
     const BORDERLESS_RESIZE_INSET: i32 = 5;
 
@@ -505,7 +505,7 @@ mod gtk {
 
     pub fn attach_resize_handler(webview: &wry::WebView) {
         use gtk::{
-            gdk::{WindowEdge, prelude::*},
+            gdk::{prelude::*, WindowEdge},
             glib::Propagation,
             prelude::*,
         };

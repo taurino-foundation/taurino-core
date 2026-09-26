@@ -5,14 +5,9 @@ use std::{
 };
 
 use muda::MenuEvent;
+use tray_icon::TrayIconId;
 
-use crate::{
-    prelude::ContextMenu,
-    types::Rect,
-    utils::{image::Image, resource::Resource},
-};
-
-use super::{TrayIconEvent, TrayIconId};
+use crate::{image::Image, prelude::ContextMenu, resource::Resource, tray::event::TrayIconEvent, types::Rect};
 
 type MenuHandler = Arc<dyn Fn(&TrayIcon, MenuEvent) + Send + Sync + 'static>;
 type TrayHandler = Arc<dyn Fn(&TrayIcon, TrayIconEvent) + Send + Sync + 'static>;
@@ -182,10 +177,7 @@ impl TrayIcon {
         #[cfg(target_os = "macos")]
         {
             let icon = icon.map(TryInto::try_into).transpose()?;
-            self.inner
-                .inner
-                .set_icon_with_as_template(icon, is_template)
-                .map_err(Into::into)?;
+            self.inner.inner.set_icon_with_as_template(icon, is_template)?;
             return Ok(());
         }
         #[cfg(not(target_os = "macos"))]

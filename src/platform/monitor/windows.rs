@@ -1,4 +1,4 @@
-use tao::dpi::{PhysicalPosition, PhysicalSize};
+use crate::native::dpi::{PhysicalPosition, PhysicalSize};
 
 use crate::types::PhysicalRect;
 

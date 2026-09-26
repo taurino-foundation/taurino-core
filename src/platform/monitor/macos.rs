@@ -1,4 +1,4 @@
-use crate::dpi::LogicalSize;
+use crate::native::dpi::LogicalSize;
 use crate::types::PhysicalRect;
 impl super::MonitorExt for tao::monitor::MonitorHandle {
     fn work_area(&self) -> PhysicalRect<i32, u32> {

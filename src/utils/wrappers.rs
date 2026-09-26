@@ -1,13 +1,11 @@
-#[cfg(windows)]
 use std::sync::atomic::Ordering;
 
-#[cfg(windows)]
+use crate::platform::monitor::MonitorExt;
 use crate::window::ManagedWindow;
 use crate::{
     error::Error,
-    platform::prelude::MonitorExt,
     types::{CursorIcon, DeviceEventFilter, Monitor, ProgressBarState, ProgressBarStatus, Rect, UserAttentionType},
-    utils::{Icon, inner_size, map_theme},
+    utils::{inner_size, map_theme, Icon},
 };
 use dpi::{PhysicalPosition, PhysicalSize};
 use serde::{Deserialize, Serialize};
@@ -32,6 +30,7 @@ impl TryFrom<Icon<'_>> for TaoIcon {
     }
 }
 
+#[allow(dead_code)]
 pub struct DeviceEventFilterWrapper(pub TaoDeviceEventFilter);
 
 impl From<DeviceEventFilter> for DeviceEventFilterWrapper {

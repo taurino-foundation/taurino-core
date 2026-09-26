@@ -12,7 +12,9 @@ mod builder;
 mod event;
 mod icon;
 
-pub use builder::TrayIconBuilder;
-pub use event::{MouseButton, MouseButtonState, TrayIconEvent};
-pub use icon::TrayIcon;
-pub use tray_icon::TrayIconId;
+pub mod prelude {
+    pub use super::builder::TrayIconBuilder;
+    pub use super::event::{MouseButton, MouseButtonState, TrayIconEvent};
+    pub use super::icon::TrayIcon;
+    pub use tray_icon::TrayIconId;
+}

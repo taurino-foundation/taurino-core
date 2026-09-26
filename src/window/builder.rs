@@ -2,7 +2,7 @@ use dpi::{self, LogicalPosition, LogicalSize, PhysicalSize, Size};
 
 use std::{
     fmt,
-    sync::{Arc, atomic::AtomicU32, mpsc::Sender},
+    sync::{atomic::AtomicU32, mpsc::Sender, Arc},
 };
 use tao::{
     event_loop::EventLoopWindowTarget,
@@ -19,15 +19,15 @@ use crate::{
         WindowEventHandler, WindowSizeConstraints,
     },
     utils::{
-        Icon, RawWindow, WindowWebViewMetaData,
         wrappers::{TaoIcon, WindowEvent},
+        Icon, RawWindow, WindowWebViewMetaData,
     },
     webview::WebViewBuilder,
-    window::{ManagedWindow, WindowId, factory::create_window},
+    window::{factory::create_window, ManagedWindow, WindowId, WindowMenu},
 };
 
 #[cfg(target_os = "macos")]
-use crate::utils::TitleBarStyle;
+use crate::types::TitleBarStyle;
 
 #[cfg(target_os = "android")]
 use tao::platform::android::WindowBuilderExtAndroid;
@@ -64,6 +64,7 @@ pub struct WindowBuilder {
     pub close_requested_handler: Option<CloseRequestedHandler>,
     pub next_webview_id: Arc<AtomicU32>,
     pub pending_webviews: Vec<WebViewBuilder>,
+    pub setup_menu: Option<WindowMenu>,
 }
 
 impl std::fmt::Debug for WindowBuilder {
@@ -82,6 +83,7 @@ impl std::fmt::Debug for WindowBuilder {
 impl Default for WindowBuilder {
     fn default() -> Self {
         Self {
+            setup_menu: None,
             on_window_event: None,
             label: "main".to_string(),
             inner: TaoWindowBuilder::default(),
@@ -97,9 +99,6 @@ impl Default for WindowBuilder {
         }
     }
 }
-// SAFETY: this type is `Send` since `menu_items` are read only here
-#[allow(clippy::non_send_fields_in_send_ty)]
-unsafe impl Send for WindowBuilder {}
 
 impl WindowBuilder {
     pub fn new() -> Self {
@@ -125,6 +124,7 @@ impl WindowBuilder {
 
         builder
     }
+
     pub fn on_window_event<F>(mut self, handler: F) -> Self
     where
         F: Fn(&WindowWebViewMetaData, &WindowEvent) + Send + Sync + 'static,
@@ -598,16 +598,16 @@ impl WindowBuilder {
         self
     }
 
-    pub fn build<T: 'static, F>(
+    pub fn build<T: 'static, S, F: Fn(RawWindow) -> Result<WindowMenu> + Send + 'static>(
         self,
         window_target: &EventLoopWindowTarget<T>,
         window_id: WindowId,
         web_context_store: WebContextStore,
-        before_webview_creation: Option<F>,
-        after_window_creation: Option<crate::window::SetupMenu>,
+        before_webview_creation: Option<S>,
+        after_window_creation: Option<F>,
     ) -> crate::error::Result<ManagedWindow>
     where
-        F: for<'a> Fn(wry::WebViewBuilder<'a>, WebviewUrl) -> crate::error::Result<wry::WebViewBuilder<'a>>
+        S: for<'a> Fn(wry::WebViewBuilder<'a>, WebviewUrl) -> crate::error::Result<wry::WebViewBuilder<'a>>
             + Send
             + Clone
             + 'static,
@@ -617,8 +617,8 @@ impl WindowBuilder {
             window_target,
             window_id,
             web_context_store,
-            after_window_creation,
             before_webview_creation,
+            after_window_creation,
         )
     }
 }

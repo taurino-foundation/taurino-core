@@ -6,7 +6,7 @@ use super::{
     metadata::NativeIcon,
 };
 use crate::error::Result;
-use crate::utils::image::Image;
+use crate::image::Image;
 use muda::MenuId;
 use std::sync::Arc;
 
@@ -169,14 +169,18 @@ impl Submenu {
 }
 
 impl Menu {
-    pub(crate) fn inner_muda(&self) -> &muda::Menu {
+    pub fn inner_muda(&self) -> &muda::Menu {
         &self.0.inner
     }
 }
 
 impl Submenu {
-    pub(crate) fn inner_muda(&self) -> &muda::Submenu {
+    pub fn inner_muda_ref(&self) -> &muda::Submenu {
         &self.0.inner
+    }
+
+    pub fn inner(&self) -> muda::Submenu {
+        self.0.inner.clone()
     }
 }
 
@@ -398,7 +402,9 @@ impl Menu {
     pub fn haccel(&self) -> isize {
         self.0.inner.haccel()
     }
-
+    pub fn inner(&self) -> muda::Menu {
+        self.0.inner.clone()
+    }
     // -------------------------------------------------------------------------
     // macOS
     // -------------------------------------------------------------------------
@@ -483,16 +489,13 @@ impl Menu {
         self.0.inner.is_visible_on_gtk_window(window)
     }
 
-    #[cfg(all(
-        feature = "gtk3",
-        any(
-            target_os = "dragonfly",
-            target_os = "freebsd",
-            target_os = "linux",
-            target_os = "netbsd",
-            target_os = "openbsd"
-        )
-    ))]
+    #[cfg(all(any(
+        target_os = "dragonfly",
+        target_os = "freebsd",
+        target_os = "linux",
+        target_os = "netbsd",
+        target_os = "openbsd"
+    )))]
     pub fn gtk_menubar_for_gtk_window<W>(self, window: &W) -> Option<gtk::MenuBar>
     where
         W: gtk::prelude::IsA<gtk::Window>,
