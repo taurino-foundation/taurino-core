@@ -16,12 +16,8 @@ jobs:
             fail-fast: false
             matrix:
                 include:
-                    # Windows 64-bit
+                    # Windows x86_64
                     - target: x86_64-pc-windows-msvc
-                      os: windows-2025
-
-                    # Windows 32-bit
-                    - target: i686-pc-windows-msvc
                       os: windows-2025
 
                     # macOS Intel / x86_64
@@ -38,7 +34,7 @@ jobs:
             - name: Checkout
               uses: actions/checkout@v6
 
-            # webkit2gtk / gtk need native system libraries on Linux.
+            # Linux benötigt GTK/WebKit-Systembibliotheken für Tauri.
             - name: Install Linux dependencies
               if: matrix.target == 'x86_64-unknown-linux-gnu'
               shell: bash
@@ -53,6 +49,12 @@ jobs:
               shell: bash
               run: |
                   rustup target add ${{ matrix.target }}
+
+            # Cargo.lock an Cargo.toml / Dependencies anpassen.
+            - name: Update Cargo.lock
+              shell: bash
+              run: |
+                  cargo update
 
             - name: Cargo check
               shell: bash
