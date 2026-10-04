@@ -182,8 +182,81 @@ impl Deref for EngineEvent {
 }
 
 pub mod native {
-  pub use muda;
+#[cfg(any(
+    target_os = "linux",
+    target_os = "dragonfly",
+    target_os = "freebsd",
+    target_os = "openbsd",
+    target_os = "netbsd",
+    target_os = "windows",
+    target_os = "macos",
+))]
+pub use muda;
+
+#[cfg(any(
+    target_os = "linux",
+    target_os = "dragonfly",
+    target_os = "freebsd",
+    target_os = "openbsd",
+    target_os = "netbsd",
+    target_os = "windows",
+    target_os = "macos",
+))]
+pub use tray_icon;
   pub use tao;
-  pub use tray_icon;
   pub use wry;
 }
+
+
+
+// ─────────────────────────────────────────────
+// Synchronization helpers
+// ─────────────────────────────────────────────
+#[macro_export]
+macro_rules! unsafe_impl_sync_send {
+    ($type:ty) => {
+        unsafe impl Send for $type {}
+        unsafe impl Sync for $type {}
+    };
+}
+
+#[macro_export]
+macro_rules! set_property_some {
+    ($builder:ident, $property:ident, &$value:expr) => {
+        if let Some(value) = &$value {
+            $builder = $builder.$property(value);
+        }
+    };
+    ($builder:ident, $property:ident, $value:expr) => {
+        if let Some(value) = $value {
+            $builder = $builder.$property(value.clone());
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! set_property {
+    ($builder:ident, $property:ident, $value:expr) => {
+        $builder = $builder.$property($value);
+    };
+}
+
+
+#[macro_export]
+macro_rules! lock {
+    ($value:expr) => {
+        $value
+            .lock()
+            .map_err(|_| anyhow::anyhow!("Failed to lock {}.", stringify!($value)))
+    };
+}
+
+#[macro_export]
+macro_rules! lock_force {
+    ($value:expr) => {
+        $value.lock().unwrap()
+    };
+}
+
+
+
