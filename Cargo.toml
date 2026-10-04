@@ -28,7 +28,7 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 schemars = { version = "0.8.22", features = ["url", "uuid1"]}
 serde_with = "3"
-getrandom = { version = "0.3", features = ["std"] }
+getrandom = { version = "0.4", features = ["std"] }
 serialize-to-javascript = { version = "0.1.2"}
 anyhow = "1"
 memchr = "2"
