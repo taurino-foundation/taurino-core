@@ -359,7 +359,7 @@ use tao::platform::windows::WindowExtWindows;
 #[cfg(windows)]
 use softbuffer;
 use tao::window::{Fullscreen, Theme as TaoTheme, Window as TaoWindow, WindowBuilder as TaoWindowBuilder};
-
+pub use tao::window::WindowId as TaoWindowId;
 use raw_window_handle::{DisplayHandle, HandleError, HasDisplayHandle, HasWindowHandle, WindowHandle};
 
 use crate::menu::{
