@@ -1,3 +1,5 @@
+#[cfg(desktop)]
+use crate::MonitorExt;
 use crate::core::webview::WebView;
 use crate::core::window::Window;
 #[cfg(target_os = "macos")]
@@ -14,6 +16,7 @@ use objc2_app_kit::NSView;
 use std::sync::{Arc, Mutex, MutexGuard};
 #[cfg(windows)]
 use tao::platform::windows::WindowExtWindows;
+
 #[cfg(not(target_os = "macos"))]
 pub fn inner_size(
   window: &Window,
@@ -233,4 +236,17 @@ mod imp {
       }
     }
   }
+}
+
+#[cfg(desktop)]
+pub fn calculate_window_center_position(
+  window_size: tao::dpi::PhysicalSize<u32>,
+  target_monitor: tao::monitor::MonitorHandle,
+) -> tao::dpi::PhysicalPosition<i32> {
+  let work_area = target_monitor.work_area();
+
+  tao::dpi::PhysicalPosition::new(
+    (work_area.size.width as i32 - window_size.width as i32) / 2 + work_area.position.x,
+    (work_area.size.height as i32 - window_size.height as i32) / 2 + work_area.position.y,
+  )
 }

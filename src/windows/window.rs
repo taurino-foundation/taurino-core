@@ -6,7 +6,7 @@ use windows::Win32::{
 
 use tao::platform::windows::WindowExtWindows;
 
-use crate::{WindowExt, windows::monitor::calculate_window_center_position};
+use crate::{WindowExt, utils::calculate_window_center_position};
 
 impl WindowExt for tao::window::Window {
   fn set_enabled(&self, enabled: bool) {
@@ -43,7 +43,10 @@ impl WindowExt for tao::window::Window {
 
   fn draw_surface(
     &self,
-    surface: &mut softbuffer::Surface<std::sync::Arc<tao::window::Window>, std::sync::Arc<tao::window::Window>>,
+    surface: &mut softbuffer::Surface<
+      std::sync::Arc<tao::window::Window>,
+      std::sync::Arc<tao::window::Window>,
+    >,
     background_color: Option<tao::window::RGBA>,
   ) {
     let size = self.inner_size();

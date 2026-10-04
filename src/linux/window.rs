@@ -1,3 +1,4 @@
+use crate::{WindowExt, utils::calculate_window_center_position};
 use gtk::prelude::*;
 #[cfg(any(
   target_os = "linux",
@@ -8,7 +9,7 @@ use gtk::prelude::*;
 ))]
 use tao::platform::unix::WindowExtUnix;
 
-impl crate::WindowExt for tao::window::Window {
+impl WindowExt for tao::window::Window {
   fn set_enabled(&self, enabled: bool) {
     self.gtk_window().set_sensitive(enabled);
   }
@@ -20,7 +21,7 @@ impl crate::WindowExt for tao::window::Window {
   fn center(&self) {
     if let Some(monitor) = self.current_monitor() {
       let window_size = self.outer_size();
-      let new_pos = crate::calculate_window_center_position(window_size, monitor);
+      let new_pos = calculate_window_center_position(window_size, monitor);
       self.set_outer_position(new_pos);
     }
   }
