@@ -1,14 +1,8 @@
-#[cfg(target_os = "macos")]
-use crate::schema::LogicalSize;
 use crate::schema::{
   webview::{WebViewId, WebviewBounds},
   window::WindowId,
 };
 use anyhow::{Result, anyhow};
-#[cfg(target_os = "macos")]
-use objc2::{MainThreadMarker, rc::Retained};
-#[cfg(target_os = "macos")]
-use objc2_app_kit::NSView;
 use std::{
   collections::HashMap,
   ops::Deref,
@@ -74,7 +68,10 @@ impl WebView {
   // Window association
   // --------------------------------------------------------
   pub fn window_id(&self) -> WindowId {
-    *self.window_id.lock().expect("WebView window_id mutex is poisoned")
+    *self
+      .window_id
+      .lock()
+      .expect("WebView window_id mutex is poisoned")
   }
   pub fn window_id_handle(&self) -> Arc<Mutex<WindowId>> {
     Arc::clone(&self.window_id)
@@ -84,7 +81,10 @@ impl WebView {
   /// The native WebView is not moved by this operation.
   /// For an actual window change, normally use `reparent()`.
   pub fn set_window_id(&self, window_id: WindowId) {
-    *self.window_id.lock().expect("WebView window_id mutex is poisoned") = window_id;
+    *self
+      .window_id
+      .lock()
+      .expect("WebView window_id mutex is poisoned") = window_id;
   }
   // --------------------------------------------------------
   // Native WebView
@@ -131,7 +131,11 @@ impl WebView {
   /// This is NOT wry::WebView::bounds().
   /// WebviewBounds must implement Clone.
   pub fn bounds(&self) -> Option<WebviewBounds> {
-    self.bounds.lock().expect("WebView bounds mutex is poisoned").clone()
+    self
+      .bounds
+      .lock()
+      .expect("WebView bounds mutex is poisoned")
+      .clone()
   }
   pub fn bounds_handle(&self) -> Arc<Mutex<Option<WebviewBounds>>> {
     Arc::clone(&self.bounds)
@@ -140,13 +144,20 @@ impl WebView {
   ///
   /// The position and size of the native WebView remain unchanged.
   pub fn set_cached_bounds(&self, bounds: Option<WebviewBounds>) {
-    *self.bounds.lock().expect("WebView bounds mutex is poisoned") = bounds;
+    *self
+      .bounds
+      .lock()
+      .expect("WebView bounds mutex is poisoned") = bounds;
   }
   /// Takes the stored bounds.
   ///
   /// Afterwards all wrapper clones hold None at this location.
   pub fn take_bounds(&self) -> Option<WebviewBounds> {
-    self.bounds.lock().expect("WebView bounds mutex is poisoned").take()
+    self
+      .bounds
+      .lock()
+      .expect("WebView bounds mutex is poisoned")
+      .take()
   }
   pub fn clear_bounds(&self) {
     self.set_cached_bounds(None);
@@ -156,20 +167,24 @@ impl WebView {
   // --------------------------------------------------------
   /// Queries the current geometry directly from Wry.
   pub fn native_bounds(&self) -> Result<wry::Rect> {
-    self
-      .as_wry()
-      .bounds()
-      .map_err(|error| anyhow!("failed to read native bounds for webview '{}': {error}", self.label))
+    self.as_wry().bounds().map_err(|error| {
+      anyhow!(
+        "failed to read native bounds for webview '{}': {error}",
+        self.label
+      )
+    })
   }
   /// Changes the native geometry.
   ///
   /// The stored WebviewBounds are not adjusted automatically: their
   /// conversion belongs in your layout code.
   pub fn set_window_bounds(&self, bounds: wry::Rect) -> Result<()> {
-    self
-      .as_wry()
-      .set_bounds(bounds)
-      .map_err(|error| anyhow!("failed to set native bounds for webview '{}': {error}", self.label))
+    self.as_wry().set_bounds(bounds).map_err(|error| {
+      anyhow!(
+        "failed to set native bounds for webview '{}': {error}",
+        self.label
+      )
+    })
   }
 }
 // ------------------------------------------------------------
@@ -281,7 +296,10 @@ impl WebViewManager {
     }
 
     if self.label_index.contains_key(&label) {
-      return Err(anyhow!("WebView with label {:?} is already registered", label));
+      return Err(anyhow!(
+        "WebView with label {:?} is already registered",
+        label
+      ));
     }
 
     let index = self.webviews.len();
@@ -401,7 +419,9 @@ impl WebViewManager {
 
       self.id_index.insert(current.id(), current_index);
 
-      self.label_index.insert(current.label().to_string(), current_index);
+      self
+        .label_index
+        .insert(current.label().to_string(), current_index);
     }
 
     Some(webview)

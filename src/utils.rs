@@ -7,17 +7,19 @@ use crate::schema::Theme;
 use anyhow::{Result, anyhow};
 #[cfg_attr(not(windows), allow(unused_imports))]
 pub use imp::*;
+#[cfg(target_os = "macos")]
+use objc2::{MainThreadMarker, rc::Retained};
+#[cfg(target_os = "macos")]
+use objc2_app_kit::NSView;
 use std::sync::{Arc, Mutex, MutexGuard};
 #[cfg(windows)]
 use tao::platform::windows::WindowExtWindows;
-#[cfg(target_os = "macos")]
-use {
-  objc2::{MainThreadMarker, rc::Retained},
-  objc2_app_kit::NSView,
-};
-
 #[cfg(not(target_os = "macos"))]
-pub fn inner_size(window: &Window, _webviews: &[WebView], _has_children: bool) -> Result<PhysicalSize<u32>> {
+pub fn inner_size(
+  window: &Window,
+  _webviews: &[WebView],
+  _has_children: bool,
+) -> Result<PhysicalSize<u32>> {
   let size = window.inner_size()?;
   Ok(PhysicalSize::new(size.width, size.height))
 }
@@ -61,11 +63,16 @@ pub fn reparent_native(webview: &WebView, target: &Arc<tao::window::Window>) -> 
     .map_err(|e| anyhow!("reparent failed: {e}"))
 }
 #[cfg(target_os = "macos")]
-pub fn inner_size(window: &Window, webviews: &[WebView], has_children: bool) -> PhysicalSize<u32> {
+pub fn inner_size(
+  window: &Window,
+  webviews: &[WebView],
+  has_children: bool,
+) -> Result<PhysicalSize<u32>> {
   use wry::WebViewExtMacOS;
   if !has_children {
     if let Some(webview) = webviews.first() {
-      let _main_thread = MainThreadMarker::new().expect("native view measurement must run on the macOS main thread");
+      let _main_thread =
+        MainThreadMarker::new().expect("native view measurement must run on the macOS main thread");
       let native_webview = webview.as_wry().webview();
       // SAFETY:
       // Wry returns its WKWebView subclass.
@@ -73,13 +80,14 @@ pub fn inner_size(window: &Window, webviews: &[WebView], has_children: bool) -> 
       // Access occurs after verification on the main thread.
       let view = unsafe { Retained::cast_unchecked::<NSView>(native_webview) };
       let frame = view.frame();
-      return LogicalSize::<f64>::new(frame.size.width, frame.size.height).to_physical(window.scale_factor());
+      return LogicalSize::<f64>::new(frame.size.width, frame.size.height)
+        .to_physical(window.scale_factor()?);
     }
   }
-  let size = window.inner_size();
+  let size = window.inner_size()?;
   // Explicit conversion avoids a dependency on whether engine_schema
   // and Tao re-export identical types.
-  PhysicalSize::new(size.width, size.height)
+  Ok(PhysicalSize::new(size.width, size.height))
 }
 
 /// Maps a Taurino theme value to Tao's native window theme.
@@ -102,7 +110,9 @@ pub fn arc_mut<T>(t: T) -> ArcMut<T> {
 
 /// Locks window state and converts mutex poisoning into an engine error.
 pub fn lock_state<'a, T>(mutex: &'a Mutex<T>, name: &str) -> Result<MutexGuard<'a, T>> {
-  mutex.lock().map_err(|_| anyhow!("Window {name} mutex is poisoned"))
+  mutex
+    .lock()
+    .map_err(|_| anyhow!("Window {name} mutex is poisoned"))
 }
 
 #[cfg(not(windows))]
@@ -156,9 +166,11 @@ mod imp {
     dpi_x: *mut u32,
     dpi_y: *mut u32,
   ) -> HRESULT;
-  type GetSystemMetricsForDpi = unsafe extern "system" fn(nindex: SYSTEM_METRICS_INDEX, dpi: u32) -> i32;
+  type GetSystemMetricsForDpi =
+    unsafe extern "system" fn(nindex: SYSTEM_METRICS_INDEX, dpi: u32) -> i32;
 
-  static GET_DPI_FOR_WINDOW: Lazy<Option<GetDpiForWindow>> = Lazy::new(|| get_function!("user32.dll", GetDpiForWindow));
+  static GET_DPI_FOR_WINDOW: Lazy<Option<GetDpiForWindow>> =
+    Lazy::new(|| get_function!("user32.dll", GetDpiForWindow));
   static GET_DPI_FOR_MONITOR: Lazy<Option<GetDpiForMonitor>> =
     Lazy::new(|| get_function!("shcore.dll", GetDpiForMonitor));
   static GET_SYSTEM_METRICS_FOR_DPI: Lazy<Option<GetSystemMetricsForDpi>> =
