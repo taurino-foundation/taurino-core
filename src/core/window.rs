@@ -1135,10 +1135,10 @@ impl Window {
   /// Returns the native window or an error after it has been taken.
 
   /// Returns the underlying Tao window or an error if its native handle is no longer available.
-  pub fn tao(&self) -> Result<&Arc<TaoWindow>> {
+  pub fn tao(&self) -> Result<&TaoWindow> {
     self
       .inner
-      .as_ref()
+      .as_deref()
       .ok_or_else(|| anyhow!("Window '{}' is not available", self.label))
   }
 
@@ -1292,7 +1292,11 @@ impl Window {
   /// Returns the effective physical client-area size, accounting for child WebViews when required.
   pub fn inner_size(&self) -> Result<PhysicalSize<u32>> {
     let has_children = self.has_children();
-    Ok(inner_size(self, &self.webviews_manager.webviews(), has_children)?)
+    Ok(inner_size(
+      self.tao()?,
+      &self.webviews_manager.webviews(),
+      has_children,
+    )?)
   }
 
   /// Returns the physical size of the entire window.

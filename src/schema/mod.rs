@@ -4,12 +4,12 @@
 //! configuration, build metadata, and runtime permissions.
 
 pub use ::dpi::*;
+pub mod event;
 pub mod menu;
 pub mod package;
 pub mod trayicon;
 pub mod webview;
 pub mod window;
-
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::{
   fmt::{self, Display, Formatter},

@@ -17,6 +17,7 @@ use crate::{core::stores::WebContext, schema::PhysicalRect};
 pub mod core;
 pub mod menu;
 pub mod schema;
+pub mod trayicon;
 pub mod undecorated_resizing;
 pub mod utils;
 pub mod wrappers;
