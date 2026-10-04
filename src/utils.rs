@@ -80,8 +80,10 @@ pub fn inner_size(
       // Access occurs after verification on the main thread.
       let view = unsafe { Retained::cast_unchecked::<NSView>(native_webview) };
       let frame = view.frame();
-      return LogicalSize::<f64>::new(frame.size.width, frame.size.height)
-        .to_physical(window.scale_factor()?);
+      return Ok(
+        LogicalSize::<f64>::new(frame.size.width, frame.size.height)
+          .to_physical(window.scale_factor()?),
+      );
     }
   }
   let size = window.inner_size()?;
