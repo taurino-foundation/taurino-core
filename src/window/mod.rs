@@ -365,15 +365,20 @@ use tao::platform::unix::WindowExtUnix;
 #[cfg(windows)]
 use tao::platform::windows::WindowExtWindows;
 
-use raw_window_handle::{DisplayHandle, HandleError, HasDisplayHandle, HasWindowHandle, WindowHandle};
+use raw_window_handle::{
+  DisplayHandle, HandleError, HasDisplayHandle, HasWindowHandle, WindowHandle,
+};
 #[cfg(windows)]
 use softbuffer;
-use tao::window::{Fullscreen, Theme as TaoTheme, Window as TaoWindow, WindowBuilder as TaoWindowBuilder};
+use tao::window::{
+  Fullscreen, Theme as TaoTheme, Window as TaoWindow, WindowBuilder as TaoWindowBuilder,
+};
 pub mod util;
 use crate::menu::{
   WindowMenu,
   prelude::{
-    CheckMenuItem, IconMenuItem, IsMenuItem, Menu, MenuItem, MenuItemKind, NativeIcon, PredefinedMenuItem, Submenu,
+    CheckMenuItem, IconMenuItem, IsMenuItem, Menu, MenuItem, MenuItemKind, NativeIcon,
+    PredefinedMenuItem, Submenu,
   },
 };
 #[cfg(windows)]
@@ -388,14 +393,17 @@ use crate::utils::arc_mut;
 use crate::{
   WindowExt,
   utils::map_theme,
-  wrappers::{CursorIconWrapper, MonitorHandleWrapper, ProgressBarStateWrapper, UserAttentionTypeWrapper},
+  wrappers::{
+    CursorIconWrapper, MonitorHandleWrapper, ProgressBarStateWrapper, UserAttentionTypeWrapper,
+  },
 };
 
 use crate::schema::{
   Color, LogicalPosition, LogicalSize, PhysicalPosition, PhysicalSize, Position, Size, Theme,
   webview::WebViewId,
   window::{
-    CursorIcon, Icon, Monitor, ProgressBarState, ResizeDirection, UserAttentionType, WindowId, WindowSizeConstraints,
+    CursorIcon, Icon, Monitor, ProgressBarState, ResizeDirection, UserAttentionType, WindowId,
+    WindowSizeConstraints,
   },
 };
 
@@ -463,14 +471,15 @@ impl WindowBuilder {
 
     #[cfg(target_os = "macos")]
     {
-      util = util
+      window = window
         .hidden_title(config.hidden_title)
         .title_bar_style(config.title_bar_style);
       if let Some(identifier) = &config.tabbing_identifier {
-        util = util.tabbing_identifier(identifier);
+        window = window.tabbing_identifier(identifier);
       }
       if let Some(position) = &config.traffic_light_position {
-        util = util.traffic_light_position(crate::schema::LogicalPosition::new(position.x, position.y));
+        window = window
+          .traffic_light_position(crate::schema::LogicalPosition::new(position.x, position.y));
       }
     }
 
@@ -483,23 +492,27 @@ impl WindowBuilder {
     ))]
     {
       // Mouse event is disabled on Linux since sudden event bursts could block event loop.
-      util.inner = util.inner.with_cursor_moved_event(false);
+      window.inner = window.inner.with_cursor_moved_event(false);
     }
 
     #[cfg(target_os = "android")]
     {
       if let Some(activity_name) = &config.activity_name {
-        util.inner = util.inner.with_activity_name(activity_name.clone());
+        window.inner = window.inner.with_activity_name(activity_name.clone());
       }
       if let Some(activity_name) = &config.created_by_activity_name {
-        util.inner = util.inner.with_created_by_activity_name(activity_name.clone());
+        window.inner = window
+          .inner
+          .with_created_by_activity_name(activity_name.clone());
       }
     }
 
     #[cfg(target_os = "ios")]
     {
       if let Some(scene_identifier) = &config.requested_by_scene_identifier {
-        util.inner = util.inner.with_requesting_scene_identifier(scene_identifier.clone());
+        window.inner = window
+          .inner
+          .with_requesting_scene_identifier(scene_identifier.clone());
       }
     }
 
@@ -596,13 +609,17 @@ impl WindowBuilder {
 
   /// Sets the minimum inner size of the window in logical coordinates.
   pub fn min_inner_size(mut self, min_width: f64, min_height: f64) -> Self {
-    self.inner = self.inner.with_min_inner_size(LogicalSize::new(min_width, min_height));
+    self.inner = self
+      .inner
+      .with_min_inner_size(LogicalSize::new(min_width, min_height));
     self
   }
 
   /// Sets the maximum inner size of the window in logical coordinates.
   pub fn max_inner_size(mut self, max_width: f64, max_height: f64) -> Self {
-    self.inner = self.inner.with_max_inner_size(LogicalSize::new(max_width, max_height));
+    self.inner = self
+      .inner
+      .with_max_inner_size(LogicalSize::new(max_width, max_height));
     self
   }
 
@@ -623,7 +640,9 @@ impl WindowBuilder {
   ///
   /// - **iOS / Android:** Unsupported.
   pub fn prevent_overflow(mut self) -> Self {
-    self.prevent_overflow.replace(PhysicalSize::new(0, 0).into());
+    self
+      .prevent_overflow
+      .replace(PhysicalSize::new(0, 0).into());
     self
   }
 
@@ -672,7 +691,9 @@ impl WindowBuilder {
   /// windowed mode.
   pub fn fullscreen(mut self, fullscreen: bool) -> Self {
     self.inner = if fullscreen {
-      self.inner.with_fullscreen(Some(Fullscreen::Borderless(None)))
+      self
+        .inner
+        .with_fullscreen(Some(Fullscreen::Borderless(None)))
     } else {
       self.inner.with_fullscreen(None)
     };
@@ -729,7 +750,9 @@ impl WindowBuilder {
 
   /// Configures whether the window is visible on all workspaces.
   pub fn visible_on_all_workspaces(mut self, visible_on_all_workspaces: bool) -> Self {
-    self.inner = self.inner.with_visible_on_all_workspaces(visible_on_all_workspaces);
+    self.inner = self
+      .inner
+      .with_visible_on_all_workspaces(visible_on_all_workspaces);
     self
   }
 
@@ -850,7 +873,9 @@ impl WindowBuilder {
 
   /// Converts and applies the supplied image as the initial native window icon.
   pub fn icon(mut self, icon: Icon) -> anyhow::Result<Self> {
-    self.inner = self.inner.with_window_icon(Some(TaoIcon::try_from(icon)?.0));
+    self.inner = self
+      .inner
+      .with_window_icon(Some(TaoIcon::try_from(icon)?.0));
     Ok(self)
   }
 
@@ -947,7 +972,9 @@ impl WindowBuilder {
   /// Sets the iOS scene identifier that requested the window.
   #[cfg(target_os = "ios")]
   pub fn requested_by_scene_identifier<S: Into<String>>(mut self, identifier: S) -> Self {
-    self.inner = self.inner.with_requesting_scene_identifier(identifier.into());
+    self.inner = self
+      .inner
+      .with_requesting_scene_identifier(identifier.into());
     self
   }
 }
@@ -1247,14 +1274,22 @@ impl Window {
 impl HasDisplayHandle for Window {
   /// Returns the raw display handle of the underlying native window.
   fn display_handle(&self) -> std::result::Result<DisplayHandle<'_>, HandleError> {
-    self.inner.as_ref().ok_or(HandleError::Unavailable)?.display_handle()
+    self
+      .inner
+      .as_ref()
+      .ok_or(HandleError::Unavailable)?
+      .display_handle()
   }
 }
 
 impl HasWindowHandle for Window {
   /// Returns the raw window handle of the underlying native window.
   fn window_handle(&self) -> std::result::Result<WindowHandle<'_>, HandleError> {
-    self.inner.as_ref().ok_or(HandleError::Unavailable)?.window_handle()
+    self
+      .inner
+      .as_ref()
+      .ok_or(HandleError::Unavailable)?
+      .window_handle()
   }
 }
 
@@ -1458,7 +1493,11 @@ impl Window {
   pub fn current_monitor(&self) -> Result<Option<Monitor>> {
     let inner = self.tao()?;
 
-    Ok(inner.current_monitor().map(|m| MonitorHandleWrapper(m).into()))
+    Ok(
+      inner
+        .current_monitor()
+        .map(|m| MonitorHandleWrapper(m).into()),
+    )
   }
 
   /// Returns the primary monitor of the system.
@@ -1467,7 +1506,11 @@ impl Window {
   pub fn primary_monitor(&self) -> Result<Option<Monitor>> {
     let inner = self.tao()?;
 
-    Ok(inner.primary_monitor().map(|m| MonitorHandleWrapper(m).into()))
+    Ok(
+      inner
+        .primary_monitor()
+        .map(|m| MonitorHandleWrapper(m).into()),
+    )
   }
 
   /// Returns the monitor that contains the given point.
@@ -1476,7 +1519,11 @@ impl Window {
   pub fn monitor_from_point(&self, x: f64, y: f64) -> Result<Option<Monitor>> {
     let inner = self.tao()?;
 
-    Ok(inner.monitor_from_point(x, y).map(|m| MonitorHandleWrapper(m).into()))
+    Ok(
+      inner
+        .monitor_from_point(x, y)
+        .map(|m| MonitorHandleWrapper(m).into()),
+    )
   }
 
   /// Returns the list of all the monitors available on the system.
@@ -1967,7 +2014,13 @@ impl Window {
 
     let monitor = inner
       .monitor_from_point(position.x, position.y)
-      .ok_or_else(|| anyhow!("No monitor contains position ({}, {})", position.x, position.y))?;
+      .ok_or_else(|| {
+        anyhow!(
+          "No monitor contains position ({}, {})",
+          position.x,
+          position.y
+        )
+      })?;
 
     inner.set_fullscreen(Some(tao::window::Fullscreen::Borderless(Some(monitor))));
 
@@ -1985,7 +2038,10 @@ impl Window {
     }
 
     if !inner.set_simple_fullscreen(enable) {
-      return Err(anyhow!("Could not change simple fullscreen for '{}'", self.label));
+      return Err(anyhow!(
+        "Could not change simple fullscreen for '{}'",
+        self.label
+      ));
     }
 
     Ok(())
@@ -2055,7 +2111,9 @@ impl Window {
     {
       let _ = (inner, skip);
 
-      Err(anyhow!("set_skip_taskbar is not supported on this platform"))
+      Err(anyhow!(
+        "set_skip_taskbar is not supported on this platform"
+      ))
     }
   }
 
@@ -2173,7 +2231,11 @@ impl Window {
   /// On Windows, no silent success is pretended.
 
   /// Sets or clears the application badge count using the platform-specific implementation.
-  pub fn set_badge_count(&self, count: Option<i64>, desktop_filename: Option<String>) -> Result<()> {
+  pub fn set_badge_count(
+    &self,
+    count: Option<i64>,
+    desktop_filename: Option<String>,
+  ) -> Result<()> {
     let inner = self.tao()?;
 
     #[cfg(target_os = "ios")]
@@ -2325,7 +2387,9 @@ impl Window {
     {
       let _ = (inner, position);
 
-      Err(anyhow!("set_traffic_light_position is only supported on macOS"))
+      Err(anyhow!(
+        "set_traffic_light_position is only supported on macOS"
+      ))
     }
   }
 
@@ -2526,7 +2590,11 @@ impl Window {
   /// Set iconized submenu (macOS/Windows).
 
   /// Sets or clears the native icon of the specified submenu.
-  pub fn set_submenu_native_icon(&self, submenu_id: &MenuId, icon: Option<NativeIcon>) -> Result<()> {
+  pub fn set_submenu_native_icon(
+    &self,
+    submenu_id: &MenuId,
+    icon: Option<NativeIcon>,
+  ) -> Result<()> {
     let submenu = self
       .get_submenu(submenu_id)?
       .ok_or_else(|| anyhow!("Submenu {:?} not found", submenu_id))?;
