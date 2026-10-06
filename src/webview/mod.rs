@@ -1,4 +1,3 @@
-mod webview;
 #[cfg(target_os = "macos")]
 use tao::platform::macos::WindowExtMacOS;
 #[cfg(target_os = "macos")]
