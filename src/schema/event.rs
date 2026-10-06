@@ -1,8 +1,7 @@
-use crate::window::Window;
+use crate::window::{Window, inner_size};
 use crate::{
   schema::{Rect, window::WindowId},
   tools::stores::DeviceRegistry,
-  webview::inner_size,
 };
 use serde::Serialize;
 use std::path::PathBuf;

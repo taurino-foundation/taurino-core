@@ -1,19 +1,38 @@
 mod webview;
 #[cfg(target_os = "macos")]
 use crate::schema::LogicalSize;
-use crate::schema::PhysicalSize;
+#[cfg(target_os = "macos")]
+use tao::platform::macos::WindowExtMacOS;
+#[cfg(target_os = "macos")]
+use wry::WebViewExtMacOS;
+#[cfg(windows)]
+use wry::WebViewExtWindows;
+
+#[cfg(any(
+  target_os = "linux",
+  target_os = "dragonfly",
+  target_os = "freebsd",
+  target_os = "netbsd",
+  target_os = "openbsd"
+))]
+use tao::platform::unix::WindowExtUnix;
+
 #[cfg(windows)]
 use crate::{platforms::windows::utils::register_webview_events, schema::FocusState, tools::ArcMut};
 use anyhow::{Result, anyhow};
 #[cfg_attr(not(windows), allow(unused_imports))]
-#[cfg(target_os = "macos")]
-use objc2::{MainThreadMarker, rc::Retained};
-#[cfg(target_os = "macos")]
-use objc2_app_kit::NSView;
 #[cfg(windows)]
 use tao::platform::windows::WindowExtWindows;
 use tao::window::Window as TaoWindow;
 pub use webview::Webview;
+#[cfg(any(
+  target_os = "linux",
+  target_os = "dragonfly",
+  target_os = "freebsd",
+  target_os = "netbsd",
+  target_os = "openbsd"
+))]
+use wry::WebViewExtUnix;
 
 use crate::{
   EngineLoopProxy,
@@ -483,18 +502,11 @@ impl WebViewManager {
   }
 }
 
-#[cfg(not(target_os = "macos"))]
-pub fn inner_size(window: &TaoWindow, _webviews: &[WebViewWrapper], _has_children: bool) -> Result<PhysicalSize<u32>> {
-  let size = window.inner_size();
-  Ok(PhysicalSize::new(size.width, size.height))
-}
 // ------------------------------------------------------------
 // Free functions for existing call sites
 // ------------------------------------------------------------
 #[cfg(target_os = "macos")]
 pub fn reparent_native(webview: &WebViewWrapper, target: &Arc<TaoWindow>) -> Result<()> {
-  use tao::platform::macos::WindowExtMacOS;
-  use wry::WebViewExtMacOS;
   webview
     .inner()
     .reparent(target.ns_window() as _)
@@ -502,7 +514,6 @@ pub fn reparent_native(webview: &WebViewWrapper, target: &Arc<TaoWindow>) -> Res
 }
 #[cfg(windows)]
 pub fn reparent_native(webview: &WebViewWrapper, target: &Arc<TaoWindow>) -> Result<()> {
-  use wry::WebViewExtWindows;
   webview
     .inner()
     .reparent(target.hwnd())
@@ -516,8 +527,6 @@ pub fn reparent_native(webview: &WebViewWrapper, target: &Arc<TaoWindow>) -> Res
   target_os = "openbsd"
 ))]
 pub fn reparent_native(webview: &WebViewWrapper, target: &Arc<TaoWindow>) -> Result<()> {
-  use tao::platform::unix::WindowExtUnix;
-  use wry::WebViewExtUnix;
   let container = target
     .default_vbox()
     .ok_or_else(|| anyhow!("target window has no default vbox"))?;
@@ -525,27 +534,6 @@ pub fn reparent_native(webview: &WebViewWrapper, target: &Arc<TaoWindow>) -> Res
     .inner()
     .reparent(container)
     .map_err(|e| anyhow!("reparent failed: {e}"))
-}
-#[cfg(target_os = "macos")]
-pub fn inner_size(window: &TaoWindow, webviews: &[WebViewWrapper], has_children: bool) -> Result<PhysicalSize<u32>> {
-  use wry::WebViewExtMacOS;
-  if !has_children {
-    if let Some(webview) = webviews.first() {
-      let _main_thread = MainThreadMarker::new().expect("native view measurement must run on the macOS main thread");
-      let native_webview = webview.as_wry().webview();
-      // SAFETY:
-      // Wry returns its WKWebView subclass.
-      // WKWebView is an NSView subclass on macOS.
-      // Access occurs after verification on the main thread.
-      let view = unsafe { Retained::cast_unchecked::<NSView>(native_webview) };
-      let frame = view.frame();
-      return Ok(LogicalSize::<f64>::new(frame.size.width, frame.size.height).to_physical(window.scale_factor()));
-    }
-  }
-  let size = window.inner_size();
-  // Explicit conversion avoids a dependency on whether engine_schema
-  // and Tao re-export identical types.
-  Ok(PhysicalSize::new(size.width, size.height))
 }
 
 #[cfg(not(any(target_os = "android", target_os = "ios")))]

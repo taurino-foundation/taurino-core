@@ -1,4 +1,3 @@
-use crate::{platforms::WindowExt, tools::wrappers::TaoIcon};
 /// Represents a native application window and its window-scoped resources.
 
 ///
@@ -293,6 +292,12 @@ use std::{
     atomic::{AtomicBool, Ordering},
   },
 };
+
+use crate::{platforms::WindowExt, tools::wrappers::TaoIcon};
+#[cfg(target_os = "macos")]
+use objc2::{MainThreadMarker, rc::Retained};
+#[cfg(target_os = "macos")]
+use objc2_app_kit::NSView;
 #[cfg(any(
   windows,
   target_os = "linux",
@@ -310,9 +315,17 @@ use crate::{
   schema::window::{PreventOverflowConfig, WindowConfig},
   tools::lock_state,
   unsafe_impl_sync_send,
-  webview::{WebViewManager, WebViewWrapper, inner_size},
+  webview::{WebViewManager, WebViewWrapper},
 };
 use anyhow::{Result, anyhow};
+#[cfg(any(
+  target_os = "linux",
+  target_os = "dragonfly",
+  target_os = "freebsd",
+  target_os = "netbsd",
+  target_os = "openbsd"
+))]
+use gtk;
 use muda::MenuId;
 #[cfg(target_os = "macos")]
 use tao::platform::macos::WindowBuilderExtMacOS;
@@ -326,23 +339,6 @@ use tao::platform::macos::WindowBuilderExtMacOS;
 use tao::platform::unix::WindowBuilderExtUnix;
 #[cfg(windows)]
 use tao::platform::windows::WindowBuilderExtWindows;
-/* use {
-    WebViewId, WindowExt, WindowId,
-    anyhow::{Result, anyhow},
-    dpi::{PhysicalPosition, PhysicalSize, Position, Size, Theme},
-    image::Icon,
-    muda::MenuId,
-    tao::{self, event_loop::EventLoopProxy, window::Window as Tao},
-};
- */
-#[cfg(any(
-  target_os = "linux",
-  target_os = "dragonfly",
-  target_os = "freebsd",
-  target_os = "netbsd",
-  target_os = "openbsd"
-))]
-use gtk;
 
 #[cfg(target_os = "android")]
 use tao::platform::android::WindowExtAndroid;
@@ -2655,4 +2651,32 @@ impl Window {
   pub fn try_background_color(&self) -> Result<Option<tao::window::RGBA>> {
     Ok(*lock_state(&self.background_color, "background_color")?)
   }
+}
+
+#[cfg(target_os = "macos")]
+pub fn inner_size(window: &TaoWindow, webviews: &[WebViewWrapper], has_children: bool) -> Result<PhysicalSize<u32>> {
+  use wry::WebViewExtMacOS;
+  if !has_children {
+    if let Some(webview) = webviews.first() {
+      let _main_thread = MainThreadMarker::new().expect("native view measurement must run on the macOS main thread");
+      let native_webview = webview.as_wry().webview();
+      // SAFETY:
+      // Wry returns its WKWebView subclass.
+      // WKWebView is an NSView subclass on macOS.
+      // Access occurs after verification on the main thread.
+      let view = unsafe { Retained::cast_unchecked::<NSView>(native_webview) };
+      let frame = view.frame();
+      return Ok(LogicalSize::<f64>::new(frame.size.width, frame.size.height).to_physical(window.scale_factor()));
+    }
+  }
+  let size = window.inner_size();
+  // Explicit conversion avoids a dependency on whether engine_schema
+  // and Tao re-export identical types.
+  Ok(PhysicalSize::new(size.width, size.height))
+}
+
+#[cfg(not(target_os = "macos"))]
+pub fn inner_size(window: &TaoWindow, _webviews: &[WebViewWrapper], _has_children: bool) -> Result<PhysicalSize<u32>> {
+  let size = window.inner_size();
+  Ok(PhysicalSize::new(size.width, size.height))
 }
