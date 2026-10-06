@@ -1,6 +1,7 @@
-use crate::schema::{PhysicalPosition, PhysicalRect, PhysicalSize};
-
-use crate::MonitorExt;
+use crate::{
+  platforms::MonitorExt,
+  schema::{PhysicalPosition, PhysicalRect, PhysicalSize},
+};
 
 impl MonitorExt for tao::monitor::MonitorHandle {
   fn work_area(&self) -> PhysicalRect<i32, u32> {

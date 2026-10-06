@@ -1,4 +1,3 @@
-use crate::{WindowExt, calculate_window_center_position};
 use gtk::prelude::*;
 #[cfg(any(
   target_os = "linux",
@@ -8,6 +7,8 @@ use gtk::prelude::*;
   target_os = "openbsd"
 ))]
 use tao::platform::unix::WindowExtUnix;
+
+use crate::platforms::{WindowExt, calculate_window_center_position};
 
 impl WindowExt for tao::window::Window {
   fn set_enabled(&self, enabled: bool) {

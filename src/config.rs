@@ -3,7 +3,7 @@ use url::Url;
 
 use crate::{
   schema::{FrontendDist, window::WindowConfig},
-  utils::Env,
+  tools::environment::Env,
 };
 
 #[derive(Debug, Clone)]

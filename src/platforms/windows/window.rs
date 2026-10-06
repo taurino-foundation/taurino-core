@@ -6,7 +6,7 @@ use windows::Win32::{
 
 use tao::platform::windows::WindowExtWindows;
 
-use crate::{WindowExt, calculate_window_center_position};
+use crate::platforms::{WindowExt, calculate_window_center_position};
 
 impl WindowExt for tao::window::Window {
   fn set_enabled(&self, enabled: bool) {

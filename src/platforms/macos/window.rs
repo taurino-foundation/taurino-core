@@ -1,7 +1,8 @@
-use crate::WindowExt;
 use objc2::MainThreadMarker;
 use objc2_app_kit::{NSBackingStoreType, NSWindow, NSWindowStyleMask};
 use tao::platform::macos::WindowExtMacOS;
+
+use crate::platforms::WindowExt;
 
 impl WindowExt for tao::window::Window {
   // based on electron implementation

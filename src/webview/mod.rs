@@ -3,7 +3,7 @@ mod webview;
 use crate::schema::LogicalSize;
 use crate::schema::PhysicalSize;
 #[cfg(windows)]
-use crate::{schema::FocusState, utils::ArcMut, windows::utils::register_webview_events};
+use crate::{platforms::windows::utils::register_webview_events, schema::FocusState, utils::ArcMut};
 use anyhow::{Result, anyhow};
 #[cfg_attr(not(windows), allow(unused_imports))]
 #[cfg(target_os = "macos")]
@@ -106,10 +106,7 @@ impl WebViewWrapper {
   // Window association
   // --------------------------------------------------------
   pub fn window_id(&self) -> WindowId {
-    *self
-      .window_id
-      .lock()
-      .expect("WebView window_id mutex is poisoned")
+    *self.window_id.lock().expect("WebView window_id mutex is poisoned")
   }
   pub fn window_id_handle(&self) -> Arc<Mutex<WindowId>> {
     Arc::clone(&self.window_id)
@@ -119,10 +116,7 @@ impl WebViewWrapper {
   /// The native WebView is not moved by this operation.
   /// For an actual window change, normally use `reparent()`.
   pub fn set_window_id(&self, window_id: WindowId) {
-    *self
-      .window_id
-      .lock()
-      .expect("WebView window_id mutex is poisoned") = window_id;
+    *self.window_id.lock().expect("WebView window_id mutex is poisoned") = window_id;
   }
   // --------------------------------------------------------
   // Native WebView
@@ -169,11 +163,7 @@ impl WebViewWrapper {
   /// This is NOT wry::WebView::bounds().
   /// WebviewBounds must implement Clone.
   pub fn bounds(&self) -> Option<WebviewBounds> {
-    self
-      .bounds
-      .lock()
-      .expect("WebView bounds mutex is poisoned")
-      .clone()
+    self.bounds.lock().expect("WebView bounds mutex is poisoned").clone()
   }
   pub fn bounds_handle(&self) -> Arc<Mutex<Option<WebviewBounds>>> {
     Arc::clone(&self.bounds)
@@ -182,20 +172,13 @@ impl WebViewWrapper {
   ///
   /// The position and size of the native WebView remain unchanged.
   pub fn set_cached_bounds(&self, bounds: Option<WebviewBounds>) {
-    *self
-      .bounds
-      .lock()
-      .expect("WebView bounds mutex is poisoned") = bounds;
+    *self.bounds.lock().expect("WebView bounds mutex is poisoned") = bounds;
   }
   /// Takes the stored bounds.
   ///
   /// Afterwards all wrapper clones hold None at this location.
   pub fn take_bounds(&self) -> Option<WebviewBounds> {
-    self
-      .bounds
-      .lock()
-      .expect("WebView bounds mutex is poisoned")
-      .take()
+    self.bounds.lock().expect("WebView bounds mutex is poisoned").take()
   }
   pub fn clear_bounds(&self) {
     self.set_cached_bounds(None);
@@ -205,24 +188,20 @@ impl WebViewWrapper {
   // --------------------------------------------------------
   /// Queries the current geometry directly from Wry.
   pub fn native_bounds(&self) -> Result<wry::Rect> {
-    self.as_wry().bounds().map_err(|error| {
-      anyhow!(
-        "failed to read native bounds for webview '{}': {error}",
-        self.label
-      )
-    })
+    self
+      .as_wry()
+      .bounds()
+      .map_err(|error| anyhow!("failed to read native bounds for webview '{}': {error}", self.label))
   }
   /// Changes the native geometry.
   ///
   /// The stored WebviewBounds are not adjusted automatically: their
   /// conversion belongs in your layout code.
   pub fn set_window_bounds(&self, bounds: wry::Rect) -> Result<()> {
-    self.as_wry().set_bounds(bounds).map_err(|error| {
-      anyhow!(
-        "failed to set native bounds for webview '{}': {error}",
-        self.label
-      )
-    })
+    self
+      .as_wry()
+      .set_bounds(bounds)
+      .map_err(|error| anyhow!("failed to set native bounds for webview '{}': {error}", self.label))
   }
 }
 // ------------------------------------------------------------
@@ -334,10 +313,7 @@ impl WebViewManager {
     }
 
     if self.label_index.contains_key(&label) {
-      return Err(anyhow!(
-        "WebView with label {:?} is already registered",
-        label
-      ));
+      return Err(anyhow!("WebView with label {:?} is already registered", label));
     }
 
     let index = self.webviews.len();
@@ -457,9 +433,7 @@ impl WebViewManager {
 
       self.id_index.insert(current.id(), current_index);
 
-      self
-        .label_index
-        .insert(current.label().to_string(), current_index);
+      self.label_index.insert(current.label().to_string(), current_index);
     }
 
     Some(webview)
@@ -510,11 +484,7 @@ impl WebViewManager {
 }
 
 #[cfg(not(target_os = "macos"))]
-pub fn inner_size(
-  window: &TaoWindow,
-  _webviews: &[WebViewWrapper],
-  _has_children: bool,
-) -> Result<PhysicalSize<u32>> {
+pub fn inner_size(window: &TaoWindow, _webviews: &[WebViewWrapper], _has_children: bool) -> Result<PhysicalSize<u32>> {
   let size = window.inner_size();
   Ok(PhysicalSize::new(size.width, size.height))
 }
@@ -557,16 +527,11 @@ pub fn reparent_native(webview: &WebViewWrapper, target: &Arc<TaoWindow>) -> Res
     .map_err(|e| anyhow!("reparent failed: {e}"))
 }
 #[cfg(target_os = "macos")]
-pub fn inner_size(
-  window: &TaoWindow,
-  webviews: &[WebViewWrapper],
-  has_children: bool,
-) -> Result<PhysicalSize<u32>> {
+pub fn inner_size(window: &TaoWindow, webviews: &[WebViewWrapper], has_children: bool) -> Result<PhysicalSize<u32>> {
   use wry::WebViewExtMacOS;
   if !has_children {
     if let Some(webview) = webviews.first() {
-      let _main_thread =
-        MainThreadMarker::new().expect("native view measurement must run on the macOS main thread");
+      let _main_thread = MainThreadMarker::new().expect("native view measurement must run on the macOS main thread");
       let native_webview = webview.as_wry().webview();
       // SAFETY:
       // Wry returns its WKWebView subclass.
@@ -574,14 +539,282 @@ pub fn inner_size(
       // Access occurs after verification on the main thread.
       let view = unsafe { Retained::cast_unchecked::<NSView>(native_webview) };
       let frame = view.frame();
-      return Ok(
-        LogicalSize::<f64>::new(frame.size.width, frame.size.height)
-          .to_physical(window.scale_factor()),
-      );
+      return Ok(LogicalSize::<f64>::new(frame.size.width, frame.size.height).to_physical(window.scale_factor()));
     }
   }
   let size = window.inner_size();
   // Explicit conversion avoids a dependency on whether engine_schema
   // and Tao re-export identical types.
   Ok(PhysicalSize::new(size.width, size.height))
+}
+
+#[cfg(not(any(target_os = "android", target_os = "ios")))]
+/// Permission types that can be requested by the webview.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[non_exhaustive]
+pub enum PermissionKind {
+  /// Microphone access permission.
+  Microphone,
+  /// Camera access permission.
+  Camera,
+  /// Geolocation access permission.
+  ///
+  /// ## Platform-specific
+  ///
+  /// - **Windows**: Supported via `COREWEBVIEW2_PERMISSION_KIND_GEOLOCATION`.
+  /// - **Linux**: Supported via `GeolocationPermissionRequest`.
+  /// - **Android**: Supported via `WebChromeClient.onGeolocationPermissionsShowPrompt`.
+  /// - **macOS / iOS**: Not yet supported by platform backends.
+  Geolocation,
+  /// Notifications permission.
+  ///
+  /// ## Platform-specific
+  ///
+  /// - **Windows**: Supported via `COREWEBVIEW2_PERMISSION_KIND_NOTIFICATIONS`.
+  /// - **Linux**: Supported via `NotificationPermissionRequest`.
+  /// - **macOS / Android / iOS**: Not yet supported by platform backends.
+  Notifications,
+  /// Clipboard read permission.
+  ///
+  /// ## Platform-specific
+  ///
+  /// - **Windows**: Supported via `COREWEBVIEW2_PERMISSION_KIND_CLIPBOARD_READ`.
+  /// - **macOS / Linux / Android / iOS**: Not yet supported by platform backends.
+  ClipboardRead,
+  /// Display capture permission (for getDisplayMedia).
+  DisplayCapture,
+  /// Midi access permission.
+  ///
+  /// ## Platform-specific
+  ///
+  /// - **Windows**: Supported via `COREWEBVIEW2_PERMISSION_KIND_MIDI_SYSTEM_EXCLUSIVE_MESSAGES`.
+  /// - **Android**: Supported via `android.webkit.resource.MIDI_SYSEX`.
+  /// - **macOS / Linux / iOS**: Not yet supported by platform backends.
+  Midi,
+  /// Sensors (accelerometer, gyroscope, etc.) access permission.
+  ///
+  /// ## Platform-specific
+  ///
+  /// - **Windows**: Supported via `COREWEBVIEW2_PERMISSION_KIND_OTHER_SENSORS`.
+  /// - **macOS / Linux / Android / iOS**: Not yet supported by platform backends.
+  Sensors,
+  /// Media key system access permission.
+  ///
+  /// ## Platform-specific
+  ///
+  /// - **Android**: Supported via `android.webkit.resource.PROTECTED_MEDIA_ID`.
+  /// - **Windows / macOS / Linux / iOS**: Not yet supported by platform backends.
+  MediaKeySystemAccess,
+  /// Local fonts access permission.
+  ///
+  /// ## Platform-specific
+  ///
+  /// - **Windows**: Supported via `COREWEBVIEW2_PERMISSION_KIND_LOCAL_FONTS`.
+  /// - **macOS / Linux / Android / iOS**: Not yet supported by platform backends.
+  LocalFonts,
+  /// Window management permission.
+  ///
+  /// ## Platform-specific
+  ///
+  /// - **Windows**: Supported via `COREWEBVIEW2_PERMISSION_KIND_WINDOW_MANAGEMENT`.
+  /// - **macOS / Linux / Android / iOS**: Not yet supported by platform backends.
+  WindowManagement,
+  /// Pointer lock permission.
+  ///
+  /// ## Platform-specific
+  ///
+  /// - **Linux**: Supported via `PointerLockPermissionRequest`.
+  /// - **Windows / macOS / Android / iOS**: Not yet supported by platform backends.
+  PointerLock,
+  /// Automatic downloads permission (multiple downloads without user interaction).
+  ///
+  /// ## Platform-specific
+  ///
+  /// - **Windows**: Supported via `COREWEBVIEW2_PERMISSION_KIND_MULTIPLE_AUTOMATIC_DOWNLOADS`.
+  /// - **macOS / Linux / Android / iOS**: Not yet supported by platform backends.
+  AutomaticDownloads,
+  /// File system access permission (read/write via File System Access API).
+  ///
+  /// ## Platform-specific
+  ///
+  /// - **Windows**: Supported via `COREWEBVIEW2_PERMISSION_KIND_FILE_READ_WRITE`.
+  /// - **macOS / Linux / Android / iOS**: Not yet supported by platform backends.
+  FileSystemAccess,
+  /// Media autoplay permission.
+  ///
+  /// ## Platform-specific
+  ///
+  /// - **Windows**: Supported via `COREWEBVIEW2_PERMISSION_KIND_AUTOPLAY`.
+  /// - **macOS / Linux / Android / iOS**: Not yet supported by platform backends.
+  Autoplay,
+  /// Other unrecognized permission type.
+  Other,
+}
+
+impl std::fmt::Display for PermissionKind {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    match self {
+      Self::Microphone => write!(f, "microphone"),
+      Self::Camera => write!(f, "camera"),
+      Self::Geolocation => write!(f, "geolocation"),
+      Self::Notifications => write!(f, "notifications"),
+      Self::ClipboardRead => write!(f, "clipboard-read"),
+      Self::DisplayCapture => write!(f, "display-capture"),
+      Self::Midi => write!(f, "midi"),
+      Self::Sensors => write!(f, "sensors"),
+      Self::MediaKeySystemAccess => write!(f, "media-key-system-access"),
+      Self::LocalFonts => write!(f, "local-fonts"),
+      Self::WindowManagement => write!(f, "window-management"),
+      Self::PointerLock => write!(f, "pointer-lock"),
+      Self::AutomaticDownloads => write!(f, "automatic-downloads"),
+      Self::FileSystemAccess => write!(f, "file-system-access"),
+      Self::Autoplay => write!(f, "autoplay"),
+      Self::Other => write!(f, "other"),
+    }
+  }
+}
+
+/// Response for permission requests.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
+pub enum PermissionResponse {
+  /// Grant the permission.
+  ///
+  /// ## Platform-specific
+  ///
+  /// - **Android**: Not supported for runtime permissions; the normal Android
+  ///   permission flow is used instead.
+  Allow,
+  /// Deny the permission.
+  Deny,
+  /// Use the platform or browser default behavior.
+  ///
+  /// ## Platform-specific
+  ///
+  /// - **Windows / macOS / Android**: The default behavior is to continue the
+  ///   platform or browser permission flow.
+  /// - **Linux**: The default behavior is [`Self::Deny`]
+  #[default]
+  Default,
+}
+
+impl std::fmt::Display for PermissionResponse {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    match self {
+      Self::Allow => write!(f, "allow"),
+      Self::Deny => write!(f, "deny"),
+      Self::Default => write!(f, "default"),
+    }
+  }
+}
+
+pub fn from_wry_permission_kind(kind: wry::PermissionKind) -> PermissionKind {
+  match kind {
+    wry::PermissionKind::Microphone => PermissionKind::Microphone,
+    wry::PermissionKind::Camera => PermissionKind::Camera,
+    wry::PermissionKind::Geolocation => PermissionKind::Geolocation,
+    wry::PermissionKind::Notifications => PermissionKind::Notifications,
+    wry::PermissionKind::ClipboardRead => PermissionKind::ClipboardRead,
+    wry::PermissionKind::DisplayCapture => PermissionKind::DisplayCapture,
+    wry::PermissionKind::Midi => PermissionKind::Midi,
+    wry::PermissionKind::Sensors => PermissionKind::Sensors,
+    wry::PermissionKind::MediaKeySystemAccess => PermissionKind::MediaKeySystemAccess,
+    wry::PermissionKind::LocalFonts => PermissionKind::LocalFonts,
+    wry::PermissionKind::WindowManagement => PermissionKind::WindowManagement,
+    wry::PermissionKind::PointerLock => PermissionKind::PointerLock,
+    wry::PermissionKind::AutomaticDownloads => PermissionKind::AutomaticDownloads,
+    wry::PermissionKind::FileSystemAccess => PermissionKind::FileSystemAccess,
+    wry::PermissionKind::Autoplay => PermissionKind::Autoplay,
+    wry::PermissionKind::Other => PermissionKind::Other,
+    _ => PermissionKind::Other,
+  }
+}
+
+pub fn to_wry_permission_response(response: PermissionResponse) -> wry::PermissionResponse {
+  match response {
+    PermissionResponse::Allow => wry::PermissionResponse::Allow,
+    PermissionResponse::Deny => wry::PermissionResponse::Deny,
+    PermissionResponse::Default => wry::PermissionResponse::Default,
+  }
+}
+
+/// Response for the new window request handler.
+pub enum NewWindowResponse {
+  /// Allow the window to be opened with the default implementation.
+  Allow,
+  /// Allow the window to be opened, with the given window.
+  ///
+  /// ## Platform-specific:
+  ///
+  /// **Linux**: The webview must be related to the caller webview. See [`WebviewAttributes::related_view`].
+  /// **Windows**: The webview must use the same environment as the caller webview. See [`WebviewAttributes::with_environment`].
+  #[cfg(not(any(target_os = "android", target_os = "ios")))]
+  Create { window_id: WindowId },
+  /// Deny the window from being opened.
+  Deny,
+}
+
+/// Information about the webview that initiated a new window request.
+#[derive(Debug)]
+pub struct NewWindowOpener {
+  /// The instance of the webview that initiated the new window request.
+  ///
+  /// This must be set as the related view of the new webview. See [`WebviewAttributes::related_view`].
+  #[cfg(any(
+    target_os = "linux",
+    target_os = "dragonfly",
+    target_os = "freebsd",
+    target_os = "netbsd",
+    target_os = "openbsd",
+  ))]
+  pub webview: webkit2gtk::WebView,
+  /// The instance of the webview that initiated the new window request.
+  ///
+  /// The target webview environment **MUST** match the environment of the opener webview. See [`WebviewAttributes::with_environment`].
+  #[cfg(windows)]
+  pub webview: webview2_com::Microsoft::Web::WebView2::Win32::ICoreWebView2,
+  #[cfg(windows)]
+  pub environment: webview2_com::Microsoft::Web::WebView2::Win32::ICoreWebView2Environment,
+  /// The instance of the webview that initiated the new window request.
+  #[cfg(target_os = "macos")]
+  pub webview: objc2::rc::Retained<objc2_web_kit::WKWebView>,
+  /// Configuration of the target webview.
+  ///
+  /// This **MUST** be used when creating the target webview. See [`WebviewAttributes::webview_configuration`].
+  #[cfg(target_os = "macos")]
+  pub target_configuration: objc2::rc::Retained<objc2_web_kit::WKWebViewConfiguration>,
+}
+
+/// Window features of a window requested to open.
+#[derive(Debug)]
+pub struct NewWindowFeatures {
+  pub(crate) size: Option<dpi::LogicalSize<f64>>,
+  pub(crate) position: Option<dpi::LogicalPosition<f64>>,
+  pub(crate) opener: NewWindowOpener,
+}
+
+impl NewWindowFeatures {
+  pub fn new(
+    size: Option<dpi::LogicalSize<f64>>,
+    position: Option<dpi::LogicalPosition<f64>>,
+    opener: NewWindowOpener,
+  ) -> Self {
+    Self { size, position, opener }
+  }
+
+  /// Specifies the size of the content area
+  /// as defined by the user's operating system where the new window will be generated.
+  pub fn size(&self) -> Option<dpi::LogicalSize<f64>> {
+    self.size
+  }
+
+  /// Specifies the position of the window relative to the work area
+  /// as defined by the user's operating system where the new window will be generated.
+  pub fn position(&self) -> Option<dpi::LogicalPosition<f64>> {
+    self.position
+  }
+
+  /// Returns information about the webview that initiated a new window request.
+  pub fn opener(&self) -> &NewWindowOpener {
+    &self.opener
+  }
 }

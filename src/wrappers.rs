@@ -1,4 +1,3 @@
-use crate::MonitorExt;
 /* anyhow::{self, Context},
 dpi::Rect,
 image::Icon,
@@ -12,9 +11,12 @@ tao::{
     },
 }, */
 
-use crate::schema::{
-  Rect,
-  window::{CursorIcon, DeviceEventFilter, Icon, Monitor, ProgressBarState, ProgressBarStatus, UserAttentionType},
+use crate::{
+  platforms::MonitorExt,
+  schema::{
+    Rect,
+    window::{CursorIcon, DeviceEventFilter, Icon, Monitor, ProgressBarState, ProgressBarStatus, UserAttentionType},
+  },
 };
 use tao::{
   event_loop::DeviceEventFilter as TaoDeviceEventFilter,
