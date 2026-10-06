@@ -56,7 +56,7 @@ use std::{
 // ------------------------------------------------------------
 
 #[derive(Clone)]
-pub struct WebViewWrapper {
+pub struct WebView {
   pub(crate) label: String,
   id: WebViewId,
   window_id: Arc<Mutex<WindowId>>,
@@ -66,7 +66,7 @@ pub struct WebViewWrapper {
   bounds: Arc<Mutex<Option<WebviewBounds>>>,
 }
 
-impl WebViewWrapper {
+impl WebView {
   /// Adopts an already-created native WebView.
   ///
   /// The associated context and its label registration must already have been
@@ -241,18 +241,18 @@ impl WebViewWrapper {
 // ------------------------------------------------------------
 // Trait implementations
 // ------------------------------------------------------------
-impl Deref for WebViewWrapper {
+impl Deref for WebView {
   type Target = wry::WebView;
   fn deref(&self) -> &Self::Target {
     self.as_wry()
   }
 }
-impl AsRef<wry::WebView> for WebViewWrapper {
+impl AsRef<wry::WebView> for WebView {
   fn as_ref(&self) -> &wry::WebView {
     self.as_wry()
   }
 }
-impl Drop for WebViewWrapper {
+impl Drop for WebView {
   fn drop(&mut self) {
     // Only clean up if this wrapper holds the last strong Rc
     // to the native WebView.
@@ -297,7 +297,7 @@ impl Drop for WebViewWrapper {
 /// without requiring a linear scan through the WebView collection.
 pub struct WebViewManager {
   /// WebViews in registration order.
-  webviews: Vec<WebViewWrapper>,
+  webviews: Vec<WebView>,
 
   /// Maps a WebView ID to its current index inside [`Self::webviews`].
   id_index: HashMap<WebViewId, usize>,
@@ -338,7 +338,7 @@ impl WebViewManager {
   /// Registers an already-created WebView.
   ///
   /// The WebView collection and both lookup indices are updated together.
-  pub fn insert(&mut self, webview: WebViewWrapper) -> Result<()> {
+  pub fn insert(&mut self, webview: WebView) -> Result<()> {
     let id = webview.id();
     let label = webview.label().to_string();
 
@@ -364,19 +364,19 @@ impl WebViewManager {
   // =========================================================================
 
   /// Returns a WebView by its engine-level ID.
-  pub fn get_by_id(&self, id: WebViewId) -> Option<&WebViewWrapper> {
+  pub fn get_by_id(&self, id: WebViewId) -> Option<&WebView> {
     let index = *self.id_index.get(&id)?;
     self.webviews.get(index)
   }
 
   /// Returns a mutable WebView by its engine-level ID.
-  pub fn get_by_id_mut(&mut self, id: WebViewId) -> Option<&mut WebViewWrapper> {
+  pub fn get_by_id_mut(&mut self, id: WebViewId) -> Option<&mut WebView> {
     let index = *self.id_index.get(&id)?;
     self.webviews.get_mut(index)
   }
 
   /// Returns a WebView by ID or an error if it is not registered.
-  pub fn get(&self, id: WebViewId) -> Result<&WebViewWrapper> {
+  pub fn get(&self, id: WebViewId) -> Result<&WebView> {
     self
       .get_by_id(id)
       .ok_or_else(|| anyhow!("WebView with id {:?} is not registered", id))
@@ -390,13 +390,13 @@ impl WebViewManager {
   ///
   /// Lookup is performed through the label index and does not scan
   /// the WebView collection.
-  pub fn get_by_label(&self, label: &str) -> Option<&WebViewWrapper> {
+  pub fn get_by_label(&self, label: &str) -> Option<&WebView> {
     let index = *self.label_index.get(label)?;
     self.webviews.get(index)
   }
 
   /// Returns a mutable WebView by its label.
-  pub fn get_by_label_mut(&mut self, label: &str) -> Option<&mut WebViewWrapper> {
+  pub fn get_by_label_mut(&mut self, label: &str) -> Option<&mut WebView> {
     let index = *self.label_index.get(label)?;
     self.webviews.get_mut(index)
   }
@@ -432,7 +432,7 @@ impl WebViewManager {
   /// Removes and returns a WebView by its engine-level ID.
   ///
   /// The relative order of all remaining WebViews is preserved.
-  pub fn remove(&mut self, id: WebViewId) -> Option<WebViewWrapper> {
+  pub fn remove(&mut self, id: WebViewId) -> Option<WebView> {
     let index = *self.id_index.get(&id)?;
 
     self.remove_at(index)
@@ -441,7 +441,7 @@ impl WebViewManager {
   /// Removes and returns a WebView by its label.
   ///
   /// The relative order of all remaining WebViews is preserved.
-  pub fn remove_by_label(&mut self, label: &str) -> Option<WebViewWrapper> {
+  pub fn remove_by_label(&mut self, label: &str) -> Option<WebView> {
     let index = *self.label_index.get(label)?;
 
     self.remove_at(index)
@@ -449,7 +449,7 @@ impl WebViewManager {
 
   /// Removes a WebView at the specified index and rebuilds the affected
   /// lookup indices.
-  fn remove_at(&mut self, index: usize) -> Option<WebViewWrapper> {
+  fn remove_at(&mut self, index: usize) -> Option<WebView> {
     if index >= self.webviews.len() {
       return None;
     }
@@ -478,7 +478,7 @@ impl WebViewManager {
   // =========================================================================
 
   /// Returns all managed WebViews as a contiguous slice.
-  pub fn webviews(&self) -> &[WebViewWrapper] {
+  pub fn webviews(&self) -> &[WebView] {
     &self.webviews
   }
 
@@ -486,7 +486,7 @@ impl WebViewManager {
   ///
   /// Callers must not modify properties used as lookup keys, such as the
   /// WebView ID or label, without updating the manager indices accordingly.
-  pub fn webviews_mut(&mut self) -> &mut [WebViewWrapper] {
+  pub fn webviews_mut(&mut self) -> &mut [WebView] {
     &mut self.webviews
   }
 
@@ -521,14 +521,14 @@ impl WebViewManager {
 // Free functions for existing call sites
 // ------------------------------------------------------------
 #[cfg(target_os = "macos")]
-pub fn reparent_native(webview: &WebViewWrapper, target: &Arc<TaoWindow>) -> Result<()> {
+pub fn reparent_native(webview: &WebView, target: &Arc<TaoWindow>) -> Result<()> {
   webview
     .inner()
     .reparent(target.ns_window() as _)
     .map_err(|e| anyhow!("reparent failed: {e}"))
 }
 #[cfg(windows)]
-pub fn reparent_native(webview: &WebViewWrapper, target: &Arc<TaoWindow>) -> Result<()> {
+pub fn reparent_native(webview: &WebView, target: &Arc<TaoWindow>) -> Result<()> {
   webview
     .inner()
     .reparent(target.hwnd())
@@ -541,7 +541,7 @@ pub fn reparent_native(webview: &WebViewWrapper, target: &Arc<TaoWindow>) -> Res
   target_os = "netbsd",
   target_os = "openbsd"
 ))]
-pub fn reparent_native(webview: &WebViewWrapper, target: &Arc<TaoWindow>) -> Result<()> {
+pub fn reparent_native(webview: &WebView, target: &Arc<TaoWindow>) -> Result<()> {
   let container = target
     .default_vbox()
     .ok_or_else(|| anyhow!("target window has no default vbox"))?;
