@@ -379,8 +379,8 @@ use crate::config::TitleBarStyle;
 use crate::utils::arc_mut;
 use crate::{
   WindowExt,
-  core::webview::{WebView, WebViewManager},
   utils::{inner_size, map_theme},
+  webview::{WebView, WebViewManager},
   wrappers::{CursorIconWrapper, MonitorHandleWrapper, ProgressBarStateWrapper, UserAttentionTypeWrapper},
 };
 

@@ -40,9 +40,7 @@ impl WebContextStore {
   pub fn new() -> Self {
     Self(arc_mut(HashMap::new()))
   }
-  pub fn lock(
-    &self,
-  ) -> std::sync::LockResult<MutexGuard<'_, HashMap<Option<PathBuf>, WebContext>>> {
+  pub fn lock(&self) -> std::sync::LockResult<MutexGuard<'_, HashMap<Option<PathBuf>, WebContext>>> {
     self.0.lock()
   }
 }

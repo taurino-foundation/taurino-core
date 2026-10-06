@@ -1,6 +1,5 @@
 #[cfg(desktop)]
 use crate::MonitorExt;
-use crate::core::webview::WebView;
 use crate::schema::FrontendDist;
 #[cfg(target_os = "macos")]
 use crate::schema::LogicalSize;
@@ -9,14 +8,12 @@ use crate::schema::Theme;
 use crate::schema::webview::BackgroundThrottlingPolicy;
 #[cfg(not(any(target_os = "android", target_os = "ios")))]
 use crate::schema::window::WindowId;
+use crate::webview::WebView;
 use anyhow::{Result, anyhow};
 use dpi::Position;
 use http::{
   Request, Response as HttpResponse, StatusCode,
-  header::{
-    ACCESS_CONTROL_ALLOW_HEADERS, ACCESS_CONTROL_ALLOW_METHODS, ACCESS_CONTROL_ALLOW_ORIGIN,
-    CONTENT_TYPE,
-  },
+  header::{ACCESS_CONTROL_ALLOW_HEADERS, ACCESS_CONTROL_ALLOW_METHODS, ACCESS_CONTROL_ALLOW_ORIGIN, CONTENT_TYPE},
 };
 #[cfg_attr(not(windows), allow(unused_imports))]
 pub use imp::*;
@@ -37,11 +34,7 @@ use tao::window::Window;
 use url::Url;
 pub const APP_PROTOCOL: &str = "taurino";
 #[cfg(not(target_os = "macos"))]
-pub fn inner_size(
-  window: &Window,
-  _webviews: &[WebView],
-  _has_children: bool,
-) -> Result<PhysicalSize<u32>> {
+pub fn inner_size(window: &Window, _webviews: &[WebView], _has_children: bool) -> Result<PhysicalSize<u32>> {
   let size = window.inner_size();
   Ok(PhysicalSize::new(size.width, size.height))
 }
@@ -84,16 +77,11 @@ pub fn reparent_native(webview: &WebView, target: &Arc<tao::window::Window>) -> 
     .map_err(|e| anyhow!("reparent failed: {e}"))
 }
 #[cfg(target_os = "macos")]
-pub fn inner_size(
-  window: &Window,
-  webviews: &[WebView],
-  has_children: bool,
-) -> Result<PhysicalSize<u32>> {
+pub fn inner_size(window: &Window, webviews: &[WebView], has_children: bool) -> Result<PhysicalSize<u32>> {
   use wry::WebViewExtMacOS;
   if !has_children {
     if let Some(webview) = webviews.first() {
-      let _main_thread =
-        MainThreadMarker::new().expect("native view measurement must run on the macOS main thread");
+      let _main_thread = MainThreadMarker::new().expect("native view measurement must run on the macOS main thread");
       let native_webview = webview.as_wry().webview();
       // SAFETY:
       // Wry returns its WKWebView subclass.
@@ -101,10 +89,7 @@ pub fn inner_size(
       // Access occurs after verification on the main thread.
       let view = unsafe { Retained::cast_unchecked::<NSView>(native_webview) };
       let frame = view.frame();
-      return Ok(
-        LogicalSize::<f64>::new(frame.size.width, frame.size.height)
-          .to_physical(window.scale_factor()),
-      );
+      return Ok(LogicalSize::<f64>::new(frame.size.width, frame.size.height).to_physical(window.scale_factor()));
     }
   }
   let size = window.inner_size();
@@ -133,9 +118,7 @@ pub fn arc_mut<T>(t: T) -> ArcMut<T> {
 
 /// Locks window state and converts mutex poisoning into an engine error.
 pub fn lock_state<'a, T>(mutex: &'a Mutex<T>, name: &str) -> Result<MutexGuard<'a, T>> {
-  mutex
-    .lock()
-    .map_err(|_| anyhow!("Window {name} mutex is poisoned"))
+  mutex.lock().map_err(|_| anyhow!("Window {name} mutex is poisoned"))
 }
 
 #[cfg(not(windows))]
@@ -189,11 +172,9 @@ mod imp {
     dpi_x: *mut u32,
     dpi_y: *mut u32,
   ) -> HRESULT;
-  type GetSystemMetricsForDpi =
-    unsafe extern "system" fn(nindex: SYSTEM_METRICS_INDEX, dpi: u32) -> i32;
+  type GetSystemMetricsForDpi = unsafe extern "system" fn(nindex: SYSTEM_METRICS_INDEX, dpi: u32) -> i32;
 
-  static GET_DPI_FOR_WINDOW: Lazy<Option<GetDpiForWindow>> =
-    Lazy::new(|| get_function!("user32.dll", GetDpiForWindow));
+  static GET_DPI_FOR_WINDOW: Lazy<Option<GetDpiForWindow>> = Lazy::new(|| get_function!("user32.dll", GetDpiForWindow));
   static GET_DPI_FOR_MONITOR: Lazy<Option<GetDpiForMonitor>> =
     Lazy::new(|| get_function!("shcore.dll", GetDpiForMonitor));
   static GET_SYSTEM_METRICS_FOR_DPI: Lazy<Option<GetSystemMetricsForDpi>> =
@@ -314,11 +295,7 @@ impl NewWindowFeatures {
     position: Option<dpi::LogicalPosition<f64>>,
     opener: NewWindowOpener,
   ) -> Self {
-    Self {
-      size,
-      position,
-      opener,
-    }
+    Self { size, position, opener }
   }
 
   /// Specifies the size of the content area
@@ -562,9 +539,7 @@ pub enum NewWindowResponse {
   Deny,
 }
 
-pub fn map_background_throttling(
-  throttling: BackgroundThrottlingPolicy,
-) -> wry::BackgroundThrottlingPolicy {
+pub fn map_background_throttling(throttling: BackgroundThrottlingPolicy) -> wry::BackgroundThrottlingPolicy {
   match throttling {
     BackgroundThrottlingPolicy::Disabled => wry::BackgroundThrottlingPolicy::Disabled,
     BackgroundThrottlingPolicy::Suspend => wry::BackgroundThrottlingPolicy::Suspend,
@@ -701,28 +676,18 @@ pub fn safe_asset_path(root: &Path, uri_path: &str) -> Option<PathBuf> {
   Some(output)
 }
 
-pub fn empty_response(
-  status: StatusCode,
-  window_origin: &str,
-) -> Result<HttpResponse<Cow<'static, [u8]>>> {
+pub fn empty_response(status: StatusCode, window_origin: &str) -> Result<HttpResponse<Cow<'static, [u8]>>> {
   Ok(
     HttpResponse::builder()
       .status(status)
       .header(ACCESS_CONTROL_ALLOW_ORIGIN, window_origin)
-      .header(
-        ACCESS_CONTROL_ALLOW_METHODS,
-        "GET, POST, PUT, PATCH, DELETE, OPTIONS",
-      )
+      .header(ACCESS_CONTROL_ALLOW_METHODS, "GET, POST, PUT, PATCH, DELETE, OPTIONS")
       .header(ACCESS_CONTROL_ALLOW_HEADERS, "*")
       .body(Cow::Owned(Vec::new()))?,
   )
 }
 
-pub fn error_response(
-  status: StatusCode,
-  window_origin: &str,
-  message: &str,
-) -> HttpResponse<Cow<'static, [u8]>> {
+pub fn error_response(status: StatusCode, window_origin: &str, message: &str) -> HttpResponse<Cow<'static, [u8]>> {
   HttpResponse::builder()
     .status(status)
     .header(CONTENT_TYPE, mime::TEXT_PLAIN.essence_str())
