@@ -5,10 +5,7 @@ use std::{
 };
 use tao::{
   event::Event,
-  event_loop::{
-    ControlFlow, EventLoop, EventLoopBuilder, EventLoopClosed, EventLoopProxy,
-    EventLoopWindowTarget,
-  },
+  event_loop::{ControlFlow, EventLoop, EventLoopBuilder, EventLoopClosed, EventLoopProxy, EventLoopWindowTarget},
 };
 
 use crate::schema::{
@@ -49,8 +46,7 @@ pub type EngineWindowTarget = EventLoopWindowTarget<EventLoopMessage>;
 pub type EngineLoopProxy = EventLoopProxy<EventLoopMessage>;
 pub type EngineLoopClosed = EventLoopClosed<EventLoopMessage>;
 pub type EngineLoopEvent<'a> = Event<'a, EventLoopMessage>;
-pub type EngineCallback =
-  Pin<Box<dyn Fn(&EngineWindowTarget, &mut ControlFlow) -> anyhow::Result<()> + Send>>;
+pub type EngineCallback = Pin<Box<dyn Fn(&EngineWindowTarget, &mut ControlFlow) -> anyhow::Result<()> + Send>>;
 
 // ─────────────────────────────────────────────
 // Monitor extensions
@@ -106,10 +102,7 @@ pub trait WindowExt {
   #[cfg(windows)]
   fn draw_surface(
     &self,
-    surface: &mut softbuffer::Surface<
-      std::sync::Arc<tao::window::Window>,
-      std::sync::Arc<tao::window::Window>,
-    >,
+    surface: &mut softbuffer::Surface<std::sync::Arc<tao::window::Window>, std::sync::Arc<tao::window::Window>>,
     background_color: Option<tao::window::RGBA>,
   );
 }
@@ -194,18 +187,13 @@ impl Debug for EngineEvent {
 }
 
 impl EngineEvent {
-  pub fn new<
-    F: Fn(&EngineWindowTarget, &mut ControlFlow) -> anyhow::Result<()> + Send + 'static,
-  >(
-    f: F,
-  ) -> Self {
+  pub fn new<F: Fn(&EngineWindowTarget, &mut ControlFlow) -> anyhow::Result<()> + Send + 'static>(f: F) -> Self {
     Self(Box::pin(f))
   }
 }
 
 impl Deref for EngineEvent {
-  type Target =
-    Pin<Box<dyn Fn(&EngineWindowTarget, &mut ControlFlow) -> anyhow::Result<()> + Send>>;
+  type Target = Pin<Box<dyn Fn(&EngineWindowTarget, &mut ControlFlow) -> anyhow::Result<()> + Send>>;
   fn deref(&self) -> &Self::Target {
     &self.0
   }

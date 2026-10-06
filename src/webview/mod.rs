@@ -558,7 +558,7 @@ pub fn reparent_native(webview: &WebViewWrapper, target: &Arc<TaoWindow>) -> Res
 }
 #[cfg(target_os = "macos")]
 pub fn inner_size(
-  window: &Window,
+  window: &TaoWindow,
   webviews: &[WebViewWrapper],
   has_children: bool,
 ) -> Result<PhysicalSize<u32>> {
