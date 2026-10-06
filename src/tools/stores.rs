@@ -1,6 +1,6 @@
 use crate::{
+  tools::{ArcMut, arc_mut},
   unsafe_impl_sync_send,
-  utils::{ArcMut, arc_mut},
 };
 use anyhow::Result;
 use parking_lot::RwLock;

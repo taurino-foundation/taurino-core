@@ -344,7 +344,7 @@ impl MenuManager {
       use windows::Win32::UI::WindowsAndMessaging::{HACCEL, MSG, TranslateAcceleratorW};
 
       unsafe {
-        use crate::utils::lock_state;
+        use crate::tools::lock_state;
 
         let msg = msg as *const MSG;
 

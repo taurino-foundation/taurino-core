@@ -1,7 +1,7 @@
 use crate::{
   EngineLoopProxy,
   schema::{FocusState, event::SynthesizedWindowEvent, webview::WebViewId, window::WindowId},
-  utils::ArcMut,
+  tools::ArcMut,
 };
 #[cfg(windows)]
 use webview2_com::{

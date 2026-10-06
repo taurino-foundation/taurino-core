@@ -3,7 +3,7 @@ mod webview;
 use crate::schema::LogicalSize;
 use crate::schema::PhysicalSize;
 #[cfg(windows)]
-use crate::{platforms::windows::utils::register_webview_events, schema::FocusState, utils::ArcMut};
+use crate::{platforms::windows::utils::register_webview_events, schema::FocusState, tools::ArcMut};
 use anyhow::{Result, anyhow};
 #[cfg_attr(not(windows), allow(unused_imports))]
 #[cfg(target_os = "macos")]

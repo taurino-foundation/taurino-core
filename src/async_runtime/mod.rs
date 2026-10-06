@@ -11,12 +11,11 @@ use serde_json::Value;
 use wry::WebViewBuilder;
 
 use crate::{
-  EngineLoopProxy,
-  aio::{
+  Config, EngineLoopProxy,
+  async_runtime::{
     emitter::{Emitter, EmitterMessage, WireMessage},
     source::ProtocolSystem,
   },
-  config::Config,
   schema::webview::WebviewUrl,
 };
 

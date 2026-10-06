@@ -9,7 +9,6 @@ use gtk::prelude::*;
 use tao::platform::unix::WindowExtUnix;
 
 use crate::platforms::{WindowExt, calculate_window_center_position};
-
 impl WindowExt for tao::window::Window {
   fn set_enabled(&self, enabled: bool) {
     self.gtk_window().set_sensitive(enabled);

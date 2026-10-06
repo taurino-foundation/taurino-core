@@ -1,4 +1,4 @@
-use crate::platforms::WindowExt;
+use crate::{platforms::WindowExt, tools::wrappers::TaoIcon};
 /// Represents a native application window and its window-scoped resources.
 
 ///
@@ -308,10 +308,9 @@ use crate::schema::FocusState;
 use crate::schema::window::TitleBarStyle;
 use crate::{
   schema::window::{PreventOverflowConfig, WindowConfig},
+  tools::lock_state,
   unsafe_impl_sync_send,
-  utils::lock_state,
   webview::{WebViewManager, WebViewWrapper, inner_size},
-  wrappers::TaoIcon,
 };
 use anyhow::{Result, anyhow};
 use muda::MenuId;
@@ -385,11 +384,10 @@ use windows::Win32::Foundation::HWND;
 #[cfg(target_os = "macos")]
 use crate::config::TitleBarStyle;
 
-use crate::utils::arc_mut;
-use crate::{
-  utils::map_theme,
-  wrappers::{CursorIconWrapper, MonitorHandleWrapper, ProgressBarStateWrapper, UserAttentionTypeWrapper},
+use crate::tools::wrappers::{
+  CursorIconWrapper, MonitorHandleWrapper, ProgressBarStateWrapper, UserAttentionTypeWrapper,
 };
+use crate::tools::{arc_mut, map_theme};
 
 use crate::schema::{
   Color, LogicalPosition, LogicalSize, PhysicalPosition, PhysicalSize, Position, Size, Theme,

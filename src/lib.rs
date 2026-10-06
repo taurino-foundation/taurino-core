@@ -14,19 +14,48 @@ use crate::schema::{
   webview::WebViewId,
   window::WindowId,
 };
-pub mod aio;
-pub mod config;
-pub mod logging;
+pub mod async_runtime;
 pub mod menu;
 pub mod schema;
 pub mod tools;
 pub mod trayicon;
-pub mod utils;
 pub mod webview;
 pub mod window;
-pub mod wrappers;
 
 pub mod platforms;
+pub mod native {
+  #[cfg(any(
+    target_os = "linux",
+    target_os = "dragonfly",
+    target_os = "freebsd",
+    target_os = "openbsd",
+    target_os = "netbsd",
+    target_os = "windows",
+    target_os = "macos",
+  ))]
+  pub use muda;
+
+  pub use tao;
+  #[cfg(any(
+    target_os = "linux",
+    target_os = "dragonfly",
+    target_os = "freebsd",
+    target_os = "openbsd",
+    target_os = "netbsd",
+    target_os = "windows",
+    target_os = "macos",
+  ))]
+  pub use tray_icon;
+  pub use wry;
+}
+
+use anyhow::Result;
+use url::Url;
+
+use crate::{
+  schema::{FrontendDist, window::WindowConfig},
+  tools::environment::Env,
+};
 
 pub type EngineLoop = EventLoop<EventLoopMessage>;
 pub type EngineLoopBuilder = EventLoopBuilder<EventLoopMessage>;
@@ -106,28 +135,36 @@ impl Deref for EngineEvent {
   }
 }
 
-pub mod native {
-  #[cfg(any(
-    target_os = "linux",
-    target_os = "dragonfly",
-    target_os = "freebsd",
-    target_os = "openbsd",
-    target_os = "netbsd",
-    target_os = "windows",
-    target_os = "macos",
-  ))]
-  pub use muda;
+#[derive(Debug, Clone)]
+pub struct Config {
+  env: Env,
+  frontend_dist: FrontendDist,
+  windows: Vec<WindowConfig>,
+}
 
-  pub use tao;
-  #[cfg(any(
-    target_os = "linux",
-    target_os = "dragonfly",
-    target_os = "freebsd",
-    target_os = "openbsd",
-    target_os = "netbsd",
-    target_os = "windows",
-    target_os = "macos",
-  ))]
-  pub use tray_icon;
-  pub use wry;
+impl Config {
+  pub fn new(_config: &str) -> Result<Self> {
+    let env = Env::default();
+
+    let frontend_dist = FrontendDist::Url(Url::parse("https://tauri.app")?); // Directory("dist".into());
+
+    Ok(Self {
+      env,
+      frontend_dist,
+      windows: Vec::new(),
+    })
+  }
+  pub fn add_window_config(&mut self, config: WindowConfig) {
+    self.windows.push(config);
+  }
+
+  pub fn get_env(&self) -> Env {
+    self.env.clone()
+  }
+  pub fn get_windows(&self) -> &[WindowConfig] {
+    &self.windows
+  }
+  pub fn frontend_dist(&self) -> FrontendDist {
+    self.frontend_dist.clone()
+  }
 }

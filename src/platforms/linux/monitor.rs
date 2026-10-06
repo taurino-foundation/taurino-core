@@ -1,5 +1,8 @@
-use crate::platforms::MonitorExt;
-use crate::schema::{LogicalPosition, LogicalSize, PhysicalRect};
+use crate::{
+  platforms::MonitorExt,
+  schema::{LogicalSize, PhysicalRect},
+};
+
 use gtk::prelude::MonitorExt;
 use tao::platform::unix::MonitorHandleExtUnix;
 impl MonitorExt for tao::monitor::MonitorHandle {
