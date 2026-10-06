@@ -11,7 +11,7 @@
 use std::{
   borrow::Cow,
   collections::HashMap,
-  fmt::{self, Debug},
+  fmt::Debug,
   path::{Path, PathBuf},
   sync::Arc,
   time::Duration,

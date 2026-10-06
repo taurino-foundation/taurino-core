@@ -42,7 +42,7 @@ pub fn inner_size(window: &Window, _webviews: &[WebViewWrapper], _has_children: 
 // Free functions for existing call sites
 // ------------------------------------------------------------
 #[cfg(target_os = "macos")]
-pub fn reparent_native(webview: &WebView, target: &Arc<tao::window::Window>) -> Result<()> {
+pub fn reparent_native(webview: &WebViewWrapper, target: &Arc<tao::window::Window>) -> Result<()> {
   use tao::platform::macos::WindowExtMacOS;
   use wry::WebViewExtMacOS;
   webview
