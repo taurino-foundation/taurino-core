@@ -225,3 +225,46 @@ mod tests {
     let _ = fs::remove_dir_all(root);
   }
 }
+
+
+
+
+#[macro_export]
+macro_rules! taurino_log {
+  ($level:expr, $($argument:tt)*) => {{
+    $crate::tools::logging::__write(
+      $level,
+      format_args!($($argument)*),
+    );
+  }};
+}
+
+#[macro_export]
+macro_rules! taurino_info {
+  ($($argument:tt)*) => {{
+    $crate::taurino_log!(
+      $crate::tools::logging::Level::Info,
+      $($argument)*
+    );
+  }};
+}
+
+#[macro_export]
+macro_rules! taurino_warn {
+  ($($argument:tt)*) => {{
+    $crate::taurino_log!(
+      $crate::tools::logging::Level::Warn,
+      $($argument)*
+    );
+  }};
+}
+
+#[macro_export]
+macro_rules! taurino_error {
+  ($($argument:tt)*) => {{
+    $crate::taurino_log!(
+      $crate::tools::logging::Level::Error,
+      $($argument)*
+    );
+  }};
+}
