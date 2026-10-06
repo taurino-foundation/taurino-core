@@ -1,3 +1,5 @@
+pub use crate::taurino_log;
+
 use std::{
   fs::{self, File, OpenOptions},
   io::{self, BufWriter, Write},
