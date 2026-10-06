@@ -296,6 +296,7 @@ use std::{
 #[cfg(target_os = "macos")]
 use crate::schema::window::TitleBarStyle;
 use crate::{
+  WebViewManager,
   schema::window::{PreventOverflowConfig, WindowConfig},
   unsafe_impl_sync_send,
   utils::lock_state,
@@ -378,9 +379,8 @@ use crate::config::TitleBarStyle;
 
 use crate::utils::arc_mut;
 use crate::{
-  WindowExt,
+  WebViewWrapper, WindowExt,
   utils::{inner_size, map_theme},
-  webview::{WebView, WebViewManager},
   wrappers::{CursorIconWrapper, MonitorHandleWrapper, ProgressBarStateWrapper, UserAttentionTypeWrapper},
 };
 
@@ -2615,17 +2615,17 @@ impl Window {
   }
 
   /// Returns all WebViews currently managed by this window.
-  pub fn webviews(&self) -> &[WebView] {
+  pub fn webviews(&self) -> &[WebViewWrapper] {
     &self.webviews_manager.webviews()
   }
 
   /// Returns the WebView with the supplied Taurino identifier, if present.
-  pub fn webview(&self, id: WebViewId) -> Option<&WebView> {
+  pub fn webview(&self, id: WebViewId) -> Option<&WebViewWrapper> {
     self.webviews_manager.get_by_id(id)
   }
 
   /// Returns the WebView with the supplied label, if present.
-  pub fn webview_by_label(&self, label: &str) -> Option<&WebView> {
+  pub fn webview_by_label(&self, label: &str) -> Option<&WebViewWrapper> {
     self.webviews_manager.get_by_label(label)
   }
 

@@ -1,5 +1,6 @@
 #[cfg(desktop)]
 use crate::MonitorExt;
+use crate::WebViewWrapper;
 use crate::schema::FrontendDist;
 #[cfg(target_os = "macos")]
 use crate::schema::LogicalSize;
@@ -8,7 +9,6 @@ use crate::schema::Theme;
 use crate::schema::webview::BackgroundThrottlingPolicy;
 #[cfg(not(any(target_os = "android", target_os = "ios")))]
 use crate::schema::window::WindowId;
-use crate::webview::WebView;
 use anyhow::{Result, anyhow};
 use dpi::Position;
 use http::{
@@ -34,7 +34,7 @@ use tao::window::Window;
 use url::Url;
 pub const APP_PROTOCOL: &str = "taurino";
 #[cfg(not(target_os = "macos"))]
-pub fn inner_size(window: &Window, _webviews: &[WebView], _has_children: bool) -> Result<PhysicalSize<u32>> {
+pub fn inner_size(window: &Window, _webviews: &[WebViewWrapper], _has_children: bool) -> Result<PhysicalSize<u32>> {
   let size = window.inner_size();
   Ok(PhysicalSize::new(size.width, size.height))
 }
@@ -51,7 +51,7 @@ pub fn reparent_native(webview: &WebView, target: &Arc<tao::window::Window>) -> 
     .map_err(|e| anyhow!("reparent failed: {e}"))
 }
 #[cfg(windows)]
-pub fn reparent_native(webview: &WebView, target: &Arc<tao::window::Window>) -> Result<()> {
+pub fn reparent_native(webview: &WebViewWrapper, target: &Arc<tao::window::Window>) -> Result<()> {
   use wry::WebViewExtWindows;
   webview
     .inner()
@@ -65,7 +65,7 @@ pub fn reparent_native(webview: &WebView, target: &Arc<tao::window::Window>) -> 
   target_os = "netbsd",
   target_os = "openbsd"
 ))]
-pub fn reparent_native(webview: &WebView, target: &Arc<tao::window::Window>) -> Result<()> {
+pub fn reparent_native(webview: &WebViewWrapper, target: &Arc<tao::window::Window>) -> Result<()> {
   use tao::platform::unix::WindowExtUnix;
   use wry::WebViewExtUnix;
   let container = target
@@ -77,7 +77,7 @@ pub fn reparent_native(webview: &WebView, target: &Arc<tao::window::Window>) -> 
     .map_err(|e| anyhow!("reparent failed: {e}"))
 }
 #[cfg(target_os = "macos")]
-pub fn inner_size(window: &Window, webviews: &[WebView], has_children: bool) -> Result<PhysicalSize<u32>> {
+pub fn inner_size(window: &Window, webviews: &[WebViewWrapper], has_children: bool) -> Result<PhysicalSize<u32>> {
   use wry::WebViewExtMacOS;
   if !has_children {
     if let Some(webview) = webviews.first() {
