@@ -1,11 +1,9 @@
-use crate::{
-  platforms::MonitorExt,
-  schema::{LogicalSize, PhysicalRect},
-};
+use crate::schema::{LogicalPosition, LogicalSize, PhysicalRect};
 
-use gtk::prelude::MonitorExt;
+use gtk::gdk::prelude::MonitorExt;
 use tao::platform::unix::MonitorHandleExtUnix;
-impl MonitorExt for tao::monitor::MonitorHandle {
+
+impl crate::platforms::MonitorExt for tao::monitor::MonitorHandle {
   fn work_area(&self) -> PhysicalRect<i32, u32> {
     let rect = self.gdk_monitor().workarea();
     let scale_factor = self.scale_factor();
