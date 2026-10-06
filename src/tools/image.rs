@@ -20,8 +20,8 @@ use windows::{
 };
 
 use crate::{
-  core::resources::{Resource, ResourceId, ResourceTable},
   schema::window::Icon,
+  tools::resources::{Resource, ResourceId, ResourceTable},
 };
 
 pub const WINDOWS_APP_ICON_RESOURCE_ID: u16 = 32512;

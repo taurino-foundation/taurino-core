@@ -1,4 +1,4 @@
-use crate::{core::image::Image, menu::prelude::ContextMenu, trayicon::TrayIcon};
+use crate::{menu::prelude::ContextMenu, tools::image::Image, trayicon::TrayIcon};
 use anyhow;
 use std::path::Path;
 use tray_icon::TrayIconId;

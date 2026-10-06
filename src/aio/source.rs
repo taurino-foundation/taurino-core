@@ -39,8 +39,8 @@ use wry::WebViewBuilderExtWindows;
 
 // Keep the application's existing image types. No WebviewConfig dependency is needed.
 use crate::{
-  core::image::Image,
   schema::{FrontendDist, webview::WebviewUrl, window::Icon},
+  tools::image::Image,
 };
 
 pub type StaticFileResponse = Response<Cow<'static, [u8]>>;

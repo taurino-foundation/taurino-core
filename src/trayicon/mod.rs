@@ -6,9 +6,9 @@ pub use builder::TrayIconBuilder;
 
 pub use crate::schema::event::{MouseButton, MouseButtonState, TrayIconEvent};
 use crate::{
-  core::{image::Image, resources::Resource},
   menu::prelude::ContextMenu,
   schema::Rect,
+  tools::{image::Image, resources::Resource},
 };
 
 pub use tray_icon::TrayIconId;

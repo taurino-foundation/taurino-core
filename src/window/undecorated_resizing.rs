@@ -78,7 +78,6 @@ fn hit_test(
 
 #[cfg(windows)]
 mod windows {
-  use crate::utils;
 
   use super::{HitTestResult, hit_test};
 
@@ -301,9 +300,9 @@ mod windows {
 
           let (cx, cy) = (GET_X_LPARAM(lparam) as i32, GET_Y_LPARAM(lparam) as i32);
 
-          let dpi = utils::hwnd_dpi(child);
-          let border_x = utils::get_system_metrics_for_dpi(SM_CXFRAME, dpi);
-          let border_y = utils::get_system_metrics_for_dpi(SM_CYFRAME, dpi);
+          let dpi = crate::window::window::hwnd_dpi(child);
+          let border_x = crate::window::window::get_system_metrics_for_dpi(SM_CXFRAME, dpi);
+          let border_y = crate::window::window::get_system_metrics_for_dpi(SM_CYFRAME, dpi);
 
           let res = hit_test(rect.left, rect.top, rect.right, rect.bottom, cx, cy, border_x, border_y);
 
@@ -338,9 +337,9 @@ mod windows {
               return DefWindowProcW(child, msg, wparam, lparam);
             }
 
-            let dpi = utils::hwnd_dpi(child);
-            let border_x = utils::get_system_metrics_for_dpi(SM_CXFRAME, dpi);
-            let border_y = utils::get_system_metrics_for_dpi(SM_CYFRAME, dpi);
+            let dpi = crate::window::window::hwnd_dpi(child);
+            let border_x = crate::window::window::get_system_metrics_for_dpi(SM_CXFRAME, dpi);
+            let border_y = crate::window::window::get_system_metrics_for_dpi(SM_CYFRAME, dpi);
 
             hit_test(rect.left, rect.top, rect.right, rect.bottom, cx, cy, border_x, border_y)
           };
@@ -398,9 +397,9 @@ mod windows {
       // and so we need create a cut out in the middle for the parent and other child
       // windows like the webview can receive mouse events.
 
-      let dpi = utils::hwnd_dpi(hwnd);
-      let border_x = utils::get_system_metrics_for_dpi(SM_CXFRAME, dpi);
-      let border_y = utils::get_system_metrics_for_dpi(SM_CYFRAME, dpi);
+      let dpi = crate::window::window::hwnd_dpi(hwnd);
+      let border_x = crate::window::window::get_system_metrics_for_dpi(SM_CXFRAME, dpi);
+      let border_y = crate::window::window::get_system_metrics_for_dpi(SM_CYFRAME, dpi);
 
       // hrgn1 must be mutable to call .free() later
       let mut hrgn1 = CreateRectRgn(0, 0, width, height);

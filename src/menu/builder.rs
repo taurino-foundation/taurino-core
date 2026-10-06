@@ -1,4 +1,4 @@
-use crate::core::image::Image;
+use crate::tools::image::Image;
 
 use super::{
   item::{CheckMenuItem, IconMenuItem, IsMenuItem, Menu, MenuItem, MenuItemKind, PredefinedMenuItem, Submenu},

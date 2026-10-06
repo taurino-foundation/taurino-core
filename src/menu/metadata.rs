@@ -1,7 +1,7 @@
 use anyhow::Result;
 use serde::Deserialize;
 
-use crate::core::image::Image;
+use crate::tools::image::Image;
 /// Application metadata for the [`PredefinedMenuItem::about`].
 #[derive(Debug, Clone, Default)]
 pub struct AboutMetadata<'a> {

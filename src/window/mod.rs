@@ -292,14 +292,24 @@ use std::{
     atomic::{AtomicBool, Ordering},
   },
 };
-
+#[cfg(any(
+  windows,
+  target_os = "linux",
+  target_os = "dragonfly",
+  target_os = "freebsd",
+  target_os = "netbsd",
+  target_os = "openbsd"
+))]
+pub mod undecorated_resizing;
+#[cfg(windows)]
+use crate::schema::FocusState;
 #[cfg(target_os = "macos")]
 use crate::schema::window::TitleBarStyle;
 use crate::{
-  WebViewManager,
   schema::window::{PreventOverflowConfig, WindowConfig},
   unsafe_impl_sync_send,
   utils::lock_state,
+  webview::{WebViewManager, WebViewWrapper, inner_size},
   wrappers::TaoIcon,
 };
 use anyhow::{Result, anyhow};
@@ -316,9 +326,6 @@ use tao::platform::macos::WindowBuilderExtMacOS;
 use tao::platform::unix::WindowBuilderExtUnix;
 #[cfg(windows)]
 use tao::platform::windows::WindowBuilderExtWindows;
-
-#[cfg(windows)]
-use crate::schema::FocusState;
 /* use {
     WebViewId, WindowExt, WindowId,
     anyhow::{Result, anyhow},
@@ -362,7 +369,7 @@ use raw_window_handle::{DisplayHandle, HandleError, HasDisplayHandle, HasWindowH
 #[cfg(windows)]
 use softbuffer;
 use tao::window::{Fullscreen, Theme as TaoTheme, Window as TaoWindow, WindowBuilder as TaoWindowBuilder};
-
+pub mod window;
 use crate::menu::{
   WindowMenu,
   prelude::{
@@ -379,8 +386,8 @@ use crate::config::TitleBarStyle;
 
 use crate::utils::arc_mut;
 use crate::{
-  WebViewWrapper, WindowExt,
-  utils::{inner_size, map_theme},
+  WindowExt,
+  utils::map_theme,
   wrappers::{CursorIconWrapper, MonitorHandleWrapper, ProgressBarStateWrapper, UserAttentionTypeWrapper},
 };
 
@@ -1590,12 +1597,8 @@ impl Window {
     #[cfg(windows)]
     {
       if !resizable {
-        use crate::undecorated_resizing;
-
         undecorated_resizing::detach_resize_handler(inner.hwnd());
       } else if !inner.is_decorated() {
-        use crate::undecorated_resizing;
-
         undecorated_resizing::attach_resize_handler(inner.hwnd(), inner.has_undecorated_shadow());
       }
     }
@@ -1776,12 +1779,8 @@ impl Window {
     #[cfg(windows)]
     {
       if decorations {
-        use crate::undecorated_resizing;
-
         undecorated_resizing::detach_resize_handler(inner.hwnd());
       } else if inner.is_resizable() {
-        use crate::undecorated_resizing;
-
         undecorated_resizing::attach_resize_handler(inner.hwnd(), inner.has_undecorated_shadow());
       }
     }

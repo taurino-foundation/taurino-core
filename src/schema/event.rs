@@ -1,7 +1,9 @@
-use crate::core::window::Window;
+#[cfg(windows)]
+use crate::window::Window;
 use crate::{
-  core::stores::DeviceRegistry,
   schema::{Rect, window::WindowId},
+  tools::stores::DeviceRegistry,
+  webview::inner_size,
 };
 use serde::Serialize;
 use std::path::PathBuf;
@@ -868,7 +870,7 @@ impl WindowEventWrapper {
       // because wry replaces the NSView
       TaoWindowEvent::Resized(_) => {
         if let Some(w) = &window.inner {
-          let size = crate::utils::inner_size(w, &window.webviews(), window.has_children.load(Ordering::Relaxed))?;
+          let size = inner_size(w, &window.webviews(), window.has_children.load(Ordering::Relaxed))?;
           Ok(Self(Some(WindowEvent::Resized(size.into()))))
         } else {
           Ok(Self(None))

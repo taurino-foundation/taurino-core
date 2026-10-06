@@ -5,8 +5,8 @@ use super::{
   metadata::{AboutMetadata, NativeIcon},
 };
 use crate::{
-  core::{image::Image, resources::Resource},
   menu::context::sealed::IsMenuItemBase,
+  tools::{image::Image, resources::Resource},
 };
 use std::sync::Arc;
 
