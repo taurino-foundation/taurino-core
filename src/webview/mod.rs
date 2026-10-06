@@ -1,7 +1,5 @@
 mod webview;
 #[cfg(target_os = "macos")]
-use crate::schema::LogicalSize;
-#[cfg(target_os = "macos")]
 use tao::platform::macos::WindowExtMacOS;
 #[cfg(target_os = "macos")]
 use wry::WebViewExtMacOS;
@@ -212,6 +210,24 @@ impl WebViewWrapper {
       .bounds()
       .map_err(|error| anyhow!("failed to read native bounds for webview '{}': {error}", self.label))
   }
+
+
+  #[cfg(any(target_os = "macos", target_os = "ios"))]
+  pub fn fetch_data_store_identifiers<F: FnOnce(Vec<[u8; 16]>) + Send + 'static>(&self, cb: F) -> Result<()> {
+    if let Err(_) = wry::WebView::fetch_data_store_identifiers(cb) {
+      // this shouldn't ever happen because we're running on the main thread
+      // but let's be safe and warn here
+      // crate::tools::logging::taurino_log!(taurino_core::logging::Level::Error, "{e}");
+    }
+  }
+
+  #[cfg(any(target_os = "macos", target_os = "ios"))]
+  pub fn remove_data_store<F: FnOnce(Result<()>) + Send + 'static>(&self, uuid: [u8; 16], cb: F) -> Result<()> {
+    wry::WebView::remove_data_store(&uuid, move |res| {
+      cb(res.map_err(|e| anyhow::anyhow!("failed to remove data store: {e}")))
+    })
+  }
+
   /// Changes the native geometry.
   ///
   /// The stored WebviewBounds are not adjusted automatically: their
