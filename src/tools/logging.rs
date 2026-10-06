@@ -131,9 +131,12 @@ pub fn write(level: Level, args: std::fmt::Arguments<'_>) {
 
 #[macro_export]
 macro_rules! taurino_log {
-    ($level:expr, $($argument:tt)*) => {{
-        $crate::logging::write($level, format_args!($($argument)*));
-    }};
+  ($level:expr, $($argument:tt)*) => {{
+    $crate::logging::write(
+      $level,
+      format_args!($($argument)*)
+    );
+  }};
 }
 
 #[cfg(test)]
