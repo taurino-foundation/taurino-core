@@ -2,11 +2,9 @@ mod webview;
 #[cfg(target_os = "macos")]
 use crate::schema::LogicalSize;
 use crate::schema::PhysicalSize;
-use anyhow::{Result, anyhow};
-pub use webview::Webview;
-
 #[cfg(windows)]
 use crate::{schema::FocusState, utils::ArcMut, windows::utils::register_webview_events};
+use anyhow::{Result, anyhow};
 #[cfg_attr(not(windows), allow(unused_imports))]
 #[cfg(target_os = "macos")]
 use objc2::{MainThreadMarker, rc::Retained};
@@ -15,6 +13,7 @@ use objc2_app_kit::NSView;
 #[cfg(windows)]
 use tao::platform::windows::WindowExtWindows;
 use tao::window::Window as TaoWindow;
+pub use webview::Webview;
 
 use crate::{
   EngineLoopProxy,
@@ -107,7 +106,10 @@ impl WebViewWrapper {
   // Window association
   // --------------------------------------------------------
   pub fn window_id(&self) -> WindowId {
-    *self.window_id.lock().expect("WebView window_id mutex is poisoned")
+    *self
+      .window_id
+      .lock()
+      .expect("WebView window_id mutex is poisoned")
   }
   pub fn window_id_handle(&self) -> Arc<Mutex<WindowId>> {
     Arc::clone(&self.window_id)
@@ -117,7 +119,10 @@ impl WebViewWrapper {
   /// The native WebView is not moved by this operation.
   /// For an actual window change, normally use `reparent()`.
   pub fn set_window_id(&self, window_id: WindowId) {
-    *self.window_id.lock().expect("WebView window_id mutex is poisoned") = window_id;
+    *self
+      .window_id
+      .lock()
+      .expect("WebView window_id mutex is poisoned") = window_id;
   }
   // --------------------------------------------------------
   // Native WebView
@@ -164,7 +169,11 @@ impl WebViewWrapper {
   /// This is NOT wry::WebView::bounds().
   /// WebviewBounds must implement Clone.
   pub fn bounds(&self) -> Option<WebviewBounds> {
-    self.bounds.lock().expect("WebView bounds mutex is poisoned").clone()
+    self
+      .bounds
+      .lock()
+      .expect("WebView bounds mutex is poisoned")
+      .clone()
   }
   pub fn bounds_handle(&self) -> Arc<Mutex<Option<WebviewBounds>>> {
     Arc::clone(&self.bounds)
@@ -173,13 +182,20 @@ impl WebViewWrapper {
   ///
   /// The position and size of the native WebView remain unchanged.
   pub fn set_cached_bounds(&self, bounds: Option<WebviewBounds>) {
-    *self.bounds.lock().expect("WebView bounds mutex is poisoned") = bounds;
+    *self
+      .bounds
+      .lock()
+      .expect("WebView bounds mutex is poisoned") = bounds;
   }
   /// Takes the stored bounds.
   ///
   /// Afterwards all wrapper clones hold None at this location.
   pub fn take_bounds(&self) -> Option<WebviewBounds> {
-    self.bounds.lock().expect("WebView bounds mutex is poisoned").take()
+    self
+      .bounds
+      .lock()
+      .expect("WebView bounds mutex is poisoned")
+      .take()
   }
   pub fn clear_bounds(&self) {
     self.set_cached_bounds(None);
@@ -189,20 +205,24 @@ impl WebViewWrapper {
   // --------------------------------------------------------
   /// Queries the current geometry directly from Wry.
   pub fn native_bounds(&self) -> Result<wry::Rect> {
-    self
-      .as_wry()
-      .bounds()
-      .map_err(|error| anyhow!("failed to read native bounds for webview '{}': {error}", self.label))
+    self.as_wry().bounds().map_err(|error| {
+      anyhow!(
+        "failed to read native bounds for webview '{}': {error}",
+        self.label
+      )
+    })
   }
   /// Changes the native geometry.
   ///
   /// The stored WebviewBounds are not adjusted automatically: their
   /// conversion belongs in your layout code.
   pub fn set_window_bounds(&self, bounds: wry::Rect) -> Result<()> {
-    self
-      .as_wry()
-      .set_bounds(bounds)
-      .map_err(|error| anyhow!("failed to set native bounds for webview '{}': {error}", self.label))
+    self.as_wry().set_bounds(bounds).map_err(|error| {
+      anyhow!(
+        "failed to set native bounds for webview '{}': {error}",
+        self.label
+      )
+    })
   }
 }
 // ------------------------------------------------------------
@@ -314,7 +334,10 @@ impl WebViewManager {
     }
 
     if self.label_index.contains_key(&label) {
-      return Err(anyhow!("WebView with label {:?} is already registered", label));
+      return Err(anyhow!(
+        "WebView with label {:?} is already registered",
+        label
+      ));
     }
 
     let index = self.webviews.len();
@@ -434,7 +457,9 @@ impl WebViewManager {
 
       self.id_index.insert(current.id(), current_index);
 
-      self.label_index.insert(current.label().to_string(), current_index);
+      self
+        .label_index
+        .insert(current.label().to_string(), current_index);
     }
 
     Some(webview)
@@ -485,7 +510,11 @@ impl WebViewManager {
 }
 
 #[cfg(not(target_os = "macos"))]
-pub fn inner_size(window: &TaoWindow, _webviews: &[WebViewWrapper], _has_children: bool) -> Result<PhysicalSize<u32>> {
+pub fn inner_size(
+  window: &TaoWindow,
+  _webviews: &[WebViewWrapper],
+  _has_children: bool,
+) -> Result<PhysicalSize<u32>> {
   let size = window.inner_size();
   Ok(PhysicalSize::new(size.width, size.height))
 }
@@ -528,11 +557,16 @@ pub fn reparent_native(webview: &WebViewWrapper, target: &Arc<TaoWindow>) -> Res
     .map_err(|e| anyhow!("reparent failed: {e}"))
 }
 #[cfg(target_os = "macos")]
-pub fn inner_size(window: &Window, webviews: &[WebViewWrapper], has_children: bool) -> Result<PhysicalSize<u32>> {
+pub fn inner_size(
+  window: &Window,
+  webviews: &[WebViewWrapper],
+  has_children: bool,
+) -> Result<PhysicalSize<u32>> {
   use wry::WebViewExtMacOS;
   if !has_children {
     if let Some(webview) = webviews.first() {
-      let _main_thread = MainThreadMarker::new().expect("native view measurement must run on the macOS main thread");
+      let _main_thread =
+        MainThreadMarker::new().expect("native view measurement must run on the macOS main thread");
       let native_webview = webview.as_wry().webview();
       // SAFETY:
       // Wry returns its WKWebView subclass.
@@ -540,7 +574,10 @@ pub fn inner_size(window: &Window, webviews: &[WebViewWrapper], has_children: bo
       // Access occurs after verification on the main thread.
       let view = unsafe { Retained::cast_unchecked::<NSView>(native_webview) };
       let frame = view.frame();
-      return Ok(LogicalSize::<f64>::new(frame.size.width, frame.size.height).to_physical(window.scale_factor()));
+      return Ok(
+        LogicalSize::<f64>::new(frame.size.width, frame.size.height)
+          .to_physical(window.scale_factor()),
+      );
     }
   }
   let size = window.inner_size();

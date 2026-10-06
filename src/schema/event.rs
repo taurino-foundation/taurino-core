@@ -1,4 +1,3 @@
-#[cfg(windows)]
 use crate::window::Window;
 use crate::{
   schema::{Rect, window::WindowId},
@@ -11,8 +10,8 @@ use std::sync::atomic::Ordering;
 use tao::{
   dpi::{PhysicalPosition, PhysicalSize},
   event::{
-    DeviceEvent, ElementState, Force, KeyEvent, MouseButton as TaoMouseButton, MouseScrollDelta, RawKeyEvent, Touch,
-    TouchPhase, WindowEvent as TaoWindowEvent,
+    DeviceEvent, ElementState, Force, KeyEvent, MouseButton as TaoMouseButton, MouseScrollDelta,
+    RawKeyEvent, Touch, TouchPhase, WindowEvent as TaoWindowEvent,
   },
   keyboard::{Key, KeyCode, KeyLocation, ModifiersState},
   window::Theme,
@@ -313,17 +312,32 @@ pub enum SerdeDeviceEvent {
 
   Removed,
 
-  MouseMotion { delta_x: f64, delta_y: f64 },
+  MouseMotion {
+    delta_x: f64,
+    delta_y: f64,
+  },
 
-  MouseWheel { delta: SerdeMouseScrollDelta },
+  MouseWheel {
+    delta: SerdeMouseScrollDelta,
+  },
 
-  Motion { axis: u32, value: f64 },
+  Motion {
+    axis: u32,
+    value: f64,
+  },
 
-  Button { button: u32, state: SerdeElementState },
+  Button {
+    button: u32,
+    state: SerdeElementState,
+  },
 
-  Key { event: SerdeRawKeyEvent },
+  Key {
+    event: SerdeRawKeyEvent,
+  },
 
-  Text { codepoint: char },
+  Text {
+    codepoint: char,
+  },
 
   Unsupported,
 }
@@ -458,25 +472,37 @@ impl From<&PhysicalSize<u32>> for SerdePhysicalSizeU32 {
 
 impl From<PhysicalPosition<i32>> for SerdePhysicalPositionI32 {
   fn from(value: PhysicalPosition<i32>) -> Self {
-    Self { x: value.x, y: value.y }
+    Self {
+      x: value.x,
+      y: value.y,
+    }
   }
 }
 
 impl From<&PhysicalPosition<i32>> for SerdePhysicalPositionI32 {
   fn from(value: &PhysicalPosition<i32>) -> Self {
-    Self { x: value.x, y: value.y }
+    Self {
+      x: value.x,
+      y: value.y,
+    }
   }
 }
 
 impl From<PhysicalPosition<f64>> for SerdePhysicalPositionF64 {
   fn from(value: PhysicalPosition<f64>) -> Self {
-    Self { x: value.x, y: value.y }
+    Self {
+      x: value.x,
+      y: value.y,
+    }
   }
 }
 
 impl From<&PhysicalPosition<f64>> for SerdePhysicalPositionF64 {
   fn from(value: &PhysicalPosition<f64>) -> Self {
-    Self { x: value.x, y: value.y }
+    Self {
+      x: value.x,
+      y: value.y,
+    }
   }
 }
 
@@ -662,7 +688,9 @@ pub fn serialize_device_event(event: &DeviceEvent) -> SerdeDeviceEvent {
       delta_y: delta.1,
     },
 
-    DeviceEvent::MouseWheel { delta, .. } => SerdeDeviceEvent::MouseWheel { delta: delta.into() },
+    DeviceEvent::MouseWheel { delta, .. } => SerdeDeviceEvent::MouseWheel {
+      delta: delta.into(),
+    },
 
     DeviceEvent::Motion { axis, value, .. } => SerdeDeviceEvent::Motion {
       axis: *axis,
@@ -674,9 +702,13 @@ pub fn serialize_device_event(event: &DeviceEvent) -> SerdeDeviceEvent {
       state: state.into(),
     },
 
-    DeviceEvent::Key(event) => SerdeDeviceEvent::Key { event: event.into() },
+    DeviceEvent::Key(event) => SerdeDeviceEvent::Key {
+      event: event.into(),
+    },
 
-    DeviceEvent::Text { codepoint, .. } => SerdeDeviceEvent::Text { codepoint: *codepoint },
+    DeviceEvent::Text { codepoint, .. } => SerdeDeviceEvent::Text {
+      codepoint: *codepoint,
+    },
 
     _ => SerdeDeviceEvent::Unsupported,
   }
@@ -707,9 +739,13 @@ impl WindowEventWrapper {
 
       TaoWindowEvent::Stopped => WindowEvent::Stopped,
 
-      TaoWindowEvent::DroppedFile(path) => WindowEvent::DroppedFile(path.to_string_lossy().into_owned()),
+      TaoWindowEvent::DroppedFile(path) => {
+        WindowEvent::DroppedFile(path.to_string_lossy().into_owned())
+      }
 
-      TaoWindowEvent::HoveredFile(path) => WindowEvent::HoveredFile(path.to_string_lossy().into_owned()),
+      TaoWindowEvent::HoveredFile(path) => {
+        WindowEvent::HoveredFile(path.to_string_lossy().into_owned())
+      }
 
       TaoWindowEvent::HoveredFileCancelled => WindowEvent::HoveredFileCancelled,
 
@@ -736,11 +772,15 @@ impl WindowEventWrapper {
           {
             use crate::schema::FocusState;
 
-            let should_focus_webview = last_focused_webview_label
-              .as_deref()
-              .and_then(|last_focused_webview_label| {
-                window.webviews().iter().find(|w| w.label == last_focused_webview_label)
-              });
+            let should_focus_webview =
+              last_focused_webview_label
+                .as_deref()
+                .and_then(|last_focused_webview_label| {
+                  window
+                    .webviews()
+                    .iter()
+                    .find(|w| w.label == last_focused_webview_label)
+                });
             *focused_webview = FocusState::WindowFocused;
             if let Some(should_focus_webview) = should_focus_webview {
               drop(focused_webview);
@@ -771,7 +811,9 @@ impl WindowEventWrapper {
         is_synthetic: *is_synthetic,
       },
 
-      TaoWindowEvent::ModifiersChanged(modifiers) => WindowEvent::ModifiersChanged(modifiers.into()),
+      TaoWindowEvent::ModifiersChanged(modifiers) => {
+        WindowEvent::ModifiersChanged(modifiers.into())
+      }
 
       TaoWindowEvent::CursorMoved {
         device_id: tao_device_id,
@@ -838,7 +880,9 @@ impl WindowEventWrapper {
         value: *value,
       },
 
-      TaoWindowEvent::Touch(touch) => WindowEvent::Touch(serialize_touch(touch, device_id_registry)),
+      TaoWindowEvent::Touch(touch) => {
+        WindowEvent::Touch(serialize_touch(touch, device_id_registry))
+      }
 
       TaoWindowEvent::ScaleFactorChanged {
         scale_factor,
@@ -870,7 +914,11 @@ impl WindowEventWrapper {
       // because wry replaces the NSView
       TaoWindowEvent::Resized(_) => {
         if let Some(w) = &window.inner {
-          let size = inner_size(w, &window.webviews(), window.has_children.load(Ordering::Relaxed))?;
+          let size = inner_size(
+            w,
+            &window.webviews(),
+            window.has_children.load(Ordering::Relaxed),
+          )?;
           Ok(Self(Some(WindowEvent::Resized(size.into()))))
         } else {
           Ok(Self(None))

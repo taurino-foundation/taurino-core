@@ -1,4 +1,4 @@
-use crate::{WindowExt, utils::calculate_window_center_position};
+use crate::{WindowExt, calculate_window_center_position};
 use gtk::prelude::*;
 #[cfg(any(
   target_os = "linux",

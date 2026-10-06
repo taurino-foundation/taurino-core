@@ -1,5 +1,3 @@
-#[cfg(desktop)]
-use crate::MonitorExt;
 use crate::schema::FrontendDist;
 #[cfg(target_os = "macos")]
 use crate::schema::LogicalSize;
@@ -11,7 +9,10 @@ use anyhow::{Result, anyhow};
 use dpi::Position;
 use http::{
   Request, Response as HttpResponse, StatusCode,
-  header::{ACCESS_CONTROL_ALLOW_HEADERS, ACCESS_CONTROL_ALLOW_METHODS, ACCESS_CONTROL_ALLOW_ORIGIN, CONTENT_TYPE},
+  header::{
+    ACCESS_CONTROL_ALLOW_HEADERS, ACCESS_CONTROL_ALLOW_METHODS, ACCESS_CONTROL_ALLOW_ORIGIN,
+    CONTENT_TYPE,
+  },
 };
 
 use std::borrow::Cow;
@@ -21,8 +22,7 @@ use std::path::Path;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex, MutexGuard};
 use tao::monitor::MonitorHandle;
-#[cfg(windows)]
-use tao::platform::windows::WindowExtWindows;
+
 use url::Url;
 
 /// Maps a Taurino theme value to Tao's native window theme.
@@ -45,7 +45,9 @@ pub fn arc_mut<T>(t: T) -> ArcMut<T> {
 
 /// Locks window state and converts mutex poisoning into an engine error.
 pub fn lock_state<'a, T>(mutex: &'a Mutex<T>, name: &str) -> Result<MutexGuard<'a, T>> {
-  mutex.lock().map_err(|_| anyhow!("Window {name} mutex is poisoned"))
+  mutex
+    .lock()
+    .map_err(|_| anyhow!("Window {name} mutex is poisoned"))
 }
 
 /// Information about the webview that initiated a new window request.
@@ -93,7 +95,11 @@ impl NewWindowFeatures {
     position: Option<dpi::LogicalPosition<f64>>,
     opener: NewWindowOpener,
   ) -> Self {
-    Self { size, position, opener }
+    Self {
+      size,
+      position,
+      opener,
+    }
   }
 
   /// Specifies the size of the content area
@@ -337,7 +343,9 @@ pub enum NewWindowResponse {
   Deny,
 }
 
-pub fn map_background_throttling(throttling: BackgroundThrottlingPolicy) -> wry::BackgroundThrottlingPolicy {
+pub fn map_background_throttling(
+  throttling: BackgroundThrottlingPolicy,
+) -> wry::BackgroundThrottlingPolicy {
   match throttling {
     BackgroundThrottlingPolicy::Disabled => wry::BackgroundThrottlingPolicy::Disabled,
     BackgroundThrottlingPolicy::Suspend => wry::BackgroundThrottlingPolicy::Suspend,
@@ -474,18 +482,28 @@ pub fn safe_asset_path(root: &Path, uri_path: &str) -> Option<PathBuf> {
   Some(output)
 }
 
-pub fn empty_response(status: StatusCode, window_origin: &str) -> Result<HttpResponse<Cow<'static, [u8]>>> {
+pub fn empty_response(
+  status: StatusCode,
+  window_origin: &str,
+) -> Result<HttpResponse<Cow<'static, [u8]>>> {
   Ok(
     HttpResponse::builder()
       .status(status)
       .header(ACCESS_CONTROL_ALLOW_ORIGIN, window_origin)
-      .header(ACCESS_CONTROL_ALLOW_METHODS, "GET, POST, PUT, PATCH, DELETE, OPTIONS")
+      .header(
+        ACCESS_CONTROL_ALLOW_METHODS,
+        "GET, POST, PUT, PATCH, DELETE, OPTIONS",
+      )
       .header(ACCESS_CONTROL_ALLOW_HEADERS, "*")
       .body(Cow::Owned(Vec::new()))?,
   )
 }
 
-pub fn error_response(status: StatusCode, window_origin: &str, message: &str) -> HttpResponse<Cow<'static, [u8]>> {
+pub fn error_response(
+  status: StatusCode,
+  window_origin: &str,
+  message: &str,
+) -> HttpResponse<Cow<'static, [u8]>> {
   HttpResponse::builder()
     .status(status)
     .header(CONTENT_TYPE, mime::TEXT_PLAIN.essence_str())
