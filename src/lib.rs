@@ -1,28 +1,94 @@
 use std::{
+  collections::HashMap,
   fmt::{Debug, Formatter},
   ops::Deref,
+  path::PathBuf,
   pin::Pin,
-};
-use tao::{
-  event::Event,
-  event_loop::{ControlFlow, EventLoop, EventLoopBuilder, EventLoopClosed, EventLoopProxy, EventLoopWindowTarget},
+  rc::Rc,
+  sync::{
+    Arc, Mutex,
+    atomic::{AtomicU32, Ordering},
+  },
 };
 
-use crate::schema::{
-  PhysicalRect,
-  event::{SynthesizedWindowEvent, WebViewEvent},
-  webview::WebViewId,
-  window::WindowId,
+use anyhow::{Result, anyhow};
+use tao::{
+  event::Event,
+  event_loop::{
+    ControlFlow,
+    EventLoop,
+    EventLoopBuilder,
+    EventLoopClosed,
+    EventLoopProxy,
+    EventLoopWindowTarget,
+  },
+  window::Window as TaoWindow,
 };
+use url::Url;
+
+#[cfg(target_os = "macos")]
+use tao::platform::macos::WindowExtMacOS;
+
+#[cfg(target_os = "macos")]
+use wry::WebViewExtMacOS;
+
+#[cfg(windows)]
+use tao::platform::windows::WindowExtWindows;
+
+#[cfg(windows)]
+use wry::WebViewExtWindows;
+
+#[cfg(any(
+  target_os = "linux",
+  target_os = "dragonfly",
+  target_os = "freebsd",
+  target_os = "netbsd",
+  target_os = "openbsd"
+))]
+use tao::platform::unix::WindowExtUnix;
+
+#[cfg(any(
+  target_os = "linux",
+  target_os = "dragonfly",
+  target_os = "freebsd",
+  target_os = "netbsd",
+  target_os = "openbsd"
+))]
+use wry::WebViewExtUnix;
+
+use crate::{
+  EngineLoopProxy,
+  schema::{
+    FrontendDist,
+    PhysicalRect,
+    event::{SynthesizedWindowEvent, WebViewEvent},
+    webview::{WebViewId, WebviewBounds},
+    window::{WindowConfig, WindowId},
+  },
+  tools::{
+    environment::Env,
+    stores::WebContextStore,
+  },
+};
+
+#[cfg(windows)]
+use crate::{
+  platforms::windows::utils::register_webview_events,
+  schema::FocusState,
+  tools::ArcMut,
+};
+
 pub mod async_runtime;
 pub mod menu;
+pub mod platforms;
 pub mod schema;
 pub mod tools;
 pub mod trayicon;
 pub mod webview;
 pub mod window;
 
-pub mod platforms;
+pub use webview::Webview;
+
 pub mod native {
   #[cfg(any(
     target_os = "linux",
@@ -36,6 +102,7 @@ pub mod native {
   pub use muda;
 
   pub use tao;
+
   #[cfg(any(
     target_os = "linux",
     target_os = "dragonfly",
@@ -46,16 +113,9 @@ pub mod native {
     target_os = "macos",
   ))]
   pub use tray_icon;
+
   pub use wry;
 }
-
-use anyhow::Result;
-use url::Url;
-
-use crate::{
-  schema::{FrontendDist, window::WindowConfig},
-  tools::environment::Env,
-};
 
 pub type EngineLoop = EventLoop<EventLoopMessage>;
 pub type EngineLoopBuilder = EventLoopBuilder<EventLoopMessage>;
@@ -98,61 +158,6 @@ pub enum EventLoopMessage {
   WebviewEvent(WindowId, WebViewId, WebViewEvent),
   ContainsFullScreenElementChanged(WindowId, bool),
 }
-
-
-#[cfg(target_os = "macos")]
-use tao::platform::macos::WindowExtMacOS;
-#[cfg(target_os = "macos")]
-use wry::WebViewExtMacOS;
-#[cfg(windows)]
-use wry::WebViewExtWindows;
-
-#[cfg(any(
-  target_os = "linux",
-  target_os = "dragonfly",
-  target_os = "freebsd",
-  target_os = "netbsd",
-  target_os = "openbsd"
-))]
-use tao::platform::unix::WindowExtUnix;
-
-#[cfg(windows)]
-use crate::{platforms::windows::utils::register_webview_events, schema::FocusState, tools::ArcMut};
-use anyhow::{Result, anyhow};
-#[cfg_attr(not(windows), allow(unused_imports))]
-#[cfg(windows)]
-use tao::platform::windows::WindowExtWindows;
-use tao::window::Window as TaoWindow;
-pub use webview::Webview;
-#[cfg(any(
-  target_os = "linux",
-  target_os = "dragonfly",
-  target_os = "freebsd",
-  target_os = "netbsd",
-  target_os = "openbsd"
-))]
-use wry::WebViewExtUnix;
-
-use crate::{
-  EngineLoopProxy,
-  schema::{
-    webview::{WebViewId, WebviewBounds},
-    window::WindowId,
-  },
-  tools::stores::WebContextStore,
-};
-
-use std::{
-  collections::HashMap,
-  ops::Deref,
-  path::PathBuf,
-  rc::Rc,
-  sync::{
-    Arc, Mutex,
-    atomic::{AtomicU32, Ordering},
-  },
-};
-
 // ------------------------------------------------------------
 // WebView
 // ------------------------------------------------------------
