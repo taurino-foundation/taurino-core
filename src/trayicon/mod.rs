@@ -32,7 +32,10 @@ impl TrayIcon {
     /* install_global_dispatch(); */
     let id = inner.id().clone();
     Self {
-      inner: Arc::new(TrayIconInner { id: id.clone(), inner }),
+      inner: Arc::new(TrayIconInner {
+        id: id.clone(),
+        inner,
+      }),
     }
   }
 
@@ -46,7 +49,10 @@ impl TrayIcon {
   }
 
   pub fn set_menu<M: ContextMenu + 'static>(&self, menu: Option<M>) -> anyhow::Result<()> {
-    self.inner.inner.set_menu(menu.map(|m| m.inner_context_owned()));
+    self
+      .inner
+      .inner
+      .set_menu(menu.map(|m| m.inner_context_owned()));
     Ok(())
   }
 
@@ -59,7 +65,10 @@ impl TrayIcon {
   }
 
   pub fn set_title<S: AsRef<str>>(&self, title: Option<S>) -> anyhow::Result<()> {
-    self.inner.inner.set_title(title.map(|s| s.as_ref().to_string()));
+    self
+      .inner
+      .inner
+      .set_title(title.map(|s| s.as_ref().to_string()));
     Ok(())
   }
 
@@ -91,7 +100,10 @@ impl TrayIcon {
     #[cfg(target_os = "macos")]
     {
       let icon = icon.map(TryInto::try_into).transpose()?;
-      self.inner.inner.set_icon_with_as_template(icon, is_template)?;
+      self
+        .inner
+        .inner
+        .set_icon_with_as_template(icon, is_template)?;
       return Ok(());
     }
     #[cfg(not(target_os = "macos"))]
@@ -147,6 +159,7 @@ where
 
 pub mod prelude {
   pub use super::{
-    MouseButton, MouseButtonState, TrayIcon, TrayIconBuilder, TrayIconEvent, TrayIconId, install_tray_event_handler,
+    MouseButton, MouseButtonState, TrayIcon, TrayIconBuilder, TrayIconEvent, TrayIconId,
+    install_tray_event_handler,
   };
 }

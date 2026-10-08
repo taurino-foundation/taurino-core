@@ -8,7 +8,9 @@ use serde::{Deserialize, Deserializer, Serialize};
 use serde_with::skip_serializing_none;
 use url::Url;
 /// Identifier of a webview.
-#[derive(Debug, Clone, Copy, Hash, Eq, PartialEq, Ord, PartialOrd, serde::Serialize, serde::Deserialize)]
+#[derive(
+  Debug, Clone, Copy, Hash, Eq, PartialEq, Ord, PartialOrd, serde::Serialize, serde::Deserialize,
+)]
 pub struct WebViewId(u32);
 
 impl From<u32> for WebViewId {
@@ -572,7 +574,9 @@ impl NavigationRule {
 }
 
 fn same_origin(a: &Url, b: &Url) -> bool {
-  a.scheme() == b.scheme() && a.host_str() == b.host_str() && a.port_or_known_default() == b.port_or_known_default()
+  a.scheme() == b.scheme()
+    && a.host_str() == b.host_str()
+    && a.port_or_known_default() == b.port_or_known_default()
 }
 
 // ============================================================================

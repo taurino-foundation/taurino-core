@@ -46,11 +46,16 @@ impl IPCRuntime {
       let _config = config;
       let _proxy = proxy;
 
-      let rt = match tokio::runtime::Builder::new_multi_thread().enable_all().build() {
+      let rt = match tokio::runtime::Builder::new_multi_thread()
+        .enable_all()
+        .build()
+      {
         Ok(rt) => rt,
 
         Err(error) => {
-          let _ = protocol_tx.send(Err(anyhow::anyhow!("failed to build Tokio runtime: {error}")));
+          let _ = protocol_tx.send(Err(anyhow::anyhow!(
+            "failed to build Tokio runtime: {error}"
+          )));
 
           return;
         }
@@ -109,15 +114,17 @@ impl IPCRuntime {
               }
             }
 
-            EmitterMessage::MsgPack(items) => match rmp_serde::from_slice::<WireMessage<Value>>(&items) {
-              Ok(msg) => {
-                println!("kind = {}, payload = {}", msg.kind, msg.payload);
-              }
+            EmitterMessage::MsgPack(items) => {
+              match rmp_serde::from_slice::<WireMessage<Value>>(&items) {
+                Ok(msg) => {
+                  println!("kind = {}, payload = {}", msg.kind, msg.payload);
+                }
 
-              Err(error) => {
-                eprintln!("failed to decode msgpack payload: {error:#}");
+                Err(error) => {
+                  eprintln!("failed to decode msgpack payload: {error:#}");
+                }
               }
-            },
+            }
 
             EmitterMessage::Shutdown => {
               break;

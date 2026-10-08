@@ -18,10 +18,11 @@ impl MonitorExt for tao::monitor::MonitorHandle {
 
       position.x += visible_frame.origin.x - screen_frame.origin.x;
 
-      position.y +=
-        (screen_frame.origin.y + screen_frame.size.height) - (visible_frame.origin.y + visible_frame.size.height);
+      position.y += (screen_frame.origin.y + screen_frame.size.height)
+        - (visible_frame.origin.y + visible_frame.size.height);
       PhysicalRect {
-        size: LogicalSize::new(visible_frame.size.width, visible_frame.size.height).to_physical(scale_factor),
+        size: LogicalSize::new(visible_frame.size.width, visible_frame.size.height)
+          .to_physical(scale_factor),
         position: position.to_physical(scale_factor),
       }
     } else {

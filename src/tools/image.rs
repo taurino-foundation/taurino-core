@@ -9,11 +9,13 @@ use windows::{
   Win32::{
     Foundation::{E_FAIL, ERROR_INVALID_PARAMETER, ERROR_NOT_SUPPORTED, WIN32_ERROR},
     Graphics::Gdi::{
-      BI_RGB, BITMAPINFO, BITMAPINFOHEADER, CreateCompatibleDC, DIB_RGB_COLORS, DeleteDC, GetDIBits, HBITMAP,
+      BI_RGB, BITMAPINFO, BITMAPINFOHEADER, CreateCompatibleDC, DIB_RGB_COLORS, DeleteDC,
+      GetDIBits, HBITMAP,
     },
     System::LibraryLoader::GetModuleHandleW,
     UI::WindowsAndMessaging::{
-      GetIconInfo, GetSystemMetrics, HICON, ICONINFO, IMAGE_ICON, LR_DEFAULTCOLOR, LoadImageW, SM_CXICON, SM_CYICON,
+      GetIconInfo, GetSystemMetrics, HICON, ICONINFO, IMAGE_ICON, LR_DEFAULTCOLOR, LoadImageW,
+      SM_CXICON, SM_CYICON,
     },
   },
   core::{Owned, PCWSTR},
@@ -143,8 +145,11 @@ unsafe fn read_bgra(hbm: HBITMAP, width: i32, height: i32) -> Result<Vec<u8>> {
     );
 
     // Capture the error before `DeleteDC` can overwrite it.
-    let error =
-      (scan_lines != height).then(|| last_error_or(&format!("GetDIBits copied {scan_lines} of {height} scan lines")));
+    let error = (scan_lines != height).then(|| {
+      last_error_or(&format!(
+        "GetDIBits copied {scan_lines} of {height} scan lines"
+      ))
+    });
 
     let _ = DeleteDC(hdc);
 
@@ -269,9 +274,11 @@ impl<'a> Image<'a> {
   {
     let path = path.as_ref();
 
-    let bytes = std::fs::read(path).with_context(|| format!("failed to read image from `{}`", path.display(),))?;
+    let bytes = std::fs::read(path)
+      .with_context(|| format!("failed to read image from `{}`", path.display(),))?;
 
-    Self::from_bytes(&bytes).with_context(|| format!("failed to decode image from `{}`", path.display(),))
+    Self::from_bytes(&bytes)
+      .with_context(|| format!("failed to decode image from `{}`", path.display(),))
   }
 
   /// Creates a new image from the application icon embedded
@@ -302,7 +309,11 @@ impl<'a> Image<'a> {
   /// ```
   #[cfg(windows)]
   #[cfg_attr(docsrs, doc(cfg(windows)))]
-  pub fn from_icon_resource<'r>(resource: impl Into<IconResource<'r>>, width: u32, height: u32) -> Result<Self> {
+  pub fn from_icon_resource<'r>(
+    resource: impl Into<IconResource<'r>>,
+    width: u32,
+    height: u32,
+  ) -> Result<Self> {
     let (width_i32, height_i32) = match (i32::try_from(width), i32::try_from(height)) {
       (Ok(width), Ok(height)) if width > 0 && height > 0 => (width, height),
 
@@ -322,7 +333,10 @@ impl<'a> Image<'a> {
       IconResource::Id(id) => PCWSTR(id as usize as *const u16),
 
       IconResource::Name(resource_name) => {
-        name = resource_name.encode_utf16().chain(std::iter::once(0)).collect();
+        name = resource_name
+          .encode_utf16()
+          .chain(std::iter::once(0))
+          .collect();
 
         PCWSTR(name.as_ptr())
       }
@@ -363,16 +377,22 @@ impl<'a> Image<'a> {
       ));
     }
 
-    let mut bgra =
-      unsafe { read_bgra(*hbm_color, width_i32, height_i32) }.context("failed to read icon color bitmap")?;
+    let mut bgra = unsafe { read_bgra(*hbm_color, width_i32, height_i32) }
+      .context("failed to read icon color bitmap")?;
 
     // Color bitmaps without an alpha channel
     // (e.g. 24bpp icons) read back with alpha = 0 on every pixel.
     //
     // Recover the alpha channel from the AND mask:
     // a set bit means the pixel is transparent.
-    if bgra.as_chunks::<BYTES_PER_PIXEL>().0.iter().all(|pixel| pixel[3] == 0) {
-      let mask = unsafe { read_bgra(*hbm_mask, width_i32, height_i32) }.context("failed to read icon mask bitmap")?;
+    if bgra
+      .as_chunks::<BYTES_PER_PIXEL>()
+      .0
+      .iter()
+      .all(|pixel| pixel[3] == 0)
+    {
+      let mask = unsafe { read_bgra(*hbm_mask, width_i32, height_i32) }
+        .context("failed to read icon mask bitmap")?;
 
       for (pixel, mask) in bgra
         .as_chunks_mut::<BYTES_PER_PIXEL>()
@@ -495,7 +515,11 @@ impl JsImage {
         .map(Arc::new)
         .context("failed to load image from raw bytes"),
 
-      Self::Rgba { rgba, width, height } => {
+      Self::Rgba {
+        rgba,
+        width,
+        height,
+      } => {
         let image = Image::new_owned(rgba, width, height);
 
         check_rgba_size(&image).context("invalid raw RGBA image")?;
@@ -510,7 +534,13 @@ pub fn check_rgba_size(img: &Image<'_>) -> Result<()> {
   let expected = (img.width as u64)
     .checked_mul(img.height as u64)
     .and_then(|value| value.checked_mul(4))
-    .ok_or_else(|| anyhow!("RGBA image dimensions overflow: {}x{}", img.width, img.height,))?;
+    .ok_or_else(|| {
+      anyhow!(
+        "RGBA image dimensions overflow: {}x{}",
+        img.width,
+        img.height,
+      )
+    })?;
 
   let actual = img.rgba.len() as u64;
 

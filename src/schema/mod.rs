@@ -337,8 +337,12 @@ impl<'de> Deserialize<'de> for Color {
 #[derive(Debug, Serialize, Deserialize)]
 pub enum FocusState {
   WindowFocused,
-  WebviewFocused { webview_label: String },
-  Blured { last_focused_webview_label: Option<String> },
+  WebviewFocused {
+    webview_label: String,
+  },
+  Blured {
+    last_focused_webview_label: Option<String>,
+  },
 }
 
 #[cfg(windows)]
@@ -461,7 +465,10 @@ pub struct AppConfig {
   /// Supports a version number in SemVer format or a path to
   /// a `package.json` whose `version` entry should be read.
   /// Processing is handled by the project-specific version deserializer.
-  #[serde(deserialize_with = "crate::schema::package::version_deserializer", default)]
+  #[serde(
+    deserialize_with = "crate::schema::package::version_deserializer",
+    default
+  )]
   pub version: Option<String>,
 
   /// Configuration of the IPC connection.

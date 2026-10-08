@@ -38,10 +38,7 @@ impl FileLogger {
       fs::create_dir_all(parent)?;
     }
 
-    let file = OpenOptions::new()
-      .create(true)
-      .append(true)
-      .open(&path)?;
+    let file = OpenOptions::new().create(true).append(true).open(&path)?;
 
     let bytes = file.metadata()?.len();
 
@@ -149,10 +146,7 @@ pub fn __write(level: Level, args: std::fmt::Arguments<'_>) {
     .map(|duration| duration.as_millis())
     .unwrap_or_default();
 
-  let record = format!(
-    "{timestamp} {} {message}\n",
-    level.name()
-  );
+  let record = format!("{timestamp} {} {message}\n", level.name());
 
   // Logging failures are intentionally silent.
   //
@@ -175,12 +169,7 @@ pub fn __write(level: Level, args: std::fmt::Arguments<'_>) {
 // in addition to:
 //
 //   taurino_core::taurino_log!(...);
-pub use crate::{
-  taurino_error,
-  taurino_info,
-  taurino_log,
-  taurino_warn,
-};
+pub use crate::{taurino_error, taurino_info, taurino_log, taurino_warn};
 
 #[cfg(test)]
 mod tests {
@@ -199,35 +188,25 @@ mod tests {
 
     let path = root.join("taurino.log");
 
-    let mut file_logger =
-      FileLogger::open(path.clone()).unwrap();
+    let mut file_logger = FileLogger::open(path.clone()).unwrap();
 
     file_logger
       .write_record(&vec![b'a'; MAX_LOG_BYTES as usize])
       .unwrap();
 
-    file_logger
-      .write_record(b"next\n")
-      .unwrap();
+    file_logger.write_record(b"next\n").unwrap();
 
     let current = fs::read(&path).unwrap();
-    let backup =
-      fs::read(path.with_extension("log.1")).unwrap();
+    let backup = fs::read(path.with_extension("log.1")).unwrap();
 
     assert_eq!(current, b"next\n");
-    assert_eq!(
-      backup.len(),
-      MAX_LOG_BYTES as usize
-    );
+    assert_eq!(backup.len(), MAX_LOG_BYTES as usize);
 
     drop(file_logger);
 
     let _ = fs::remove_dir_all(root);
   }
 }
-
-
-
 
 #[macro_export]
 macro_rules! taurino_log {

@@ -15,7 +15,10 @@ use crate::{
   platforms::MonitorExt,
   schema::{
     Rect,
-    window::{CursorIcon, DeviceEventFilter, Icon, Monitor, ProgressBarState, ProgressBarStatus, UserAttentionType},
+    window::{
+      CursorIcon, DeviceEventFilter, Icon, Monitor, ProgressBarState, ProgressBarStatus,
+      UserAttentionType,
+    },
   },
 };
 use tao::{
@@ -152,7 +155,9 @@ impl From<ProgressBarState> for ProgressBarStateWrapper {
   fn from(progress_state: ProgressBarState) -> Self {
     Self(TaoProgressBarState {
       progress: progress_state.progress,
-      state: progress_state.status.map(|state| ProgressStateWrapper::from(state).0),
+      state: progress_state
+        .status
+        .map(|state| ProgressStateWrapper::from(state).0),
       desktop_filename: progress_state.desktop_filename,
     })
   }

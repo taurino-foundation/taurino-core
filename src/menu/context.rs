@@ -41,11 +41,19 @@ pub(crate) mod sealed {
   pub trait ContextMenuBase {
     fn inner_context(&self) -> &dyn muda::ContextMenu;
     fn inner_context_owned(&self) -> Box<dyn muda::ContextMenu>;
-    fn popup_inner<P: Into<Position>>(&self, window: &Window, position: Option<P>) -> anyhow::Result<()>;
+    fn popup_inner<P: Into<Position>>(
+      &self,
+      window: &Window,
+      position: Option<P>,
+    ) -> anyhow::Result<()>;
   }
 }
 
-fn show_context_menu(menu: &dyn MudaContextMenu, window: &Window, position: Option<Position>) -> anyhow::Result<()> {
+fn show_context_menu(
+  menu: &dyn MudaContextMenu,
+  window: &Window,
+  position: Option<Position>,
+) -> anyhow::Result<()> {
   #[cfg(windows)]
   {
     use tao::platform::windows::WindowExtWindows;
@@ -104,7 +112,11 @@ impl sealed::ContextMenuBase for Menu {
     Box::new(self.0.inner.clone())
   }
 
-  fn popup_inner<P: Into<Position>>(&self, window: &Window, position: Option<P>) -> anyhow::Result<()> {
+  fn popup_inner<P: Into<Position>>(
+    &self,
+    window: &Window,
+    position: Option<P>,
+  ) -> anyhow::Result<()> {
     show_context_menu(&self.0.inner, window, position.map(Into::into))
   }
 }
@@ -133,7 +145,11 @@ impl sealed::ContextMenuBase for Submenu {
     Box::new(self.0.inner.clone())
   }
 
-  fn popup_inner<P: Into<Position>>(&self, window: &Window, position: Option<P>) -> anyhow::Result<()> {
+  fn popup_inner<P: Into<Position>>(
+    &self,
+    window: &Window,
+    position: Option<P>,
+  ) -> anyhow::Result<()> {
     show_context_menu(&self.0.inner, window, position.map(Into::into))
   }
 }

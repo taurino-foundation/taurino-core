@@ -167,7 +167,9 @@ impl ResourceTable {
   ///
   /// Panics if the resource does not exist.
   pub fn replace<T: Resource>(&mut self, rid: ResourceId, resource: T) {
-    let result = self.index.insert(rid, Arc::new(resource) as Arc<dyn Resource>);
+    let result = self
+      .index
+      .insert(rid, Arc::new(resource) as Arc<dyn Resource>);
 
     assert!(result.is_some(), "resource with id {rid} does not exist",);
   }
@@ -214,7 +216,10 @@ impl ResourceTable {
   ///
   /// The order in which items appear is not guaranteed.
   pub fn names(&self) -> impl Iterator<Item = (ResourceId, Cow<'_, str>)> {
-    self.index.iter().map(|(&id, resource)| (id, resource.name()))
+    self
+      .index
+      .iter()
+      .map(|(&id, resource)| (id, resource.name()))
   }
 
   /// Removes the resource with the given `rid` from the resource table.

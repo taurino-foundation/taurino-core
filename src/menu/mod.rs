@@ -153,7 +153,10 @@ impl MenuManager {
   }
 
   pub fn insert_menu_into_stash(&mut self, menu: &Menu) {
-    self.menus.entry(menu.id().clone()).or_insert_with(|| menu.clone());
+    self
+      .menus
+      .entry(menu.id().clone())
+      .or_insert_with(|| menu.clone());
   }
 
   pub fn set_app_wide_menu(&mut self, menu: Menu) -> Option<Menu> {
@@ -178,7 +181,11 @@ impl MenuManager {
   }
 
   pub fn remove_menu_if_not_app_wide(&mut self, id: &MenuId) -> Option<Menu> {
-    if self.app_wide_menu.as_ref().is_some_and(|menu| menu.id() == id) {
+    if self
+      .app_wide_menu
+      .as_ref()
+      .is_some_and(|menu| menu.id() == id)
+    {
       return None;
     }
 
@@ -339,7 +346,9 @@ impl MenuManager {
   // -------------------------------------------------------------------------
 
   #[cfg(windows)]
-  pub fn install_msg_hook(manager: Arc<Mutex<Self>>) -> Box<dyn FnMut(*const std::ffi::c_void) -> bool + 'static> {
+  pub fn install_msg_hook(
+    manager: Arc<Mutex<Self>>,
+  ) -> Box<dyn FnMut(*const std::ffi::c_void) -> bool + 'static> {
     Box::new(move |msg| {
       use windows::Win32::UI::WindowsAndMessaging::{HACCEL, MSG, TranslateAcceleratorW};
 
@@ -357,7 +366,8 @@ impl MenuManager {
         };
 
         for menu in manager.menus.values() {
-          let translated = TranslateAcceleratorW((*msg).hwnd, HACCEL(menu.inner().haccel() as _), msg);
+          let translated =
+            TranslateAcceleratorW((*msg).hwnd, HACCEL(menu.inner().haccel() as _), msg);
 
           if translated == 1 {
             return true;
@@ -392,14 +402,17 @@ where
 // -----------------------------------------------------------------------------
 
 pub mod prelude {
-  pub use super::builder::{CheckMenuItemBuilder, IconMenuItemBuilder, MenuBuilder, MenuItemBuilder, SubmenuBuilder};
+  pub use super::builder::{
+    CheckMenuItemBuilder, IconMenuItemBuilder, MenuBuilder, MenuItemBuilder, SubmenuBuilder,
+  };
 
   pub use super::context::ContextMenu;
 
   pub use super::install_menu_event_handler;
 
   pub use super::item::{
-    CheckMenuItem, IconMenuItem, IsMenuItem, Menu, MenuItem, MenuItemKind, PredefinedMenuItem, Submenu,
+    CheckMenuItem, IconMenuItem, IsMenuItem, Menu, MenuItem, MenuItemKind, PredefinedMenuItem,
+    Submenu,
   };
 
   pub use super::metadata::{AboutMetadata, AboutMetadataBuilder, NativeIcon};

@@ -23,8 +23,8 @@ use http::{
   HeaderMap, HeaderName, HeaderValue, Method, Request, Response, StatusCode,
   header::{
     ACCESS_CONTROL_ALLOW_HEADERS, ACCESS_CONTROL_ALLOW_METHODS, ACCESS_CONTROL_ALLOW_ORIGIN,
-    ACCESS_CONTROL_REQUEST_HEADERS, ACCESS_CONTROL_REQUEST_METHOD, ALLOW, CONNECTION, CONTENT_LENGTH, CONTENT_TYPE,
-    HOST, ORIGIN,
+    ACCESS_CONTROL_REQUEST_HEADERS, ACCESS_CONTROL_REQUEST_METHOD, ALLOW, CONNECTION,
+    CONTENT_LENGTH, CONTENT_TYPE, HOST, ORIGIN,
   },
 };
 use percent_encoding::percent_decode_str;
@@ -51,7 +51,8 @@ const APP_HOST: &str = "localhost";
 const APP_BASE: &str = "taurino://localhost/";
 const EMPTY_BODY: Cow<'static, [u8]> = Cow::Borrowed(&[]);
 const MAX_HTML_BYTES: usize = 2 * 1024 * 1024;
-const ALLOWED_PREFLIGHT_HEADERS: &str = "range, if-none-match, if-modified-since, cache-control, pragma";
+const ALLOWED_PREFLIGHT_HEADERS: &str =
+  "range, if-none-match, if-modified-since, cache-control, pragma";
 
 /// Backend contract. A manager can be shared by multiple webviews.
 ///
@@ -79,9 +80,12 @@ pub struct FileSystemResource {
 impl FileSystemResource {
   pub async fn new(root_dir: impl AsRef<Path>) -> Result<Arc<Self>> {
     let requested_root = root_dir.as_ref();
-    let root_dir = fs::canonicalize(requested_root)
-      .await
-      .with_context(|| format!("failed to resolve resource directory {}", requested_root.display()))?;
+    let root_dir = fs::canonicalize(requested_root).await.with_context(|| {
+      format!(
+        "failed to resolve resource directory {}",
+        requested_root.display()
+      )
+    })?;
     if !fs::metadata(&root_dir).await?.is_dir() {
       bail!("resource path is not a directory: {}", root_dir.display());
     }
@@ -181,7 +185,9 @@ impl ResourceManager for FileSystemResource {
       return Ok(empty_response(StatusCode::NOT_FOUND));
     }
 
-    let content_type = mime_guess::from_path(&resolved).first_or_octet_stream().to_string();
+    let content_type = mime_guess::from_path(&resolved)
+      .first_or_octet_stream()
+      .to_string();
     let (body, content_length) = if request.method() == Method::HEAD {
       (EMPTY_BODY, metadata.len())
     } else {
@@ -195,9 +201,10 @@ impl ResourceManager for FileSystemResource {
       .headers_mut()
       .insert(CONTENT_TYPE, HeaderValue::from_str(&content_type)?);
     // Insert once. Builder::header appends and could produce duplicate lengths.
-    response
-      .headers_mut()
-      .insert(CONTENT_LENGTH, HeaderValue::from_str(&content_length.to_string())?);
+    response.headers_mut().insert(
+      CONTENT_LENGTH,
+      HeaderValue::from_str(&content_length.to_string())?,
+    );
     Ok(response)
   }
 }
@@ -308,7 +315,9 @@ impl ResourceManager for FileListResource {
 
     let metadata = fs::metadata(file).await?;
 
-    let content_type = mime_guess::from_path(file).first_or_octet_stream().to_string();
+    let content_type = mime_guess::from_path(file)
+      .first_or_octet_stream()
+      .to_string();
 
     let (body, content_length) = if request.method() == Method::HEAD {
       (EMPTY_BODY, metadata.len())
@@ -325,9 +334,10 @@ impl ResourceManager for FileListResource {
       .headers_mut()
       .insert(CONTENT_TYPE, HeaderValue::from_str(&content_type)?);
 
-    response
-      .headers_mut()
-      .insert(CONTENT_LENGTH, HeaderValue::from_str(&content_length.to_string())?);
+    response.headers_mut().insert(
+      CONTENT_LENGTH,
+      HeaderValue::from_str(&content_length.to_string())?,
+    );
 
     Ok(response)
   }
@@ -406,7 +416,8 @@ impl ResourceManager for RemoteHttpResource {
     match self.client.head(url.clone()).send().await {
       Ok(response) if response.status().is_success() => true,
       Ok(response)
-        if response.status() == StatusCode::METHOD_NOT_ALLOWED || response.status() == StatusCode::NOT_IMPLEMENTED =>
+        if response.status() == StatusCode::METHOD_NOT_ALLOWED
+          || response.status() == StatusCode::NOT_IMPLEMENTED =>
       {
         self
           .client
@@ -481,13 +492,18 @@ impl ResourceManager for RemoteHttpResource {
       .context("failed to fetch upstream resource")?;
     let status = upstream.status();
     let mut headers = copy_end_to_end_headers(upstream.headers());
-    let has_no_body =
-      is_head || status == StatusCode::NO_CONTENT || status == StatusCode::NOT_MODIFIED || status.is_informational();
+    let has_no_body = is_head
+      || status == StatusCode::NO_CONTENT
+      || status == StatusCode::NOT_MODIFIED
+      || status.is_informational();
     let body = if has_no_body {
       EMPTY_BODY
     } else {
       let bytes = upstream.bytes().await?.to_vec();
-      headers.insert(CONTENT_LENGTH, HeaderValue::from_str(&bytes.len().to_string())?);
+      headers.insert(
+        CONTENT_LENGTH,
+        HeaderValue::from_str(&bytes.len().to_string())?,
+      );
       Cow::Owned(bytes)
     };
     if status == StatusCode::NO_CONTENT || status.is_informational() {
@@ -547,7 +563,10 @@ impl ProtocolSystem {
     }
     // The GUI event loop may occupy the main thread for the whole app life.
     // Require worker threads instead of depending on a polled current-thread runtime.
-    if !matches!(runtime.runtime_flavor(), tokio::runtime::RuntimeFlavor::MultiThread) {
+    if !matches!(
+      runtime.runtime_flavor(),
+      tokio::runtime::RuntimeFlavor::MultiThread
+    ) {
       bail!("ProtocolSystem requires a live Tokio multi-thread runtime");
     }
     let frontend_dist = match resources.frontend_dist() {
@@ -567,7 +586,11 @@ impl ProtocolSystem {
   }
 
   /// Examines a destination without constructing a native WebView.
-  pub fn resolve(&self, webview_url: &WebviewUrl, use_https_scheme: bool) -> Result<ResolvedWebview> {
+  pub fn resolve(
+    &self,
+    webview_url: &WebviewUrl,
+    use_https_scheme: bool,
+  ) -> Result<ResolvedWebview> {
     resolve_webview(webview_url, &self.frontend_dist, use_https_scheme)
   }
 
@@ -600,8 +623,9 @@ impl ProtocolSystem {
 
         let builder = configure_https_scheme(builder, use_https_scheme);
 
-        let builder =
-          builder.with_asynchronous_custom_protocol(PROTOCOL.to_owned(), move |_webview_id, request, responder| {
+        let builder = builder.with_asynchronous_custom_protocol(
+          PROTOCOL.to_owned(),
+          move |_webview_id, request, responder| {
             let handler = Arc::clone(&handler);
             let reply = PendingResponse::new(responder);
 
@@ -611,12 +635,15 @@ impl ProtocolSystem {
             });
 
             drop(task);
-          });
+          },
+        );
 
         Ok(builder.with_url(url.as_str()))
       }
 
-      ResolvedWebview::External(url) | ResolvedWebview::CustomProtocol(url) => Ok(builder.with_url(url.as_str())),
+      ResolvedWebview::External(url) | ResolvedWebview::CustomProtocol(url) => {
+        Ok(builder.with_url(url.as_str()))
+      }
 
       ResolvedWebview::Html(html) => Ok(builder.with_html(html)),
     }
@@ -661,7 +688,9 @@ fn resolve_webview(
         bail!("WebviewUrl::External requires an HTTP or HTTPS URL");
       }
       if is_platform_app_url(url, use_https_scheme) {
-        return Ok(ResolvedWebview::App(app_url_from_reference(&url_reference(url))?));
+        return Ok(ResolvedWebview::App(app_url_from_reference(
+          &url_reference(url),
+        )?));
       }
       if let FrontendDist::Url(base) = frontend_dist {
         // Match both origin and the configured base path. An IP address
@@ -675,10 +704,16 @@ fn resolve_webview(
     WebviewUrl::CustomProtocol(url) => match url.scheme() {
       PROTOCOL => {
         validate_app_authority(url)?;
-        Ok(ResolvedWebview::App(app_url_from_reference(&url_reference(url))?))
+        Ok(ResolvedWebview::App(app_url_from_reference(
+          &url_reference(url),
+        )?))
       }
       "data" => Ok(ResolvedWebview::Html(decode_html_data_url(url)?)),
-      "http" | "https" => resolve_webview(&WebviewUrl::External(url.clone()), frontend_dist, use_https_scheme),
+      "http" | "https" => resolve_webview(
+        &WebviewUrl::External(url.clone()),
+        frontend_dist,
+        use_https_scheme,
+      ),
       "file" | "javascript" => {
         bail!("direct file: and javascript: webview URLs are not supported");
       }
@@ -744,7 +779,11 @@ fn normalize_remote_base(mut url: Url) -> Result<Url> {
   if !matches!(url.scheme(), "http" | "https") || url.host_str().is_none() {
     bail!("remote frontend source must be an absolute HTTP(S) URL");
   }
-  if !url.username().is_empty() || url.password().is_some() || url.query().is_some() || url.fragment().is_some() {
+  if !url.username().is_empty()
+    || url.password().is_some()
+    || url.query().is_some()
+    || url.fragment().is_some()
+  {
     bail!("remote frontend base must not contain credentials, a query, or a fragment");
   }
   let _ = validate_resource_path(url.path())?;
@@ -802,8 +841,8 @@ fn decode_html_data_url(url: &Url) -> Result<String> {
   if url.fragment().is_some() {
     bail!("HTML data URL fragments are not supported by this with_html adapter");
   }
-  let data =
-    data_url::DataUrl::process(url.as_str()).map_err(|error| anyhow::anyhow!("invalid data URL: {error:?}"))?;
+  let data = data_url::DataUrl::process(url.as_str())
+    .map_err(|error| anyhow::anyhow!("invalid data URL: {error:?}"))?;
   let mime: mime::Mime = data
     .mime_type()
     .to_string()
@@ -896,7 +935,9 @@ impl WebResponseContext {
     match (request.uri().scheme_str(), request.uri().authority()) {
       (None, None) => true, // Origin-form URI; useful for tests and adapters.
       (Some(_), Some(_)) => Url::parse(&request.uri().to_string())
-        .map(|url| validate_app_authority(&url).is_ok() || is_platform_app_url(&url, self.use_https_scheme))
+        .map(|url| {
+          validate_app_authority(&url).is_ok() || is_platform_app_url(&url, self.use_https_scheme)
+        })
         .unwrap_or(false),
       _ => false,
     }
@@ -930,7 +971,11 @@ impl WebResponseContext {
     if !matches!(method, Some("GET" | "HEAD")) {
       return self.apply(method_not_allowed(), false);
     }
-    for value in request.headers().get_all(ACCESS_CONTROL_REQUEST_HEADERS).iter() {
+    for value in request
+      .headers()
+      .get_all(ACCESS_CONTROL_REQUEST_HEADERS)
+      .iter()
+    {
       let Ok(value) = value.to_str() else {
         return empty_response(StatusCode::FORBIDDEN);
       };
@@ -943,9 +988,10 @@ impl WebResponseContext {
       }
     }
     let mut response = self.apply(empty_response(StatusCode::NO_CONTENT), false);
-    response
-      .headers_mut()
-      .insert(ACCESS_CONTROL_ALLOW_METHODS, HeaderValue::from_static("GET, HEAD"));
+    response.headers_mut().insert(
+      ACCESS_CONTROL_ALLOW_METHODS,
+      HeaderValue::from_static("GET, HEAD"),
+    );
     response.headers_mut().insert(
       ACCESS_CONTROL_ALLOW_HEADERS,
       HeaderValue::from_static(ALLOWED_PREFLIGHT_HEADERS),
@@ -1044,12 +1090,17 @@ async fn create_parent_directory(path: &Path) -> Result<()> {
   Ok(())
 }
 
-async fn load_cached_icon(manager: &dyn ResourceManager, cache: &IconCache, path: &str) -> Result<Icon<'static>> {
+async fn load_cached_icon(
+  manager: &dyn ResourceManager,
+  cache: &IconCache,
+  path: &str,
+) -> Result<Icon<'static>> {
   if let Some(icon) = cache.lock().await.get(path).cloned() {
     return Ok(icon);
   }
   let bytes = manager.load(path).await?;
-  let image = Image::from_bytes(&bytes).with_context(|| format!("failed to decode icon resource {path}"))?;
+  let image =
+    Image::from_bytes(&bytes).with_context(|| format!("failed to decode icon resource {path}"))?;
   let icon: Icon<'static> = image.into();
   let mut cache = cache.lock().await;
   Ok(cache.entry(path.to_owned()).or_insert(icon).clone())

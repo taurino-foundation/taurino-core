@@ -47,7 +47,10 @@ impl Emitter {
   }
 
   fn emit(&self, msg: EmitterMessage) -> Result<()> {
-    self.tx.send(msg).map_err(|e| anyhow::anyhow!("Emitter closed: {e}"))
+    self
+      .tx
+      .send(msg)
+      .map_err(|e| anyhow::anyhow!("Emitter closed: {e}"))
   }
 
   fn send_msg_pack<E, P>(&self, action: E, payload: P) -> Result<()>

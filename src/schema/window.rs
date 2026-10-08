@@ -22,7 +22,9 @@ pub struct Icon<'a> {
   pub height: u32,
 }
 
-#[derive(Debug, Clone, Copy, Hash, Eq, PartialEq, Ord, PartialOrd, serde::Serialize, serde::Deserialize)]
+#[derive(
+  Debug, Clone, Copy, Hash, Eq, PartialEq, Ord, PartialOrd, serde::Serialize, serde::Deserialize,
+)]
 pub struct WindowId(u32);
 
 impl From<u32> for WindowId {

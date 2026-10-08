@@ -15,11 +15,7 @@ use anyhow::{Result, anyhow};
 use tao::{
   event::Event,
   event_loop::{
-    ControlFlow,
-    EventLoop,
-    EventLoopBuilder,
-    EventLoopClosed,
-    EventLoopProxy,
+    ControlFlow, EventLoop, EventLoopBuilder, EventLoopClosed, EventLoopProxy,
     EventLoopWindowTarget,
   },
   window::Window as TaoWindow,
@@ -58,23 +54,17 @@ use wry::WebViewExtUnix;
 
 use crate::{
   schema::{
-    FrontendDist,
-    PhysicalRect,
+    FrontendDist, PhysicalRect,
     event::{SynthesizedWindowEvent, WebViewEvent},
     webview::{WebViewId, WebviewBounds},
     window::{WindowConfig, WindowId},
   },
-  tools::{
-    environment::Env,
-    stores::WebContextStore,
-  },
+  tools::{environment::Env, stores::WebContextStore},
 };
 
 #[cfg(windows)]
 use crate::{
-  platforms::windows::utils::register_webview_events,
-  schema::FocusState,
-  tools::ArcMut,
+  platforms::windows::utils::register_webview_events, schema::FocusState, tools::ArcMut,
 };
 
 pub mod async_runtime;
@@ -122,7 +112,8 @@ pub type EngineWindowTarget = EventLoopWindowTarget<EventLoopMessage>;
 pub type EngineLoopProxy = EventLoopProxy<EventLoopMessage>;
 pub type EngineLoopClosed = EventLoopClosed<EventLoopMessage>;
 pub type EngineLoopEvent<'a> = Event<'a, EventLoopMessage>;
-pub type EngineCallback = Pin<Box<dyn Fn(&EngineWindowTarget, &mut ControlFlow) -> anyhow::Result<()> + Send>>;
+pub type EngineCallback =
+  Pin<Box<dyn Fn(&EngineWindowTarget, &mut ControlFlow) -> anyhow::Result<()> + Send>>;
 
 /// Internal messages delivered through the Tao user-event channel.
 ///
@@ -228,7 +219,10 @@ impl WebView {
   // Window association
   // --------------------------------------------------------
   pub fn window_id(&self) -> WindowId {
-    *self.window_id.lock().expect("WebView window_id mutex is poisoned")
+    *self
+      .window_id
+      .lock()
+      .expect("WebView window_id mutex is poisoned")
   }
   pub fn window_id_handle(&self) -> Arc<Mutex<WindowId>> {
     Arc::clone(&self.window_id)
@@ -238,7 +232,10 @@ impl WebView {
   /// The native WebView is not moved by this operation.
   /// For an actual window change, normally use `reparent()`.
   pub fn set_window_id(&self, window_id: WindowId) {
-    *self.window_id.lock().expect("WebView window_id mutex is poisoned") = window_id;
+    *self
+      .window_id
+      .lock()
+      .expect("WebView window_id mutex is poisoned") = window_id;
   }
   // --------------------------------------------------------
   // Native WebView
@@ -285,7 +282,11 @@ impl WebView {
   /// This is NOT wry::WebView::bounds().
   /// WebviewBounds must implement Clone.
   pub fn bounds(&self) -> Option<WebviewBounds> {
-    self.bounds.lock().expect("WebView bounds mutex is poisoned").clone()
+    self
+      .bounds
+      .lock()
+      .expect("WebView bounds mutex is poisoned")
+      .clone()
   }
   pub fn bounds_handle(&self) -> Arc<Mutex<Option<WebviewBounds>>> {
     Arc::clone(&self.bounds)
@@ -294,13 +295,20 @@ impl WebView {
   ///
   /// The position and size of the native WebView remain unchanged.
   pub fn set_cached_bounds(&self, bounds: Option<WebviewBounds>) {
-    *self.bounds.lock().expect("WebView bounds mutex is poisoned") = bounds;
+    *self
+      .bounds
+      .lock()
+      .expect("WebView bounds mutex is poisoned") = bounds;
   }
   /// Takes the stored bounds.
   ///
   /// Afterwards all wrapper clones hold None at this location.
   pub fn take_bounds(&self) -> Option<WebviewBounds> {
-    self.bounds.lock().expect("WebView bounds mutex is poisoned").take()
+    self
+      .bounds
+      .lock()
+      .expect("WebView bounds mutex is poisoned")
+      .take()
   }
   pub fn clear_bounds(&self) {
     self.set_cached_bounds(None);
@@ -310,27 +318,32 @@ impl WebView {
   // --------------------------------------------------------
   /// Queries the current geometry directly from Wry.
   pub fn native_bounds(&self) -> Result<wry::Rect> {
-    self
-      .as_wry()
-      .bounds()
-      .map_err(|error| anyhow!("failed to read native bounds for webview '{}': {error}", self.label))
-  }
-
-
-  #[cfg(any(target_os = "macos", target_os = "ios"))]
-  pub fn fetch_data_store_identifiers<F: FnOnce(Vec<[u8; 16]>) + Send + 'static>(&self, cb: F) -> Result<()> {
-    if let Err(_) = Self::fetch_data_store_identifiers(cb) {
-      // this shouldn't ever happen because we're running on the main thread
-      // but let's be safe and warn here
-      // crate::tools::logging::taurino_log!(taurino_core::logging::Level::Error, "{e}");
-    }
-  }
-
-  #[cfg(any(target_os = "macos", target_os = "ios"))]
-  pub fn remove_data_store<F: FnOnce(Result<()>) + Send + 'static>(&self, uuid: [u8; 16], cb: F) -> Result<()> {
-    Self::remove_data_store(&uuid, move |res| {
-      cb(res.map_err(|e| anyhow::anyhow!("failed to remove data store: {e}")))
+    self.as_wry().bounds().map_err(|error| {
+      anyhow!(
+        "failed to read native bounds for webview '{}': {error}",
+        self.label
+      )
     })
+  }
+
+  #[cfg(any(target_os = "macos", target_os = "ios"))]
+  pub fn fetch_data_store_identifiers<F>(&self, cb: F) -> Result<()>
+  where
+    F: FnOnce(Vec<[u8; 16]>) + Send + 'static,
+  {
+    wry::WebView::fetch_data_store_identifiers(cb)
+      .map_err(|e| anyhow!("failed to fetch data store identifiers: {e}"))
+  }
+
+  #[cfg(any(target_os = "macos", target_os = "ios"))]
+  pub fn remove_data_store<F>(&self, uuid: [u8; 16], cb: F) -> Result<()>
+  where
+    F: FnOnce(Result<()>) + Send + 'static,
+  {
+    wry::WebView::remove_data_store(&uuid, move |res| {
+      cb(res.map_err(|e| anyhow!("failed to remove data store: {e}")))
+    })
+    .map_err(|e| anyhow!("failed to schedule data store removal: {e}"))
   }
 
   /// Changes the native geometry.
@@ -338,10 +351,12 @@ impl WebView {
   /// The stored WebviewBounds are not adjusted automatically: their
   /// conversion belongs in your layout code.
   pub fn set_window_bounds(&self, bounds: wry::Rect) -> Result<()> {
-    self
-      .as_wry()
-      .set_bounds(bounds)
-      .map_err(|error| anyhow!("failed to set native bounds for webview '{}': {error}", self.label))
+    self.as_wry().set_bounds(bounds).map_err(|error| {
+      anyhow!(
+        "failed to set native bounds for webview '{}': {error}",
+        self.label
+      )
+    })
   }
 }
 // ------------------------------------------------------------
@@ -453,7 +468,10 @@ impl WebViewManager {
     }
 
     if self.label_index.contains_key(&label) {
-      return Err(anyhow!("WebView with label {:?} is already registered", label));
+      return Err(anyhow!(
+        "WebView with label {:?} is already registered",
+        label
+      ));
     }
 
     let index = self.webviews.len();
@@ -573,7 +591,9 @@ impl WebViewManager {
 
       self.id_index.insert(current.id(), current_index);
 
-      self.label_index.insert(current.label().to_string(), current_index);
+      self
+        .label_index
+        .insert(current.label().to_string(), current_index);
     }
 
     Some(webview)
@@ -907,7 +927,11 @@ impl NewWindowFeatures {
     position: Option<dpi::LogicalPosition<f64>>,
     opener: NewWindowOpener,
   ) -> Self {
-    Self { size, position, opener }
+    Self {
+      size,
+      position,
+      opener,
+    }
   }
 
   /// Specifies the size of the content area
@@ -927,7 +951,6 @@ impl NewWindowFeatures {
     &self.opener
   }
 }
-
 
 /// Type-erased operation scheduled for execution on the Tao event-loop thread.
 ///
@@ -953,13 +976,18 @@ impl Debug for EngineEvent {
 }
 
 impl EngineEvent {
-  pub fn new<F: Fn(&EngineWindowTarget, &mut ControlFlow) -> anyhow::Result<()> + Send + 'static>(f: F) -> Self {
+  pub fn new<
+    F: Fn(&EngineWindowTarget, &mut ControlFlow) -> anyhow::Result<()> + Send + 'static,
+  >(
+    f: F,
+  ) -> Self {
     Self(Box::pin(f))
   }
 }
 
 impl Deref for EngineEvent {
-  type Target = Pin<Box<dyn Fn(&EngineWindowTarget, &mut ControlFlow) -> anyhow::Result<()> + Send>>;
+  type Target =
+    Pin<Box<dyn Fn(&EngineWindowTarget, &mut ControlFlow) -> anyhow::Result<()> + Send>>;
   fn deref(&self) -> &Self::Target {
     &self.0
   }
