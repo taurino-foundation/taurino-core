@@ -25,6 +25,8 @@ use url::Url;
 #[cfg(target_os = "macos")]
 use tao::platform::macos::WindowExtMacOS;
 
+#[cfg(any(target_os = "macos", target_os = "ios"))]
+use wry::WebViewExtDarwin;
 #[cfg(target_os = "macos")]
 use wry::WebViewExtMacOS;
 
