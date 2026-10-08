@@ -57,7 +57,6 @@ use tao::platform::unix::WindowExtUnix;
 use wry::WebViewExtUnix;
 
 use crate::{
-  EngineLoopProxy,
   schema::{
     FrontendDist,
     PhysicalRect,
@@ -510,12 +509,12 @@ impl WebViewManager {
 
   /// Resolves a WebView label to its engine-level ID.
   pub fn id_by_label(&self, label: &str) -> Option<WebViewId> {
-    self.get_by_label(label).map(WebViewWrapper::id)
+    self.get_by_label(label).map(WebView::id)
   }
 
   /// Returns the label associated with a WebView ID.
   pub fn label(&self, id: WebViewId) -> Option<&str> {
-    self.get_by_id(id).map(WebViewWrapper::label)
+    self.get_by_id(id).map(WebView::label)
   }
 
   // =========================================================================

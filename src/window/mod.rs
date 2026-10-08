@@ -315,7 +315,7 @@ use crate::{
   schema::window::{PreventOverflowConfig, WindowConfig},
   tools::lock_state,
   unsafe_impl_sync_send,
-  webview::{WebViewManager, WebViewWrapper},
+  WebViewManager, WebView,
 };
 use anyhow::{Result, anyhow};
 #[cfg(any(
@@ -2606,17 +2606,17 @@ impl Window {
   }
 
   /// Returns all WebViews currently managed by this window.
-  pub fn webviews(&self) -> &[WebViewWrapper] {
+  pub fn webviews(&self) -> &[WebView] {
     &self.webviews_manager.webviews()
   }
 
   /// Returns the WebView with the supplied Taurino identifier, if present.
-  pub fn webview(&self, id: WebViewId) -> Option<&WebViewWrapper> {
+  pub fn webview(&self, id: WebViewId) -> Option<&WebView> {
     self.webviews_manager.get_by_id(id)
   }
 
   /// Returns the WebView with the supplied label, if present.
-  pub fn webview_by_label(&self, label: &str) -> Option<&WebViewWrapper> {
+  pub fn webview_by_label(&self, label: &str) -> Option<&WebView> {
     self.webviews_manager.get_by_label(label)
   }
 
@@ -2654,7 +2654,7 @@ impl Window {
 }
 
 #[cfg(target_os = "macos")]
-pub fn inner_size(window: &TaoWindow, webviews: &[WebViewWrapper], has_children: bool) -> Result<PhysicalSize<u32>> {
+pub fn inner_size(window: &TaoWindow, webviews: &[WebView], has_children: bool) -> Result<PhysicalSize<u32>> {
   use wry::WebViewExtMacOS;
   if !has_children {
     if let Some(webview) = webviews.first() {
@@ -2676,7 +2676,7 @@ pub fn inner_size(window: &TaoWindow, webviews: &[WebViewWrapper], has_children:
 }
 
 #[cfg(not(target_os = "macos"))]
-pub fn inner_size(window: &TaoWindow, _webviews: &[WebViewWrapper], _has_children: bool) -> Result<PhysicalSize<u32>> {
+pub fn inner_size(window: &TaoWindow, _webviews: &[WebView], _has_children: bool) -> Result<PhysicalSize<u32>> {
   let size = window.inner_size();
   Ok(PhysicalSize::new(size.width, size.height))
 }
