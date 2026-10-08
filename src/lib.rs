@@ -338,16 +338,14 @@ impl WebView {
   }
 
   #[cfg(any(target_os = "macos", target_os = "ios"))]
-  pub fn remove_data_store<F>(&self, uuid: [u8; 16], cb: F) -> Result<()>
+  pub fn remove_data_store<F>(uuid: [u8; 16], cb: F)
   where
     F: FnOnce(Result<()>) + Send + 'static,
   {
     wry::WebView::remove_data_store(&uuid, move |res| {
-      cb(res.map_err(|e| anyhow!("failed to remove data store: {e}")))
-    })
-    .map_err(|e| anyhow!("failed to schedule data store removal: {e}"))
+      cb(res.map_err(|e| anyhow!("failed to remove data store: {e}")));
+    });
   }
-
   /// Changes the native geometry.
   ///
   /// The stored WebviewBounds are not adjusted automatically: their
