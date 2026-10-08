@@ -328,24 +328,7 @@ impl WebView {
     })
   }
 
-  #[cfg(any(target_os = "macos", target_os = "ios"))]
-  pub fn fetch_data_store_identifiers<F>(&self, cb: F) -> Result<()>
-  where
-    F: FnOnce(Vec<[u8; 16]>) + Send + 'static,
-  {
-    wry::WebView::fetch_data_store_identifiers(cb)
-      .map_err(|e| anyhow!("failed to fetch data store identifiers: {e}"))
-  }
 
-  #[cfg(any(target_os = "macos", target_os = "ios"))]
-  pub fn remove_data_store<F>(uuid: [u8; 16], cb: F)
-  where
-    F: FnOnce(Result<()>) + Send + 'static,
-  {
-    wry::WebView::remove_data_store(&uuid, move |res| {
-      cb(res.map_err(|e| anyhow!("failed to remove data store: {e}")));
-    });
-  }
   /// Changes the native geometry.
   ///
   /// The stored WebviewBounds are not adjusted automatically: their
@@ -452,6 +435,25 @@ impl WebViewManager {
     self.next_webview_id.fetch_add(1, Ordering::Relaxed).into()
   }
 
+  
+  #[cfg(any(target_os = "macos", target_os = "ios"))]
+  pub fn fetch_data_store_identifiers<F>(&self, cb: F) -> Result<()>
+  where
+    F: FnOnce(Vec<[u8; 16]>) + Send + 'static,
+  {
+    wry::WebView::fetch_data_store_identifiers(cb)
+      .map_err(|e| anyhow!("failed to fetch data store identifiers: {e}"))
+  }
+
+  #[cfg(any(target_os = "macos", target_os = "ios"))]
+  pub fn remove_data_store<F>(uuid: [u8; 16], cb: F)
+  where
+    F: FnOnce(Result<()>) + Send + 'static,
+  {
+    wry::WebView::remove_data_store(&uuid, move |res| {
+      cb(res.map_err(|e| anyhow!("failed to remove data store: {e}")));
+    });
+  }
   // =========================================================================
   // Registration
   // =========================================================================
