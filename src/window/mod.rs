@@ -292,8 +292,10 @@ use std::{
     atomic::{AtomicBool, Ordering},
   },
 };
-
-use crate::{platforms::WindowExt, tools::wrappers::TaoIcon};
+pub mod javascript_interfaces;
+use crate::{
+  platforms::WindowExt, tools::wrappers::TaoIcon, window::javascript_interfaces::JsEvaluator,
+};
 #[cfg(target_os = "macos")]
 use objc2::{MainThreadMarker, rc::Retained};
 #[cfg(target_os = "macos")]
@@ -2716,6 +2718,41 @@ impl Window {
   /// Returns the stored Windows background color while reporting lock poisoning as an error.
   pub fn try_background_color(&self) -> Result<Option<tao::window::RGBA>> {
     Ok(*lock_state(&self.background_color, "background_color")?)
+  }
+
+  pub fn js_evaluator_by_label<'a>(&'a self, label: &str) -> Result<JsEvaluator<'a>> {
+    let webview = self
+      .webviews_manager
+      .get_by_label(label)
+      .ok_or_else(|| anyhow!("WebView with label '{label}' not found"))?;
+
+    Ok(JsEvaluator::new(webview))
+  }
+  pub fn js_evaluator_by_id<'a>(&'a self, id: WebViewId) -> Result<JsEvaluator<'a>> {
+    let webview = self
+      .webviews_manager
+      .get_by_id(id)
+      .ok_or_else(|| anyhow!("WebView with ID: '{:?}' not found", id))?;
+
+    Ok(JsEvaluator::new(webview))
+  }
+
+  pub fn js_evaluator_by_id_mut<'a>(&'a mut self, id: WebViewId) -> Result<JsEvaluator<'a>> {
+    let webview = self
+      .webviews_manager
+      .get_by_id_mut(id)
+      .ok_or_else(|| anyhow!("WebView with ID: '{:?}' not found", id))?;
+
+    Ok(JsEvaluator::new(webview))
+  }
+
+  pub fn js_evaluator_by_label_mut<'a>(&'a mut self, label: &str) -> Result<JsEvaluator<'a>> {
+    let webview = self
+      .webviews_manager
+      .get_by_label_mut(label)
+      .ok_or_else(|| anyhow!("WebView with label '{label}' not found"))?;
+
+    Ok(JsEvaluator::new(webview))
   }
 }
 

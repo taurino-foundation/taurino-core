@@ -149,6 +149,7 @@ pub enum EventLoopMessage {
   SynthesizedWindowEvent(WindowId, WebViewId, SynthesizedWindowEvent),
   WebviewEvent(WindowId, WebViewId, WebViewEvent),
   ContainsFullScreenElementChanged(WindowId, bool),
+  EvalScript(WindowId, WebViewId, String),
 }
 // ------------------------------------------------------------
 // WebView
@@ -328,7 +329,6 @@ impl WebView {
     })
   }
 
-
   /// Changes the native geometry.
   ///
   /// The stored WebviewBounds are not adjusted automatically: their
@@ -435,7 +435,6 @@ impl WebViewManager {
     self.next_webview_id.fetch_add(1, Ordering::Relaxed).into()
   }
 
-  
   #[cfg(any(target_os = "macos", target_os = "ios"))]
   pub fn fetch_data_store_identifiers<F>(&self, cb: F) -> Result<()>
   where
