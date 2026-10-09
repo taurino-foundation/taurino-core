@@ -38,6 +38,25 @@ mod imp {}
   target_os = "openbsd",
 ))]
 use crate::window::undecorated_resizing;
+
+#[cfg(any(
+  target_os = "linux",
+  target_os = "freebsd",
+  target_os = "dragonfly",
+  target_os = "netbsd",
+  target_os = "openbsd",
+))]
+use tao::platform::unix::WindowExtUnix;
+
+#[cfg(any(
+  target_os = "linux",
+  target_os = "freebsd",
+  target_os = "dragonfly",
+  target_os = "netbsd",
+  target_os = "openbsd",
+))]
+use wry::WebViewBuilderExtUnix;
+
 #[cfg(windows)]
 mod imp {
   use std::{iter::once, os::windows::ffi::OsStrExt};
