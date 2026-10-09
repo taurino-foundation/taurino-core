@@ -11,7 +11,7 @@ impl<'a> JsEvaluator<'a> {
     Self { webview }
   }
 
-  fn evaluate(&self, script: &str) -> Result<()> {
+  pub fn evaluate(&self, script: &str) -> Result<()> {
     self.webview.evaluate_script(script)?;
     Ok(())
   }
