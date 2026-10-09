@@ -632,7 +632,7 @@ pub fn apply_build_webview<'a>(
         anyhow::anyhow!(
           "failed to create child WebView `{}`: \
                      window does not provide a GTK default vbox",
-          options.label
+          webview_label
         )
       })?;
       webview_builder.build_gtk(vbox)
