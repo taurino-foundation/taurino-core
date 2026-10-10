@@ -1002,7 +1002,7 @@ pub struct Config {
 }
 
 impl Config {
-  pub fn new(_config: &str) -> Result<Self> {
+  pub fn new(_config: Vec<u8>) -> Result<Self> {
     let env = Env::default();
 
     let frontend_dist = FrontendDist::Url(Url::parse("https://tauri.app")?); // Directory("dist".into());
