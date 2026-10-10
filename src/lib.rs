@@ -1003,6 +1003,14 @@ pub struct Config {
 
 impl Config {
   pub fn new(_config: Vec<u8>) -> Result<Self> {
+  /* 
+  
+      // MessagePack -> Rust
+    let decoded: Message = rmp_serde::from_slice(&bytes)?;
+
+    println!("{decoded:?}");
+  
+   */
     let env = Env::default();
 
     let frontend_dist = FrontendDist::Url(Url::parse("https://tauri.app")?); // Directory("dist".into());
