@@ -92,7 +92,7 @@ common-controls-v6 = ["windows/Win32_UI_Controls","windows/Win32_UI_Shell"]
 
 # Desktop only
 [target.'cfg(any(target_os = "linux",target_os = "dragonfly",target_os = "freebsd",target_os = "openbsd",target_os = "netbsd",target_os = "windows",target_os = "macos"))'.dependencies]
-muda = {version = "0.20",default-features = false,features = ["serde","gtk3"]}
+muda = {version = "0.21",default-features = false,features = ["serde","gtk3"]}
 tray-icon = {version = "0.25",default-features = false,features = ["serde","libappindicator"]}
 
 
